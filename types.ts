@@ -9,19 +9,18 @@ export enum OrderStatus {
 
 export enum PaymentMethod {
   COD = 'Cash on Delivery',
-  STRIPE = 'Stripe / Credit Card',
-  PAYPAL = 'PayPal',
-  BANK_TRANSFER = 'International Bank Transfer'
+  BANK_TRANSFER = 'Bank Transfer (Admin Account)'
 }
+
+export type SellerPayoutMethod = 'JazzCash' | 'Easypaisa' | 'Bank Transfer';
 
 export interface Seller {
   id: string;
   fullName: string;
   email: string;
   phoneNumber: string;
-  country: string;
-  paymentType: 'PayPal' | 'Stripe' | 'Bank Transfer' | 'Other';
-  accountDetails: string;
+  payoutMethod: SellerPayoutMethod;
+  accountNumber: string; // JazzCash/Easypaisa/Bank number
   shopName: string;
   shopSlug: string;
   joinedAt: string;
@@ -46,7 +45,6 @@ export interface Order {
   customerPhone: string;
   customerEmail: string;
   customerAddress: string;
-  customerCountry: string;
   items: {
     productId: string;
     productName: string;
@@ -57,15 +55,6 @@ export interface Order {
   currency: string;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
-  commissionAmount: number; // 5% of total
+  commissionAmount: number; // 5% of total for the seller
   createdAt: string;
-}
-
-export interface Payout {
-  id: string;
-  sellerId: string;
-  amount: number;
-  currency: string;
-  status: 'Pending' | 'Paid';
-  date: string;
 }
