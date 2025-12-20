@@ -55,10 +55,8 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
       joinedAt: new Date().toISOString()
     };
 
-    // Deep link for Admin to open the website
     const shopLink = `${window.location.origin}/#/shop/${shopSlug}`;
     
-    // Hidden Admin Notification formatting
     const message = `*VEO-PK ADMIN: NEW SELLER*%0A` +
                     `--------------------------%0A` +
                     `*Name:* ${newSeller.fullName}%0A` +
@@ -66,15 +64,25 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
                     `*Shop:* ${newSeller.shopName}%0A` +
                     `*Payout:* ${newSeller.payoutMethod} - ${newSeller.accountNumber}%0A` +
                     `*WhatsApp:* ${newSeller.phoneNumber}%0A%0A` +
-                    `*Open Website:* ${shopLink}`;
+                    `*Review Site:* ${shopLink}`;
 
     onUpdateSellers([...sellers, newSeller]);
     setCurrentUser(newSeller);
     setRegSuccess(true);
     setIsRegistering(false);
 
-    // Redirect to WhatsApp to notify Admin
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${message}`, '_blank');
+  };
+
+  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingProduct(prev => prev ? ({ ...prev, imageUrl: reader.result as string }) : null);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveProduct = () => {
@@ -98,18 +106,42 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
     setEditingProduct(null);
   };
 
+  const shareShop = (platform: 'whatsapp' | 'facebook') => {
+    if (!currentUser) return;
+    const url = `${window.location.origin}/#/shop/${currentUser.shopSlug}`;
+    const text = `Check out my shop "${currentUser.shopName}" on PK-MART! 🇵🇰🛍️`;
+    
+    if (platform === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
+    } else {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    }
+  };
+
   if (regSuccess && currentUser) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-        <div className="max-w-xl w-full bg-white p-12 rounded-2xl shadow-2xl border border-slate-100 text-center animate-in fade-in zoom-in duration-500">
+        <div className="max-w-2xl w-full bg-white p-12 rounded-2xl shadow-2xl border border-slate-100 text-center animate-in fade-in zoom-in duration-500">
           <div className="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl">✓</div>
-          <h2 className="text-3xl font-black text-slate-900 mb-4">Registration Logged!</h2>
+          <h2 className="text-3xl font-black text-slate-900 mb-4">Shop Created Successfully!</h2>
           <p className="text-slate-500 font-medium mb-10 leading-relaxed">
-            Your details for <b>{currentUser.shopName}</b> have been submitted. The Admin is reviewing your JazzCash/Bank details for payout verification.
+            Your identity for <b>{currentUser.shopName}</b> has been verified. You can now share your store on Instagram and Facebook.
           </p>
-          <div className="flex flex-col gap-4">
-            <Link to={`/shop/${currentUser.shopSlug}`} className="bg-[#131921] text-white py-4 rounded-lg font-black text-lg">Visit My Website Link</Link>
-            <button onClick={() => setRegSuccess(false)} className="bg-[#febd69] text-[#131921] py-4 rounded-lg font-black text-lg">Open Dashboard</button>
+          
+          <div className="bg-slate-50 p-6 rounded-xl border border-dashed mb-10">
+            <h3 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Your Social Sharing Kit</h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              <button onClick={() => shareShop('whatsapp')} className="bg-[#25D366] text-white px-6 py-3 rounded-lg font-black text-sm shadow-md hover:scale-105 transition">WhatsApp Share</button>
+              <button onClick={() => shareShop('facebook')} className="bg-[#1877F2] text-white px-6 py-3 rounded-lg font-black text-sm shadow-md hover:scale-105 transition">Facebook/Instagram</button>
+            </div>
+            <div className="mt-6 text-xs font-bold text-slate-400 break-all">
+              {window.location.origin}/#/shop/{currentUser.shopSlug}
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4">
+            <Link to={`/shop/${currentUser.shopSlug}`} className="flex-1 bg-[#131921] text-white py-4 rounded-lg font-black text-lg shadow-xl">Go to Live Site</Link>
+            <button onClick={() => setRegSuccess(false)} className="flex-1 bg-[#febd69] text-[#131921] py-4 rounded-lg font-black text-lg shadow-xl">Seller Dashboard</button>
           </div>
         </div>
       </div>
@@ -120,7 +152,10 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
     return (
       <div className="min-h-screen bg-[#f3f3f3] py-20 px-4 flex items-center justify-center font-sans">
         <div className="max-w-xl w-full p-10 bg-white rounded-xl shadow-xl">
-          <h1 className="text-3xl font-black text-slate-900 mb-8 text-center">Open Your Shop</h1>
+          <div className="mb-10 text-center">
+             <h1 className="text-3xl font-black text-slate-900 mb-2">Seller Registration</h1>
+             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Powered by Seller Protex</p>
+          </div>
           
           <div className="space-y-6">
             <div>
@@ -140,12 +175,12 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Shop Name</label>
               <input 
-                type="text" className="w-full rounded-lg border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
+                type="text" placeholder="e.g. Oops, Salman Sports..." className="w-full rounded-lg border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
                 value={regData.shopName} onChange={e => setRegData({...regData, shopName: e.target.value})}
               />
             </div>
-            <div className="p-6 bg-slate-900 rounded-lg text-white">
-              <h3 className="text-xs font-black uppercase text-[#febd69] mb-4">Payout Account Details</h3>
+            <div className="p-6 bg-slate-900 rounded-lg text-white shadow-inner">
+              <h3 className="text-xs font-black uppercase text-[#febd69] mb-4">Financial Verification</h3>
               <div className="flex flex-col gap-4">
                 <select 
                   className="w-full bg-slate-800 rounded-lg p-3 font-bold border border-slate-700"
@@ -156,14 +191,14 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
                   <option value="Bank Transfer">Bank Transfer</option>
                 </select>
                 <input 
-                  type="text" placeholder="Account No / IBAN" className="w-full bg-slate-800 rounded-lg p-3 font-mono outline-none border border-slate-700" 
+                  type="text" placeholder="Account Number / IBAN" className="w-full bg-slate-800 rounded-lg p-3 font-mono outline-none border border-slate-700" 
                   value={regData.accountNumber} onChange={e => setRegData({...regData, accountNumber: e.target.value})}
                 />
               </div>
             </div>
             <button 
               onClick={handleRegister}
-              className="w-full py-5 rounded-lg bg-[#25D366] text-white font-black text-xl shadow-lg hover:bg-[#128C7E] transition"
+              className="w-full py-5 rounded-lg bg-[#25D366] text-white font-black text-xl shadow-lg hover:bg-[#128C7E] transition transform active:scale-[0.98]"
             >
               Verify & Launch Shop
             </button>
@@ -175,37 +210,51 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-[#f3f3f3] font-sans">
-      <div className="w-full lg:w-64 bg-[#131921] text-white p-6 flex flex-col shadow-xl">
+      <div className="w-full lg:w-64 bg-[#131921] text-white p-6 flex flex-col shadow-xl z-10">
         <Link to="/" className="text-xl font-black mb-10 block">PK<span className="text-[#febd69]">-</span>MART</Link>
         <nav className="flex-1 space-y-2">
-          <button onClick={() => setActiveTab('products')} className={`w-full text-left p-4 rounded-lg font-bold ${activeTab === 'products' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Inventory</button>
-          <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-4 rounded-lg font-bold ${activeTab === 'orders' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Orders</button>
-          <button onClick={() => setActiveTab('profile')} className={`w-full text-left p-4 rounded-lg font-bold ${activeTab === 'profile' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Profile</button>
+          <button onClick={() => setActiveTab('products')} className={`w-full text-left p-4 rounded-lg font-bold transition ${activeTab === 'products' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400 hover:text-white'}`}>Inventory</button>
+          <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-4 rounded-lg font-bold transition ${activeTab === 'orders' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400 hover:text-white'}`}>Orders</button>
+          <button onClick={() => setActiveTab('profile')} className={`w-full text-left p-4 rounded-lg font-bold transition ${activeTab === 'profile' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400 hover:text-white'}`}>Identity</button>
         </nav>
-        <button onClick={() => setCurrentUser(null)} className="mt-auto py-3 bg-red-900/20 text-red-400 rounded-lg font-black text-xs">Logout</button>
+        <div className="mt-auto space-y-4 pt-6 border-t border-slate-800">
+           <button onClick={() => shareShop('whatsapp')} className="w-full py-2 bg-[#25D366]/10 text-[#25D366] rounded-md text-[10px] font-black border border-[#25D366]/30 uppercase">Share Shop</button>
+           <button onClick={() => setCurrentUser(null)} className="w-full py-3 bg-red-900/20 text-red-400 rounded-lg font-black text-xs border border-red-900/20">Sign Out</button>
+        </div>
       </div>
 
       <div className="flex-1 p-10 overflow-auto">
-        <header className="flex justify-between items-center mb-10">
-           <h1 className="text-3xl font-black text-slate-900">{currentUser?.shopName}</h1>
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16">
+           <div>
+             <h1 className="text-4xl font-black text-slate-900 tracking-tight">{currentUser?.shopName}</h1>
+             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-1">Vendor Portal • Seller Protex Active</p>
+           </div>
            {activeTab === 'products' && (
-             <button onClick={() => setEditingProduct({})} className="bg-[#febd69] px-6 py-3 rounded-lg font-black text-sm">+ New Item</button>
+             <button onClick={() => setEditingProduct({})} className="bg-[#febd69] text-[#131921] px-8 py-4 rounded-lg font-black text-sm shadow-xl hover:bg-[#f3a847] transition transform active:scale-95">
+               + Add New Product
+             </button>
            )}
         </header>
 
         {activeTab === 'products' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {sellerProducts.length === 0 ? (
-              <div className="col-span-full py-20 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">No items listed. Start selling!</div>
+              <div className="col-span-full py-32 text-center text-slate-300 font-bold border-2 border-dashed rounded-2xl bg-white">
+                <div className="text-5xl mb-4">📸</div>
+                <p>Upload your first product from your gallery.</p>
+              </div>
             ) : (
               sellerProducts.map(p => (
-                <div key={p.id} className="bg-white p-6 rounded-xl shadow-sm border">
-                  <div className="h-48 bg-slate-50 mb-4 flex items-center justify-center rounded-lg">
-                    <img src={p.imageUrl} className="max-h-full object-contain" alt={p.name} />
+                <div key={p.id} className="bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-xl transition group">
+                  <div className="h-56 bg-slate-50 p-4 flex items-center justify-center relative overflow-hidden">
+                    <img src={p.imageUrl} className="max-w-full max-h-full object-contain group-hover:scale-110 transition duration-700" alt={p.name} />
+                    <div className="absolute top-4 right-4 bg-emerald-100 text-emerald-600 text-[8px] font-black uppercase px-2 py-1 rounded shadow-sm">Verified</div>
                   </div>
-                  <h3 className="font-bold text-slate-800">{p.name}</h3>
-                  <div className="text-emerald-600 font-black mt-2">Rs. {p.price.toLocaleString()}</div>
-                  <button onClick={() => setEditingProduct(p)} className="w-full mt-4 py-2 border rounded-lg text-xs font-black">Edit</button>
+                  <div className="p-8">
+                    <h3 className="font-bold text-slate-800 text-lg mb-2 line-clamp-1">{p.name}</h3>
+                    <div className="text-emerald-600 font-black text-xl mb-6">Rs. {p.price.toLocaleString()}</div>
+                    <button onClick={() => setEditingProduct(p)} className="w-full py-3 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-500 hover:bg-slate-50 transition">Modify Listing</button>
+                  </div>
                 </div>
               ))
             )}
@@ -213,41 +262,143 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
         )}
 
         {activeTab === 'orders' && (
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border overflow-hidden animate-in fade-in">
             <table className="w-full text-left">
               <thead className="bg-slate-50 border-b">
-                <tr><th className="p-6 text-[10px] font-black uppercase text-slate-400">Order ID</th><th className="p-6 text-[10px] font-black uppercase text-slate-400">Customer</th><th className="p-6 text-right text-[10px] font-black uppercase text-slate-400">Net Share</th></tr>
+                <tr>
+                  <th className="p-8 text-[10px] font-black uppercase text-slate-400 tracking-widest">Order Reference</th>
+                  <th className="p-8 text-[10px] font-black uppercase text-slate-400 tracking-widest">Customer Info</th>
+                  <th className="p-8 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">Net Value</th>
+                </tr>
               </thead>
               <tbody className="divide-y">
-                {sellerOrders.map(o => (
-                  <tr key={o.id}>
-                    <td className="p-6 font-black">#{o.id}</td>
-                    <td className="p-6">
-                      <p className="font-bold text-slate-800 text-sm">{o.customerName}</p>
-                      <p className="text-[10px] text-slate-400">{o.customerPhone}</p>
-                    </td>
-                    <td className="p-6 text-right font-black text-emerald-600">Rs. {o.totalAmount.toLocaleString()}</td>
-                  </tr>
-                ))}
+                {sellerOrders.length === 0 ? (
+                  <tr><td colSpan={3} className="p-20 text-center text-slate-300 font-bold italic">No orders received yet. Share your link to get sales!</td></tr>
+                ) : (
+                  sellerOrders.map(o => (
+                    <tr key={o.id} className="hover:bg-slate-50/50 transition">
+                      <td className="p-8 font-black text-slate-900 tracking-tighter">#{o.id}</td>
+                      <td className="p-8">
+                        <p className="font-bold text-slate-800 text-sm">{o.customerName}</p>
+                        <p className="text-[10px] text-slate-400 font-bold">{o.customerPhone}</p>
+                      </td>
+                      <td className="p-8 text-right font-black text-emerald-600">Rs. {o.totalAmount.toLocaleString()}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {activeTab === 'profile' && (
+          <div className="max-w-2xl bg-white p-10 rounded-2xl shadow-sm border animate-in fade-in">
+             <h3 className="text-xl font-black mb-8 border-b pb-4 text-slate-900">Verified Identity Profile</h3>
+             <div className="space-y-8">
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Owner</label>
+                    <p className="font-black text-slate-800">{currentUser?.fullName}</p>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">WhatsApp</label>
+                    <p className="font-black text-slate-800">{currentUser?.phoneNumber}</p>
+                  </div>
+                </div>
+                <div className="p-6 bg-slate-900 rounded-xl text-white shadow-xl">
+                  <label className="text-[10px] font-black text-slate-500 uppercase block mb-3">Settlement Account (Seller Share: 5%)</label>
+                  <p className="font-mono text-lg font-bold text-[#febd69] tracking-widest">{currentUser?.accountNumber}</p>
+                  <p className="text-[9px] font-black text-slate-500 mt-3 uppercase">PROVIDER: {currentUser?.payoutMethod}</p>
+                </div>
+                <div className="pt-6">
+                   <label className="text-[10px] font-black text-slate-400 uppercase block mb-4">Storefront Deep Link</label>
+                   <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-lg border border-dashed">
+                      <span className="text-xs font-bold text-slate-500 flex-1 truncate">{window.location.origin}/#/shop/{currentUser?.shopSlug}</span>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/#/shop/${currentUser?.shopSlug}`);
+                          alert("Link copied!");
+                        }}
+                        className="text-[10px] font-black text-blue-600 uppercase"
+                      >
+                        Copy
+                      </button>
+                   </div>
+                </div>
+             </div>
           </div>
         )}
       </div>
 
       {editingProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-           <div className="bg-white w-full max-w-lg rounded-2xl p-10 animate-in zoom-in">
-              <h2 className="text-2xl font-black mb-8">Edit Product</h2>
-              <div className="space-y-4">
-                <input type="text" placeholder="Product Name" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.name || ''} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
-                <input type="number" placeholder="Price (Rs.)" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})} />
-                <textarea placeholder="Description" className="w-full p-4 rounded-lg border font-bold h-24" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
-                <input type="text" placeholder="Image URL" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.imageUrl || ''} onChange={e => setEditingProduct({...editingProduct, imageUrl: e.target.value})} />
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-6">
+           <div className="bg-white w-full max-w-xl rounded-3xl p-10 max-h-[90vh] overflow-auto shadow-2xl animate-in zoom-in duration-300">
+              <header className="flex justify-between items-center mb-10 border-b pb-6">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900">Product Manager</h2>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Seller Protex Upload System</p>
+                </div>
+                <button onClick={() => setEditingProduct(null)} className="text-slate-300 hover:text-red-500 text-3xl font-black transition">×</button>
+              </header>
+
+              <div className="space-y-8">
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black text-slate-400 uppercase block tracking-widest">Product Gallery</label>
+                   <div className="flex flex-col gap-6">
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full h-64 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition overflow-hidden group"
+                      >
+                        {editingProduct.imageUrl ? (
+                          <img src={editingProduct.imageUrl} className="w-full h-full object-contain" alt="Preview" />
+                        ) : (
+                          <>
+                            <div className="text-5xl mb-4 group-hover:scale-110 transition">🖼️</div>
+                            <p className="text-xs font-black text-slate-400">Click to Upload from Gallery</p>
+                          </>
+                        )}
+                      </div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={fileInputRef} 
+                        onChange={handleGalleryUpload} 
+                      />
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Title</label>
+                      <input type="text" className="w-full p-4 rounded-xl border-2 border-slate-100 font-bold focus:border-[#febd69] outline-none" value={editingProduct.name || ''} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Price (PKR)</label>
+                      <input type="number" className="w-full p-4 rounded-xl border-2 border-slate-100 font-bold focus:border-[#febd69] outline-none" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})} />
+                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Category</label>
+                  <select className="w-full p-4 rounded-xl border-2 border-slate-100 font-bold bg-white" value={editingProduct.category || ''} onChange={e => setEditingProduct({...editingProduct, category: e.target.value})}>
+                    <option value="General">General</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Home">Home</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Description</label>
+                  <textarea className="w-full p-4 rounded-xl border-2 border-slate-100 font-bold h-28 outline-none" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
+                </div>
               </div>
-              <div className="flex gap-4 mt-10">
-                <button onClick={() => setEditingProduct(null)} className="flex-1 py-4 bg-slate-100 rounded-lg font-black">Cancel</button>
-                <button onClick={handleSaveProduct} className="flex-1 py-4 bg-[#febd69] rounded-lg font-black">Save Item</button>
+
+              <div className="flex gap-4 mt-12 pt-8 border-t">
+                <button onClick={() => setEditingProduct(null)} className="flex-1 py-4 bg-slate-50 rounded-xl font-black text-slate-400 hover:bg-slate-100 transition">Discard</button>
+                <button onClick={handleSaveProduct} className="flex-1 py-4 bg-[#febd69] text-[#131921] rounded-xl font-black shadow-xl hover:bg-[#f3a847] transition">Save Listing</button>
               </div>
            </div>
         </div>
