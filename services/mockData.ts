@@ -11,7 +11,8 @@ export const mockSellers: Seller[] = [
     accountNumber: '03001234567',
     shopName: 'Ahmed Electronics',
     shopSlug: 'ahmed-electronics',
-    joinedAt: '2024-01-01'
+    joinedAt: '2024-01-01',
+    status: 'active'
   },
   {
     id: 's2',
@@ -22,7 +23,8 @@ export const mockSellers: Seller[] = [
     accountNumber: '03217654321',
     shopName: 'Zahra Fabrics',
     shopSlug: 'zahra-fabrics',
-    joinedAt: '2024-02-15'
+    joinedAt: '2024-02-15',
+    status: 'active'
   },
   {
     id: 's3',
@@ -34,7 +36,8 @@ export const mockSellers: Seller[] = [
     bankName: 'Alfalah Bank',
     shopName: 'Salman Sports',
     shopSlug: 'salman-sports',
-    joinedAt: '2024-03-01'
+    joinedAt: '2024-03-01',
+    status: 'active'
   }
 ];
 
@@ -42,6 +45,7 @@ export const mockProducts: Product[] = [
   {
     id: 'p1',
     sellerId: 's1',
+    shopId: 's1',
     name: 'Wireless Pro Buds',
     description: 'Noise cancelling Bluetooth 5.3 earbuds with 40h playtime.',
     price: 3500,
@@ -55,6 +59,7 @@ export const mockProducts: Product[] = [
   {
     id: 'p2',
     sellerId: 's2',
+    shopId: 's2',
     name: 'Embroidered Lawn Dress',
     description: '3-Piece premium unstitched collection for Summer 2024.',
     price: 5200,
@@ -68,6 +73,7 @@ export const mockProducts: Product[] = [
   {
     id: 'p3',
     sellerId: 's3',
+    shopId: 's3',
     name: 'Cricket Willow Bat (G1)',
     description: 'Grade 1 English Willow professional cricket bat.',
     price: 15500,
@@ -77,19 +83,6 @@ export const mockProducts: Product[] = [
     imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400',
     published: true,
     createdAt: '2024-03-08'
-  },
-  {
-    id: 'p4',
-    sellerId: 's1',
-    name: 'Smart Watch Series 9',
-    description: 'Amoled display, SPO2 tracking, and 7-day battery life.',
-    price: 7800,
-    category: 'Electronics',
-    rating: 4.2,
-    reviewsCount: 230,
-    imageUrl: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=400',
-    published: true,
-    createdAt: '2024-03-10'
   }
 ];
 

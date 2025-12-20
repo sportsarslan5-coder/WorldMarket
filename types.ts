@@ -25,11 +25,13 @@ export interface Seller {
   shopName: string;
   shopSlug: string;
   joinedAt: string;
+  status: 'active' | 'inactive'; // Added for activation logic
 }
 
 export interface Product {
   id: string;
   sellerId: string;
+  shopId: string; // Added for robust linking
   name: string;
   description: string;
   price: number;
