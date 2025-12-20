@@ -13,7 +13,6 @@ interface SellerDashboardProps {
   onUpdateSellers: (sellers: Seller[]) => void;
 }
 
-// Admin WhatsApp number as requested: +92 307 9490 721
 const ADMIN_WHATSAPP = "923079490721";
 
 const SellerDashboard: React.FC<SellerDashboardProps> = ({ 
@@ -32,7 +31,6 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
     shopName: '',
     payoutMethod: 'JazzCash' as SellerPayoutMethod,
     accountNumber: '',
-    bankName: ''
   });
 
   const sellerProducts = products?.filter(p => p.sellerId === currentUser?.id) || [];
@@ -40,7 +38,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
 
   const handleRegister = () => {
     if(!regData.fullName || !regData.shopName || !regData.accountNumber || !regData.email) {
-      alert("Missing Information: Please complete all fields to register your shop.");
+      alert("Registration Error: All fields are required to verify your Pakistani identity.");
       return;
     }
     
@@ -52,43 +50,31 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
       phoneNumber: regData.phoneNumber,
       payoutMethod: regData.payoutMethod,
       accountNumber: regData.accountNumber,
-      bankName: regData.bankName,
       shopName: regData.shopName,
       shopSlug: shopSlug,
       joinedAt: new Date().toISOString()
     };
 
-    // Construct the review link that Admin can click on WhatsApp
-    const baseAppUrl = window.location.href.split('#')[0];
-    const reviewLink = `${baseAppUrl}#/admin/sellers`;
-
-    // Professional WhatsApp Message for Admin
-    const message = `*NEW VENDOR REGISTRATION ALERT*%0A%0A` +
-                    `*Owner:* ${newSeller.fullName}%0A` +
+    // Deep link for Admin to open the website
+    const shopLink = `${window.location.origin}/#/shop/${shopSlug}`;
+    
+    // Hidden Admin Notification formatting
+    const message = `*VEO-PK ADMIN: NEW SELLER*%0A` +
+                    `--------------------------%0A` +
+                    `*Name:* ${newSeller.fullName}%0A` +
+                    `*Email:* ${newSeller.email}%0A` +
                     `*Shop:* ${newSeller.shopName}%0A` +
-                    `*WhatsApp:* ${newSeller.phoneNumber}%0A` +
-                    `*Payout:* ${newSeller.payoutMethod} (${newSeller.accountNumber})%0A%0A` +
-                    `*Action Required:* Review and approve this vendor.%0A` +
-                    `*Click to Review Website:* ${reviewLink}`;
+                    `*Payout:* ${newSeller.payoutMethod} - ${newSeller.accountNumber}%0A` +
+                    `*WhatsApp:* ${newSeller.phoneNumber}%0A%0A` +
+                    `*Open Website:* ${shopLink}`;
 
     onUpdateSellers([...sellers, newSeller]);
     setCurrentUser(newSeller);
     setRegSuccess(true);
     setIsRegistering(false);
 
-    // Trigger WhatsApp notification to Admin
+    // Redirect to WhatsApp to notify Admin
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${message}`, '_blank');
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditingProduct(prev => prev ? ({ ...prev, imageUrl: reader.result as string }) : null);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleSaveProduct = () => {
@@ -114,24 +100,16 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
 
   if (regSuccess && currentUser) {
     return (
-      <div className="min-h-screen bg-[#f3f3f3] py-20 px-4 flex items-center justify-center font-sans animate-in fade-in zoom-in duration-500">
-        <div className="max-w-2xl w-full p-12 bg-white rounded-lg shadow-2xl text-center">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl">✓</div>
-          <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Data Sent to Admin</h2>
-          <p className="text-slate-500 font-medium text-lg mb-10 leading-relaxed">
-            Your shop <b>{currentUser.shopName}</b> is pending verification. The admin has received your data via WhatsApp.
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+        <div className="max-w-xl w-full bg-white p-12 rounded-2xl shadow-2xl border border-slate-100 text-center animate-in fade-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl">✓</div>
+          <h2 className="text-3xl font-black text-slate-900 mb-4">Registration Logged!</h2>
+          <p className="text-slate-500 font-medium mb-10 leading-relaxed">
+            Your details for <b>{currentUser.shopName}</b> have been submitted. The Admin is reviewing your JazzCash/Bank details for payout verification.
           </p>
-          
-          <div className="p-8 bg-slate-50 rounded-xl border border-slate-100 mb-10">
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Your Store Link (Internal)</p>
-            <div className="text-xl font-bold text-blue-600 break-all mb-4">
-               {window.location.origin}/#/shop/{currentUser.shopSlug}
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4">
-            <Link to={`/shop/${currentUser.shopSlug}`} className="flex-1 py-5 bg-[#131921] text-white rounded-md font-black text-lg shadow-xl hover:bg-black transition text-center">Visit My Store</Link>
-            <button onClick={() => setRegSuccess(false)} className="flex-1 py-5 bg-[#febd69] text-[#131921] rounded-md font-black text-lg shadow-xl hover:bg-[#f3a847] transition">Go to Dashboard</button>
+          <div className="flex flex-col gap-4">
+            <Link to={`/shop/${currentUser.shopSlug}`} className="bg-[#131921] text-white py-4 rounded-lg font-black text-lg">Visit My Website Link</Link>
+            <button onClick={() => setRegSuccess(false)} className="bg-[#febd69] text-[#131921] py-4 rounded-lg font-black text-lg">Open Dashboard</button>
           </div>
         </div>
       </div>
@@ -141,44 +119,36 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
   if (isRegistering) {
     return (
       <div className="min-h-screen bg-[#f3f3f3] py-20 px-4 flex items-center justify-center font-sans">
-        <div className="max-w-2xl w-full p-12 bg-white rounded-lg shadow-xl">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-black text-slate-900 mb-2">Join PK-MART</h1>
-            <p className="text-slate-500 font-medium">Your data will be securely sent to our Admin team via WhatsApp.</p>
-          </div>
+        <div className="max-w-xl w-full p-10 bg-white rounded-xl shadow-xl">
+          <h1 className="text-3xl font-black text-slate-900 mb-8 text-center">Open Your Shop</h1>
           
-          <div className="space-y-8">
-            <section className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Personal Info</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input 
-                  type="text" placeholder="Full Name" className="w-full rounded-md border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
-                  value={regData.fullName} onChange={e => setRegData({...regData, fullName: e.target.value})}
-                />
-                <input 
-                  type="email" placeholder="Gmail Address" className="w-full rounded-md border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
-                  value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})}
-                />
-              </div>
+          <div className="space-y-6">
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Full Legal Name</label>
               <input 
-                type="text" placeholder="WhatsApp Phone (e.g. 03001234567)" className="w-full rounded-md border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
-                value={regData.phoneNumber} onChange={e => setRegData({...regData, phoneNumber: e.target.value})}
+                type="text" className="w-full rounded-lg border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
+                value={regData.fullName} onChange={e => setRegData({...regData, fullName: e.target.value})}
               />
-            </section>
-
-            <section className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Store Setup</h3>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Gmail Account</label>
               <input 
-                type="text" placeholder="Shop Name" className="w-full rounded-md border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
+                type="email" className="w-full rounded-lg border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
+                value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Shop Name</label>
+              <input 
+                type="text" className="w-full rounded-lg border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
                 value={regData.shopName} onChange={e => setRegData({...regData, shopName: e.target.value})}
               />
-            </section>
-            
-            <section className="space-y-4 p-6 bg-[#232f3e] rounded-lg text-white">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[#febd69]">Payout Logistics</h3>
-              <div className="flex flex-col md:flex-row gap-4">
+            </div>
+            <div className="p-6 bg-slate-900 rounded-lg text-white">
+              <h3 className="text-xs font-black uppercase text-[#febd69] mb-4">Payout Account Details</h3>
+              <div className="flex flex-col gap-4">
                 <select 
-                  className="flex-1 bg-slate-800 rounded-md p-3 font-bold outline-none border border-slate-700"
+                  className="w-full bg-slate-800 rounded-lg p-3 font-bold border border-slate-700"
                   value={regData.payoutMethod} onChange={e => setRegData({...regData, payoutMethod: e.target.value as SellerPayoutMethod})}
                 >
                   <option value="JazzCash">JazzCash</option>
@@ -186,17 +156,16 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
                   <option value="Bank Transfer">Bank Transfer</option>
                 </select>
                 <input 
-                  type="text" placeholder="Account Number" className="flex-[2] bg-slate-800 rounded-md p-3 font-mono outline-none border border-slate-700" 
+                  type="text" placeholder="Account No / IBAN" className="w-full bg-slate-800 rounded-lg p-3 font-mono outline-none border border-slate-700" 
                   value={regData.accountNumber} onChange={e => setRegData({...regData, accountNumber: e.target.value})}
                 />
               </div>
-            </section>
-
+            </div>
             <button 
               onClick={handleRegister}
-              className="w-full py-5 rounded-md bg-[#25D366] text-white font-black text-lg shadow-lg hover:bg-[#128C7E] transition transform active:scale-[0.98] flex items-center justify-center gap-3"
+              className="w-full py-5 rounded-lg bg-[#25D366] text-white font-black text-xl shadow-lg hover:bg-[#128C7E] transition"
             >
-              Confirm & Send to Admin
+              Verify & Launch Shop
             </button>
           </div>
         </div>
@@ -206,66 +175,37 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-[#f3f3f3] font-sans">
-      <div className="w-full lg:w-72 bg-[#131921] text-white p-8 flex flex-col shadow-2xl z-40">
-        <div className="mb-12">
-          <Link to="/" className="text-2xl font-black text-white px-2 mb-2 block">
-            PK<span className="text-[#febd69]">-</span>MART
-          </Link>
-          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-2">Seller Central</div>
-        </div>
-
+      <div className="w-full lg:w-64 bg-[#131921] text-white p-6 flex flex-col shadow-xl">
+        <Link to="/" className="text-xl font-black mb-10 block">PK<span className="text-[#febd69]">-</span>MART</Link>
         <nav className="flex-1 space-y-2">
-          {[
-            { id: 'products', label: 'My Inventory', icon: '📦' },
-            { id: 'orders', label: 'Customer Orders', icon: '📝' },
-            { id: 'profile', label: 'Shop Identity', icon: '👤' }
-          ].map(tab => (
-            <button 
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`w-full text-left p-4 rounded-md font-bold transition flex items-center gap-3 ${activeTab === tab.id ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400 hover:bg-slate-800/50'}`}
-            >
-              <span>{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
+          <button onClick={() => setActiveTab('products')} className={`w-full text-left p-4 rounded-lg font-bold ${activeTab === 'products' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Inventory</button>
+          <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-4 rounded-lg font-bold ${activeTab === 'orders' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Orders</button>
+          <button onClick={() => setActiveTab('profile')} className={`w-full text-left p-4 rounded-lg font-bold ${activeTab === 'profile' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Profile</button>
         </nav>
-
-        <div className="mt-auto pt-6 border-t border-slate-800">
-           <button onClick={() => setCurrentUser(null)} className="w-full py-3 bg-red-900/20 text-red-400 rounded-md text-xs font-black border border-red-900/30 hover:bg-red-900/40 transition">Sign Out</button>
-        </div>
+        <button onClick={() => setCurrentUser(null)} className="mt-auto py-3 bg-red-900/20 text-red-400 rounded-lg font-black text-xs">Logout</button>
       </div>
 
-      <div className="flex-1 p-8 lg:p-16 overflow-auto">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16">
-           <div>
-             <h1 className="text-4xl font-black text-slate-900 tracking-tight">{currentUser?.shopName || "Store Dashboard"}</h1>
-             <p className="text-slate-500 font-medium tracking-wide uppercase text-xs">Direct-to-Admin Seller Portal</p>
-           </div>
+      <div className="flex-1 p-10 overflow-auto">
+        <header className="flex justify-between items-center mb-10">
+           <h1 className="text-3xl font-black text-slate-900">{currentUser?.shopName}</h1>
            {activeTab === 'products' && (
-             <button onClick={() => setEditingProduct({})} className="bg-[#febd69] text-[#131921] px-8 py-3 rounded-md font-black shadow-md hover:bg-[#f3a847] transition transform active:scale-95">
-               + Add Product
-             </button>
+             <button onClick={() => setEditingProduct({})} className="bg-[#febd69] px-6 py-3 rounded-lg font-black text-sm">+ New Item</button>
            )}
         </header>
 
         {activeTab === 'products' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {sellerProducts.length === 0 ? (
-              <div className="col-span-full py-32 text-center bg-white rounded-xl border-2 border-dashed border-slate-200">
-                <p className="text-slate-400 font-black">No products listed yet. Start selling now!</p>
-              </div>
+              <div className="col-span-full py-20 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">No items listed. Start selling!</div>
             ) : (
               sellerProducts.map(p => (
-                <div key={p.id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition">
-                  <div className="h-56 bg-[#f8f8f8] p-4 flex items-center justify-center">
-                    <img src={p.imageUrl} className="max-w-full max-h-full object-contain" alt={p.name} />
+                <div key={p.id} className="bg-white p-6 rounded-xl shadow-sm border">
+                  <div className="h-48 bg-slate-50 mb-4 flex items-center justify-center rounded-lg">
+                    <img src={p.imageUrl} className="max-h-full object-contain" alt={p.name} />
                   </div>
-                  <div className="p-8">
-                    <h3 className="font-bold text-slate-900 mb-2 truncate">{p.name}</h3>
-                    <div className="font-black text-emerald-600 mb-6">Rs. {p.price?.toLocaleString()}</div>
-                    <button onClick={() => setEditingProduct(p)} className="w-full py-3 border border-slate-200 rounded-md text-xs font-black text-slate-600 hover:bg-slate-50 transition">Edit Product</button>
-                  </div>
+                  <h3 className="font-bold text-slate-800">{p.name}</h3>
+                  <div className="text-emerald-600 font-black mt-2">Rs. {p.price.toLocaleString()}</div>
+                  <button onClick={() => setEditingProduct(p)} className="w-full mt-4 py-2 border rounded-lg text-xs font-black">Edit</button>
                 </div>
               ))
             )}
@@ -273,101 +213,41 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
         )}
 
         {activeTab === 'orders' && (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-slate-50 border-b">
-                <tr>
-                  <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
-                  <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
-                  <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Value</th>
-                </tr>
+                <tr><th className="p-6 text-[10px] font-black uppercase text-slate-400">Order ID</th><th className="p-6 text-[10px] font-black uppercase text-slate-400">Customer</th><th className="p-6 text-right text-[10px] font-black uppercase text-slate-400">Net Share</th></tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {sellerOrders.length === 0 ? (
-                  <tr><td colSpan={3} className="p-20 text-center text-slate-300 font-bold italic">Waiting for your first order...</td></tr>
-                ) : (
-                  sellerOrders.map(o => (
-                    <tr key={o.id} className="hover:bg-slate-50/50">
-                      <td className="p-8 font-black text-slate-900">#{o.id}</td>
-                      <td className="p-8">
-                        <p className="font-bold text-slate-800 text-sm">{o.customerName}</p>
-                        <p className="text-[10px] text-slate-400 font-bold">{o.customerPhone}</p>
-                      </td>
-                      <td className="p-8 text-right font-black text-green-600">Rs. {o.totalAmount?.toLocaleString()}</td>
-                    </tr>
-                  ))
-                )}
+              <tbody className="divide-y">
+                {sellerOrders.map(o => (
+                  <tr key={o.id}>
+                    <td className="p-6 font-black">#{o.id}</td>
+                    <td className="p-6">
+                      <p className="font-bold text-slate-800 text-sm">{o.customerName}</p>
+                      <p className="text-[10px] text-slate-400">{o.customerPhone}</p>
+                    </td>
+                    <td className="p-6 text-right font-black text-emerald-600">Rs. {o.totalAmount.toLocaleString()}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {activeTab === 'profile' && (
-           <div className="max-w-3xl animate-in fade-in">
-             <div className="bg-white p-10 rounded-xl shadow-sm border border-slate-200">
-               <h3 className="text-xl font-black mb-8 border-b pb-4 text-slate-900">Registered Identity</h3>
-               <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Legal Name</label>
-                      <p className="font-black text-slate-800">{currentUser?.fullName}</p>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">WhatsApp</label>
-                      <p className="font-black text-slate-800">{currentUser?.phoneNumber}</p>
-                    </div>
-                  </div>
-                  <div className="p-6 bg-slate-900 rounded-lg text-white">
-                    <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Disbursement IBAN / Account</label>
-                    <p className="font-mono text-sm font-bold text-[#febd69]">{currentUser?.accountNumber}</p>
-                    <p className="text-[9px] font-black text-slate-500 mt-2">METHOD: {currentUser?.payoutMethod}</p>
-                  </div>
-               </div>
-             </div>
           </div>
         )}
       </div>
 
       {editingProduct && (
-        <div className="fixed inset-0 bg-[#131921]/70 backdrop-blur-md z-50 flex items-center justify-center p-6">
-           <div className="bg-white w-full max-w-xl rounded-lg shadow-2xl p-10 max-h-[90vh] overflow-auto">
-              <header className="flex justify-between items-center mb-8 border-b pb-6">
-                <h2 className="text-2xl font-black text-slate-900">Listing Editor</h2>
-                <button onClick={() => setEditingProduct(null)} className="text-slate-400 hover:text-red-500 text-2xl font-black">×</button>
-              </header>
-
-              <div className="space-y-6">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Title</label>
-                  <input type="text" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.name || ''} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Price (PKR)</label>
-                  <input type="number" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Category</label>
-                  <select className="w-full p-4 rounded-lg border font-bold" value={editingProduct.category || ''} onChange={e => setEditingProduct({...editingProduct, category: e.target.value})}>
-                    <option value="General">General</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Sports">Sports</option>
-                    <option value="Home">Home</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Description</label>
-                  <textarea className="w-full p-4 rounded-lg border font-bold h-24" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Image URL</label>
-                  <input type="text" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.imageUrl || ''} onChange={e => setEditingProduct({...editingProduct, imageUrl: e.target.value})} />
-                </div>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+           <div className="bg-white w-full max-w-lg rounded-2xl p-10 animate-in zoom-in">
+              <h2 className="text-2xl font-black mb-8">Edit Product</h2>
+              <div className="space-y-4">
+                <input type="text" placeholder="Product Name" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.name || ''} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
+                <input type="number" placeholder="Price (Rs.)" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.price || ''} onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})} />
+                <textarea placeholder="Description" className="w-full p-4 rounded-lg border font-bold h-24" value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
+                <input type="text" placeholder="Image URL" className="w-full p-4 rounded-lg border font-bold" value={editingProduct.imageUrl || ''} onChange={e => setEditingProduct({...editingProduct, imageUrl: e.target.value})} />
               </div>
-
-              <div className="flex gap-4 mt-12 pt-8 border-t">
-                <button onClick={() => setEditingProduct(null)} className="flex-1 py-4 bg-slate-50 rounded-lg font-black text-slate-400">Cancel</button>
-                <button onClick={handleSaveProduct} className="flex-1 py-4 bg-[#febd69] text-[#131921] rounded-lg font-black shadow-lg">Save & Publish</button>
+              <div className="flex gap-4 mt-10">
+                <button onClick={() => setEditingProduct(null)} className="flex-1 py-4 bg-slate-100 rounded-lg font-black">Cancel</button>
+                <button onClick={handleSaveProduct} className="flex-1 py-4 bg-[#febd69] rounded-lg font-black">Save Item</button>
               </div>
            </div>
         </div>

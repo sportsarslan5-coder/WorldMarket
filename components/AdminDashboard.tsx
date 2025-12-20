@@ -1,7 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
+// Added missing Link import from react-router-dom
+import { Link } from 'react-router-dom';
 import { Seller, Order, OrderStatus, AdminNotification } from '../types.ts';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AdminDashboardProps {
   sellers: Seller[];
@@ -15,74 +17,60 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   sellers = [], 
   orders = [], 
   notifications = [], 
-  onUpdateOrders
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'sellers' | 'payouts' | 'notifications'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'sellers'>('overview');
 
   const stats = useMemo(() => {
-    const totalSales = orders?.reduce((sum, o) => sum + (o.totalAmount || 0), 0) || 0;
-    const totalCommission = orders?.reduce((sum, o) => sum + (o.commissionAmount || 0), 0) || 0;
-    const pendingOrders = orders?.filter(o => o.status === OrderStatus.PENDING).length || 0;
-    return { totalSales, totalCommission, pendingOrders };
+    const totalGTV = orders?.reduce((sum, o) => sum + (o.totalAmount || 0), 0) || 0;
+    // As requested: 95% for Admin, 5% for Seller
+    const adminShare = totalGTV * 0.95;
+    const sellerShare = totalGTV * 0.05;
+    return { totalGTV, adminShare, sellerShare };
   }, [orders]);
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    const updated = orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
-    onUpdateOrders(updated);
-  };
-
-  const chartData = useMemo(() => [
-    { name: 'Collections', value: stats.totalSales },
-    { name: 'Vendor Owed', value: stats.totalCommission },
-    { name: 'Platform Net', value: Math.max(0, stats.totalSales - stats.totalCommission) },
-  ], [stats]);
-
-  const formatCurrency = (val: number) => `Rs. ${(val || 0).toLocaleString()}`;
+  const chartData = [
+    { name: 'Admin (95%)', value: stats.adminShare },
+    { name: 'Seller (5%)', value: stats.sellerShare },
+  ];
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-[#f3f3f3] overflow-hidden font-sans">
-      <div className="w-full lg:w-72 bg-[#131921] text-white flex-shrink-0 shadow-2xl flex flex-col">
-        <div className="p-8 text-2xl font-black border-b border-slate-800">PK-ADMIN</div>
-        <nav className="p-4 space-y-2 flex-1">
-          {[
-            { id: 'overview', label: 'Dashboard', icon: '📊' },
-            { id: 'orders', label: `Orders (${stats.pendingOrders})`, icon: '📦' },
-            { id: 'sellers', label: 'Vendor PII', icon: '🛡️' },
-            { id: 'payouts', label: 'Disbursements', icon: '💰' },
-            { id: 'notifications', label: 'AI Alert Log', icon: '🔔' }
-          ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`w-full text-left p-4 rounded-md flex items-center gap-3 font-bold ${activeTab === tab.id ? 'bg-emerald-600' : 'text-slate-400'}`}>
-              <span>{tab.icon}</span> {tab.label}
-            </button>
-          ))}
+    <div className="flex h-screen bg-[#f3f3f3] font-sans">
+      <div className="w-64 bg-[#131921] text-white p-8 flex flex-col">
+        <h2 className="text-2xl font-black mb-10">PK-ADMIN</h2>
+        <nav className="space-y-4 flex-1">
+          <button onClick={() => setActiveTab('overview')} className={`w-full text-left font-bold ${activeTab === 'overview' ? 'text-[#febd69]' : 'text-slate-400'}`}>Dashboard</button>
+          <button onClick={() => setActiveTab('orders')} className={`w-full text-left font-bold ${activeTab === 'orders' ? 'text-[#febd69]' : 'text-slate-400'}`}>Recent Orders</button>
+          <button onClick={() => setActiveTab('sellers')} className={`w-full text-left font-bold ${activeTab === 'sellers' ? 'text-[#febd69]' : 'text-slate-400'}`}>Vendor PII</button>
         </nav>
       </div>
 
-      <div className="flex-1 overflow-auto p-10">
+      <div className="flex-1 p-10 overflow-auto">
         {activeTab === 'overview' && (
           <div className="space-y-10">
-            <h2 className="text-4xl font-black text-slate-800">Platform Command</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[
-                { label: 'GTV', value: formatCurrency(stats.totalSales) },
-                { label: 'Owed Share', value: formatCurrency(stats.totalCommission) },
-                { label: 'Vendors', value: sellers.length },
-                { label: 'Pending', value: stats.pendingOrders }
-              ].map(stat => (
-                <div key={stat.label} className="bg-white p-8 rounded-xl shadow-sm border">
-                  <div className="text-[10px] font-black uppercase text-slate-400 mb-2">{stat.label}</div>
-                  <div className="text-3xl font-black">{stat.value}</div>
-                </div>
-              ))}
+            <h1 className="text-4xl font-black text-slate-900">Platform Finance</h1>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="bg-white p-8 rounded-2xl border shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase">Total Collections</p>
+                <p className="text-3xl font-black">Rs. {stats.totalGTV.toLocaleString()}</p>
+              </div>
+              <div className="bg-[#232f3e] p-8 rounded-2xl border shadow-sm text-white">
+                <p className="text-[10px] font-black text-[#febd69] uppercase">Admin Net (95%)</p>
+                <p className="text-3xl font-black text-emerald-400">Rs. {stats.adminShare.toLocaleString()}</p>
+              </div>
+              <div className="bg-white p-8 rounded-2xl border shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase">Vendor Payable (5%)</p>
+                <p className="text-3xl font-black text-orange-500">Rs. {stats.sellerShare.toLocaleString()}</p>
+              </div>
             </div>
-            <div className="bg-white p-10 rounded-2xl border shadow-sm h-[400px]">
+
+            <div className="bg-white p-10 rounded-2xl border h-96">
                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="value" fill="#febd69" radius={[10, 10, 0, 0]} />
                   </BarChart>
                </ResponsiveContainer>
             </div>
@@ -90,15 +78,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         )}
 
         {activeTab === 'sellers' && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {sellers.map((seller) => (
-              <div key={seller.id} className="bg-white p-10 rounded-2xl border shadow-sm">
-                <h4 className="text-2xl font-black mb-6">{seller.shopName}</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm font-bold">
-                  <div><span className="text-slate-400 block uppercase text-[10px]">Owner</span>{seller.fullName}</div>
-                  <div><span className="text-slate-400 block uppercase text-[10px]">WhatsApp</span>{seller.phoneNumber}</div>
-                  <div className="col-span-2 p-4 bg-emerald-50 rounded-lg text-emerald-800 font-mono">IBAN: {seller.accountNumber}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {sellers.map(s => (
+              <div key={s.id} className="bg-white p-8 rounded-2xl border shadow-sm">
+                <h3 className="text-xl font-black mb-4">{s.shopName}</h3>
+                <div className="space-y-2 text-sm">
+                  <p><b>Owner:</b> {s.fullName}</p>
+                  <p><b>Account:</b> {s.accountNumber} ({s.payoutMethod})</p>
+                  <p><b>Phone:</b> {s.phoneNumber}</p>
                 </div>
+                {/* Link is now correctly defined after import */}
+                <Link to={`/shop/${s.shopSlug}`} target="_blank" className="mt-6 block text-center py-2 bg-slate-100 rounded-lg text-xs font-black">View Storefront</Link>
               </div>
             ))}
           </div>
@@ -106,19 +96,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {activeTab === 'orders' && (
           <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-            <table className="min-w-full text-left">
+            <table className="w-full text-left">
               <thead className="bg-slate-50 border-b">
-                <tr><th className="p-8">ID</th><th className="p-8">Details</th><th className="p-8 text-right">Value</th></tr>
+                <tr><th className="p-6">ID</th><th className="p-6">Store</th><th className="p-6">Customer</th><th className="p-6 text-right">Value</th></tr>
               </thead>
               <tbody className="divide-y">
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="p-8 font-black">#{order.id}</td>
-                    <td className="p-8">
-                      <div className="font-black text-sm">{order.customerName} @ {order.sellerName}</div>
-                      <div className="text-xs text-slate-400">{order.customerPhone}</div>
-                    </td>
-                    <td className="p-8 text-right font-black text-emerald-600">{formatCurrency(order.totalAmount)}</td>
+                {orders.map(o => (
+                  <tr key={o.id}>
+                    <td className="p-6 font-black">#{o.id}</td>
+                    <td className="p-6 font-bold">{o.sellerName}</td>
+                    <td className="p-6 text-sm">{o.customerName}<br/><span className="text-[10px] text-slate-400">{o.customerPhone}</span></td>
+                    <td className="p-6 text-right font-black text-emerald-600">Rs. {o.totalAmount.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
