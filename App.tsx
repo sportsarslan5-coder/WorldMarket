@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+// Switched to HashRouter to fix the white screen issues often caused by BrowserRouter in static/preview environments.
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import SellerDashboard from './components/SellerDashboard.tsx';
@@ -20,8 +21,12 @@ const App: React.FC = () => {
     // Check if a new seller was added
     if (updated.length > sellers.length) {
       const newSeller = updated[updated.length - 1];
-      const notification = await generateAdminNotification('NEW_SELLER', newSeller);
-      setNotifications(prev => [notification, ...prev]);
+      try {
+        const notification = await generateAdminNotification('NEW_SELLER', newSeller);
+        setNotifications(prev => [notification, ...prev]);
+      } catch (err) {
+        console.error("AI Notification Error:", err);
+      }
     }
     setSellers(updated);
   };
@@ -32,8 +37,12 @@ const App: React.FC = () => {
 
   const handlePlaceOrder = async (newOrder: Order) => {
     setOrders([...orders, newOrder]);
-    const notification = await generateAdminNotification('NEW_ORDER', newOrder);
-    setNotifications(prev => [notification, ...prev]);
+    try {
+      const notification = await generateAdminNotification('NEW_ORDER', newOrder);
+      setNotifications(prev => [notification, ...prev]);
+    } catch (err) {
+      console.error("AI Notification Error:", err);
+    }
   };
 
   return (

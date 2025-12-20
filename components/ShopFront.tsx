@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+// Explicitly importing useParams and Link from react-router-dom to resolve module export errors
 import { useParams, Link } from 'react-router-dom';
 import { Seller, Product, Order, OrderStatus, PaymentMethod } from '../types.ts';
 

@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+// Explicitly importing Link from react-router-dom to resolve module export errors
 import { Link } from 'react-router-dom';
 import { mockProducts, mockSellers } from '../services/mockData.ts';
 import { Product } from '../types.ts';
