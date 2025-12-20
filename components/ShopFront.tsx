@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Seller, Product, Order, OrderStatus, PaymentMethod } from '../types';
+import { Seller, Product, Order, OrderStatus, PaymentMethod } from '../types.ts';
 
 interface ShopFrontProps {
   sellers: Seller[];
@@ -74,7 +74,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers, products, onPlaceOrder }
 
   if (orderPlaced) {
     return (
-      <div className="min-h-screen bg-blue-50 flex items-center justify-center p-6 animate-in zoom-in duration-300">
+      <div className="min-h-screen bg-blue-50 flex items-center justify-center p-6">
         <div className="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-lg w-full">
           <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
             <svg className="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
@@ -89,14 +89,12 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers, products, onPlaceOrder }
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Premium Header */}
       <div className="bg-white border-b px-6 py-12 text-center shadow-sm">
         <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter mb-2">{seller.shopName}</h1>
         <p className="text-gray-400 font-black uppercase text-[10px] tracking-[0.3em]">Verified International Merchant • {seller.country}</p>
       </div>
 
       <div className="max-w-7xl mx-auto p-6 md:p-12 grid grid-cols-1 md:grid-cols-12 gap-12">
-        {/* Product Selection */}
         <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-10">
           {shopProducts.map(product => (
             <div key={product.id} className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition duration-500 group flex flex-col">
@@ -126,7 +124,6 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers, products, onPlaceOrder }
           )}
         </div>
 
-        {/* Global Checkout Console */}
         <div className="md:col-span-4">
           <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-50 p-8 sticky top-28 overflow-hidden">
             <h2 className="text-2xl font-black mb-6 text-slate-900 tracking-tight flex items-center justify-between">
@@ -182,7 +179,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers, products, onPlaceOrder }
                 Checkout Worldwide
               </button>
             ) : (
-              <div className="space-y-4 animate-in slide-in-from-right duration-300">
+              <div className="space-y-4">
                 <input 
                   type="text" placeholder="Full Name" className="w-full border-gray-100 border bg-slate-50 p-4 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500 transition" 
                   value={customerInfo.name} onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})}
@@ -219,7 +216,6 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers, products, onPlaceOrder }
                 <button onClick={() => setShowCheckout(false)} className="w-full text-xs font-black text-gray-400 py-2 uppercase tracking-widest hover:text-slate-600">Modify Selection</button>
               </div>
             )}
-            
             <p className="mt-8 text-center text-[10px] text-gray-300 font-black uppercase tracking-[0.2em]">Secured by WorldMarket Global Hub</p>
           </div>
         </div>

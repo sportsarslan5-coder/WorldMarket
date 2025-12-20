@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Seller, Product, Order, OrderStatus } from '../types';
+import { Seller, Product, Order, OrderStatus } from '../types.ts';
 
 interface SellerDashboardProps {
   currentUser: Seller | null;
@@ -18,7 +18,6 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
   const [isRegistering, setIsRegistering] = useState(!currentUser);
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'profile'>('products');
   
-  // Registration Form State
   const [regData, setRegData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -136,7 +135,6 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
       </nav>
 
       <div className="max-w-7xl mx-auto p-10 grid grid-cols-12 gap-10">
-        {/* Stats Row */}
         <div className="col-span-12 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
             <h3 className="text-gray-400 text-xs font-black uppercase tracking-widest mb-1">Global Catalog</h3>
@@ -152,7 +150,6 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="col-span-12 md:col-span-3">
           <div className="bg-white rounded-3xl shadow-sm border p-3 space-y-1">
             <button onClick={() => setActiveTab('products')} className={`w-full text-left px-5 py-4 rounded-2xl font-bold transition ${activeTab === 'products' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50'}`}>Inventory</button>
@@ -161,10 +158,9 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
           </div>
         </div>
 
-        {/* Content */}
         <div className="col-span-12 md:col-span-9">
           {activeTab === 'products' && (
-            <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="space-y-8">
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">Product Inventory</h2>
                 <button 
@@ -211,7 +207,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
           )}
 
           {activeTab === 'orders' && (
-            <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="space-y-8">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Worldwide Referral Orders</h2>
               <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-100">
@@ -250,7 +246,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
           )}
 
           {activeTab === 'profile' && (
-            <div className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 animate-in fade-in duration-500">
+            <div className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100">
               <h2 className="text-3xl font-black text-slate-900 mb-8 tracking-tight">Merchant Configuration</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                 <div>

@@ -1,20 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
-import AdminDashboard from './components/AdminDashboard';
-import SellerDashboard from './components/SellerDashboard';
-import ShopFront from './components/ShopFront';
-import LandingPage from './components/LandingPage';
-import { Seller, Product, Order } from './types';
-import { mockSellers, mockProducts, mockOrders } from './services/mockData';
+import React, { useState } from 'react';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import AdminDashboard from './components/AdminDashboard.tsx';
+import SellerDashboard from './components/SellerDashboard.tsx';
+import ShopFront from './components/ShopFront.tsx';
+import LandingPage from './components/LandingPage.tsx';
+import { Seller, Product, Order } from './types.ts';
+import { mockSellers, mockProducts, mockOrders } from './services/mockData.ts';
 
 const App: React.FC = () => {
-  // Shared state simulation (In a real app, this would be Firebase/Supabase)
   const [sellers, setSellers] = useState<Seller[]>(mockSellers);
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [orders, setOrders] = useState<Order[]>(mockOrders);
-  
-  // Current user simulation
   const [currentUser, setCurrentUser] = useState<Seller | null>(null);
 
   const handleUpdateSellers = (updated: Seller[]) => setSellers(updated);
@@ -26,7 +23,6 @@ const App: React.FC = () => {
       <div className="min-h-screen">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          
           <Route path="/admin/*" element={
             <AdminDashboard 
               sellers={sellers} 
@@ -35,7 +31,6 @@ const App: React.FC = () => {
               onUpdateSellers={handleUpdateSellers}
             />
           } />
-          
           <Route path="/seller/*" element={
             <SellerDashboard 
               currentUser={currentUser}
@@ -47,7 +42,6 @@ const App: React.FC = () => {
               onUpdateSellers={handleUpdateSellers}
             />
           } />
-          
           <Route path="/shop/:slug" element={
             <ShopFront 
               sellers={sellers} 

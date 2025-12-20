@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Seller, Order, OrderStatus } from '../types';
+import { Seller, Order, OrderStatus } from '../types.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface AdminDashboardProps {
@@ -32,7 +32,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Sidebar */}
       <div className="w-64 bg-slate-900 text-white flex-shrink-0">
         <div className="p-6 text-2xl font-black border-b border-slate-800 tracking-tight">WorldMarket</div>
         <nav className="p-4 space-y-2 mt-4">
@@ -43,10 +42,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
         </nav>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 overflow-auto p-8">
         {activeTab === 'overview' && (
-          <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="space-y-8">
             <h2 className="text-4xl font-black text-slate-800">Global Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
@@ -83,7 +81,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
         )}
 
         {activeTab === 'orders' && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
             <h2 className="text-3xl font-black text-slate-800">Global Orders</h2>
             <div className="bg-white rounded-3xl shadow-sm border overflow-hidden">
               <table className="min-w-full divide-y divide-gray-100">
@@ -130,7 +128,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
         )}
 
         {activeTab === 'sellers' && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
             <h2 className="text-3xl font-black text-slate-800">Global Partners</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {sellers.map((seller) => (
@@ -153,7 +151,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
         )}
 
         {activeTab === 'payouts' && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
             <h2 className="text-3xl font-black text-slate-800">International Payouts</h2>
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
               <p className="mb-8 text-gray-500 font-medium">Clearances for the 5% merchant commissions across global accounts.</p>
