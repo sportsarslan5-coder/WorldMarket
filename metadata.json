@@ -1,6 +1,6 @@
 {
-  "name": "WorldMarket - Global Multi-Vendor Platform",
-  "description": "An international multi-vendor platform where sellers from across the globe create mini-shops, and administration handles global logistics and payments with a standard commission model.",
+  "name": "PK-MART - Pakistan's Premier Multi-Vendor Platform",
+  "description": "A specialized multi-vendor platform for the Pakistani market, featuring localized payments (JazzCash, Easypaisa), professional logistics handling, and a vendor-friendly 5% commission model.",
   "requestFramePermissions": [
     "camera"
   ]
