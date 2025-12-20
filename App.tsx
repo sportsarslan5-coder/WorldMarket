@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-// Switched to HashRouter to fix the white screen issues often caused by BrowserRouter in static/preview environments.
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import SellerDashboard from './components/SellerDashboard.tsx';
@@ -18,7 +17,6 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<Seller | null>(null);
 
   const handleUpdateSellers = async (updated: Seller[]) => {
-    // Check if a new seller was added
     if (updated.length > sellers.length) {
       const newSeller = updated[updated.length - 1];
       try {
@@ -31,8 +29,13 @@ const App: React.FC = () => {
     setSellers(updated);
   };
 
+  const handleToggleSellerStatus = (sellerId: string) => {
+    setSellers(prev => prev.map(s => 
+      s.id === sellerId ? { ...s, status: s.status === 'active' ? 'inactive' : 'active' } : s
+    ));
+  };
+
   const handleUpdateProducts = (updated: Product[]) => setProducts(updated);
-  
   const handleUpdateOrders = (updated: Order[]) => setOrders(updated);
 
   const handlePlaceOrder = async (newOrder: Order) => {
@@ -49,7 +52,7 @@ const App: React.FC = () => {
     <Router>
       <div className="min-h-screen">
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage sellers={sellers} products={products} />} />
           <Route path="/admin/*" element={
             <AdminDashboard 
               sellers={sellers} 
@@ -57,6 +60,7 @@ const App: React.FC = () => {
               notifications={notifications}
               onUpdateOrders={handleUpdateOrders}
               onUpdateSellers={handleUpdateSellers}
+              onToggleSellerStatus={handleToggleSellerStatus}
             />
           } />
           <Route path="/seller/*" element={
