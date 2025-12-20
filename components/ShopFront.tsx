@@ -1,7 +1,8 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Seller, Product, Order, OrderStatus, PaymentMethod } from '../types.ts';
+import { db } from '../services/db.ts';
 
 interface ShopFrontProps {
   sellers: Seller[];
@@ -11,22 +12,39 @@ interface ShopFrontProps {
 
 const ADMIN_WHATSAPP = "923079490721";
 
-const ShopFront: React.FC<ShopFrontProps> = ({ sellers = [], products = [], onPlaceOrder }) => {
+const ShopFront: React.FC<ShopFrontProps> = ({ sellers: propSellers = [], products: propProducts = [], onPlaceOrder }) => {
   const { slug } = useParams();
+  const [localSellers, setLocalSellers] = useState<Seller[]>(propSellers);
+  const [localProducts, setLocalProducts] = useState<Product[]>(propProducts);
   
+  // Hydrate local state if props are empty (handles direct link/refresh)
+  useEffect(() => {
+    if (propSellers.length === 0) {
+      setLocalSellers(db.getSellers());
+    } else {
+      setLocalSellers(propSellers);
+    }
+    
+    if (propProducts.length === 0) {
+      setLocalProducts(db.getProducts());
+    } else {
+      setLocalProducts(propProducts);
+    }
+  }, [propSellers, propProducts]);
+
   // High-fidelity slug resolution
   const matchedSeller = useMemo(() => {
-    if (!slug || !sellers) return null;
-    return sellers.find(s => s.shopSlug.toLowerCase() === slug.toLowerCase());
-  }, [sellers, slug]);
+    if (!slug || !localSellers) return null;
+    return localSellers.find(s => s.shopSlug.toLowerCase() === slug.toLowerCase());
+  }, [localSellers, slug]);
 
   const shopProducts = useMemo(() => {
     if (!matchedSeller) return [];
-    return products?.filter(p => 
+    return localProducts?.filter(p => 
       (p.sellerId === matchedSeller.id || p.shopId === matchedSeller.id) && 
       p.published
     ) || [];
-  }, [products, matchedSeller]);
+  }, [localProducts, matchedSeller]);
   
   const [cart, setCart] = useState<{product: Product, quantity: number}[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -37,7 +55,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers = [], products = [], onPl
   if (!matchedSeller && slug) return (
     <div className="min-h-screen flex items-center justify-center font-sans bg-[#f3f3f3]">
       <div className="text-center bg-white p-16 rounded-3xl shadow-2xl max-w-lg border border-slate-100 animate-in zoom-in">
-        <div className="text-7xl mb-6">🔍</div>
+        <div className="text-7xl mb-6 text-slate-200">🔍</div>
         <h2 className="text-4xl font-black mb-4 text-slate-900 tracking-tighter uppercase italic">404 - Shop Missing</h2>
         <p className="text-slate-400 font-bold text-lg mb-10 leading-relaxed">The link <b>"/{slug}"</b> does not point to an existing vendor on PK-MART.</p>
         <Link to="/" className="bg-[#febd69] px-10 py-5 rounded-xl font-black text-[#131921] shadow-xl hover:bg-[#f7ca00] transition inline-block">Explore Marketplace</Link>
@@ -49,7 +67,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers = [], products = [], onPl
   if (matchedSeller?.status === 'inactive') return (
     <div className="min-h-screen flex items-center justify-center font-sans bg-[#f3f3f3]">
       <div className="text-center bg-white p-16 rounded-3xl shadow-2xl max-w-lg border border-slate-100 animate-in fade-in">
-        <div className="text-7xl mb-6">⏸️</div>
+        <div className="text-7xl mb-6 text-slate-200">⏸️</div>
         <h2 className="text-4xl font-black mb-4 text-slate-900 tracking-tighter uppercase">Shop Paused</h2>
         <p className="text-slate-400 font-bold text-lg mb-10 leading-relaxed"><b>{matchedSeller.shopName}</b> is currently offline or undergoing maintenance by Admin.</p>
         <Link to="/" className="bg-[#febd69] px-10 py-5 rounded-xl font-black text-[#131921] shadow-xl hover:bg-[#f7ca00] transition inline-block">Return Home</Link>
@@ -132,7 +150,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers = [], products = [], onPl
           <Link to="/" className="text-xl font-black tracking-tighter">PK-MART</Link>
           <div className="flex items-center gap-6">
             <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest text-[#febd69] bg-[#131921] px-4 py-2 rounded-full border border-slate-700 shadow-inner">
-               Active: {matchedSeller?.shopName}
+               Live: {matchedSeller?.shopName}
             </span>
             <div className="relative cursor-pointer group" onClick={() => setShowCheckout(true)}>
                <span className="absolute -top-2 -right-2 bg-[#febd69] text-[#131921] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#232f3e] group-hover:scale-110 transition">{cart.length}</span>
@@ -147,7 +165,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers = [], products = [], onPl
         <div className="flex justify-center items-center gap-4">
            <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest border px-4 py-1.5 rounded-full">Protex Secured</span>
            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-           <span className="text-emerald-500 font-black text-[10px] uppercase tracking-widest">Storefront Live</span>
+           <span className="text-emerald-500 font-black text-[10px] uppercase tracking-widest">Official Storefront</span>
         </div>
       </header>
 
@@ -155,7 +173,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers = [], products = [], onPl
         {shopProducts.length === 0 ? (
           <div className="col-span-full py-40 text-center text-slate-300 font-bold bg-white rounded-3xl border-2 border-dashed animate-in fade-in">
             <div className="text-6xl mb-6 opacity-30">📦</div>
-            <p className="text-xl">Store is currently restocking. Please check back later.</p>
+            <p className="text-xl italic">This vendor is currently setting up their gallery.</p>
           </div>
         ) : (
           shopProducts.map(p => (
@@ -227,7 +245,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers = [], products = [], onPl
                   disabled={cart.length === 0}
                   className="flex-1 py-4 bg-[#25D366] text-white rounded-xl font-black shadow-2xl hover:bg-[#128C7E] transition disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  Place Order
+                  Confirm on WhatsApp
                 </button>
               </div>
            </div>

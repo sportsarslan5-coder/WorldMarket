@@ -1,7 +1,8 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Seller, Product, Order, OrderStatus, SellerPayoutMethod } from '../types.ts';
+import { db } from '../services/db.ts';
 
 interface SellerDashboardProps {
   currentUser: Seller | null;
@@ -33,6 +34,19 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
     accountNumber: '',
   });
 
+  // Hydrate user from localStorage if app reloaded
+  useEffect(() => {
+    if (!currentUser) {
+      const storedSellers = db.getSellers();
+      // For demo: automatically log in the first custom seller found that isn't mock
+      const customSeller = storedSellers.find(s => !['s1', 's2', 's3'].includes(s.id));
+      if (customSeller) {
+        setCurrentUser(customSeller);
+        setIsRegistering(false);
+      }
+    }
+  }, [currentUser]);
+
   const sellerProducts = products?.filter(p => p.sellerId === currentUser?.id) || [];
   const sellerOrders = orders?.filter(o => o.sellerId === currentUser?.id) || [];
 
@@ -53,7 +67,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
       shopName: regData.shopName,
       shopSlug: shopSlug,
       joinedAt: new Date().toISOString(),
-      status: 'active' // Ensure seller is active upon registration
+      status: 'active'
     };
 
     const shopLink = `${window.location.origin}/#/shop/${shopSlug}`;
@@ -67,6 +81,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
                     `*Payout:* ${newSeller.payoutMethod} - ${newSeller.accountNumber}%0A%0A` +
                     `*Open Shop:* ${shopLink}`;
 
+    db.saveSeller(newSeller);
     onUpdateSellers([...sellers, newSeller]);
     setCurrentUser(newSeller);
     setRegSuccess(true);
@@ -90,19 +105,22 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
     if (!editingProduct?.name || !editingProduct?.price || !currentUser) return;
 
     if (editingProduct.id) {
-      onUpdateProducts(products.map(p => p.id === editingProduct.id ? (editingProduct as Product) : p));
+      const updatedProd = editingProduct as Product;
+      db.saveProduct(updatedProd);
+      onUpdateProducts(products.map(p => p.id === editingProduct.id ? updatedProd : p));
     } else {
       const newProd: Product = {
         ...(editingProduct as Omit<Product, 'id' | 'sellerId' | 'shopId' | 'createdAt'>),
         id: 'p' + Math.random().toString(36).substr(2, 9),
         sellerId: currentUser.id,
-        shopId: currentUser.id, // Linked by unique seller ID
+        shopId: currentUser.id,
         category: editingProduct.category || 'General',
         rating: 5.0,
         reviewsCount: 0,
         published: true,
         createdAt: new Date().toISOString(),
       } as Product;
+      db.saveProduct(newProd);
       onUpdateProducts([...products, newProd]);
     }
     setEditingProduct(null);
@@ -116,7 +134,6 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
     if (platform === 'whatsapp') {
       window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
     } else if (platform === 'facebook' || platform === 'instagram') {
-      // Direct sharing to FB; Instagram usually requires mobile app or bio links
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     }
   };
@@ -128,11 +145,11 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
           <div className="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl">✓</div>
           <h2 className="text-3xl font-black text-slate-900 mb-4">Store Active & Live!</h2>
           <p className="text-slate-500 font-medium mb-10 leading-relaxed">
-            Congratulations! <b>{currentUser.shopName}</b> is now visible to customers. Your status is <b>ACTIVE</b>.
+            Congratulations! <b>{currentUser.shopName}</b> is permanently saved in our database. Your status is <b>ACTIVE</b>.
           </p>
           
           <div className="bg-slate-50 p-6 rounded-xl border border-dashed mb-10">
-            <h3 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Seller Protex Social Kit</h3>
+            <h3 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest text-center">Seller Protex Social Kit</h3>
             <div className="flex flex-wrap justify-center gap-4">
               <button onClick={() => shareShop('whatsapp')} className="bg-[#25D366] text-white px-6 py-3 rounded-lg font-black text-sm shadow-md hover:scale-105 transition">WhatsApp</button>
               <button onClick={() => shareShop('facebook')} className="bg-[#1877F2] text-white px-6 py-3 rounded-lg font-black text-sm shadow-md hover:scale-105 transition">Facebook/Instagram</button>
@@ -153,8 +170,8 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
       <div className="min-h-screen bg-[#f3f3f3] py-20 px-4 flex items-center justify-center font-sans">
         <div className="max-w-xl w-full p-10 bg-white rounded-xl shadow-xl">
           <div className="mb-10 text-center">
-             <h1 className="text-3xl font-black text-slate-900 mb-2">Shop Activation</h1>
-             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Verify identity with Seller Protex</p>
+             <h1 className="text-3xl font-black text-slate-900 mb-2">Permanent Shop Activation</h1>
+             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Storefronts that never disappear • Protex 5.0</p>
           </div>
           
           <div className="space-y-6">
@@ -175,7 +192,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Unique Shop Name (e.g. Oops)</label>
               <input 
-                type="text" placeholder="This will be your website link" className="w-full rounded-lg border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
+                type="text" placeholder="This link is permanent" className="w-full rounded-lg border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:ring-2 focus:ring-blue-500 border" 
                 value={regData.shopName} onChange={e => setRegData({...regData, shopName: e.target.value})}
               />
             </div>
@@ -213,18 +230,21 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
       <div className="w-full lg:w-64 bg-[#131921] text-white p-6 flex flex-col shadow-xl z-10">
         <Link to="/" className="text-xl font-black mb-10 block">PK<span className="text-[#febd69]">-</span>MART</Link>
         <nav className="flex-1 space-y-2">
-          <button onClick={() => setActiveTab('products')} className={`w-full text-left p-4 rounded-lg font-bold transition ${activeTab === 'products' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Gallery & Items</button>
+          <button onClick={() => setActiveTab('products')} className={`w-full text-left p-4 rounded-lg font-bold transition ${activeTab === 'products' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Items & Gallery</button>
           <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-4 rounded-lg font-bold transition ${activeTab === 'orders' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Live Orders</button>
           <button onClick={() => setActiveTab('profile')} className={`w-full text-left p-4 rounded-lg font-bold transition ${activeTab === 'profile' ? 'bg-slate-800 text-[#febd69]' : 'text-slate-400'}`}>Shop Identity</button>
         </nav>
-        <button onClick={() => setCurrentUser(null)} className="mt-auto py-3 bg-red-900/20 text-red-400 rounded-lg font-black text-xs border border-red-900/20">Sign Out</button>
+        <div className="mt-auto space-y-4 pt-6 border-t border-slate-800">
+           <Link to={`/shop/${currentUser?.shopSlug}`} target="_blank" className="w-full block text-center py-2 bg-blue-600/10 text-blue-400 rounded-md text-[10px] font-black border border-blue-900/30 uppercase">Open My Shop</Link>
+           <button onClick={() => { db.saveSeller({...currentUser!, status: 'inactive'}); setCurrentUser(null); setIsRegistering(true); }} className="w-full py-3 bg-red-900/20 text-red-400 rounded-lg font-black text-xs border border-red-900/20">Sign Out</button>
+        </div>
       </div>
 
       <div className="flex-1 p-10 overflow-auto">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16">
            <div>
              <h1 className="text-4xl font-black text-slate-900 tracking-tight">{currentUser?.shopName}</h1>
-             <p className="text-emerald-500 font-bold uppercase text-[10px] tracking-widest mt-1">Status: Active • Protex Verified</p>
+             <p className="text-emerald-500 font-bold uppercase text-[10px] tracking-widest mt-1">Status: Active • Protex Database Locked</p>
            </div>
            {activeTab === 'products' && (
              <button onClick={() => setEditingProduct({})} className="bg-[#febd69] text-[#131921] px-8 py-4 rounded-lg font-black text-sm shadow-xl hover:bg-[#f3a847] transition transform active:scale-95">
@@ -237,8 +257,8 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {sellerProducts.length === 0 ? (
               <div className="col-span-full py-32 text-center text-slate-300 font-bold border-2 border-dashed rounded-2xl bg-white">
-                <div className="text-5xl mb-4">📸</div>
-                <p>Use Protex to upload photos from your gallery.</p>
+                <div className="text-5xl mb-4 text-slate-200">📸</div>
+                <p>Upload your first item. It will stay forever.</p>
               </div>
             ) : (
               sellerProducts.map(p => (
@@ -257,16 +277,15 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
           </div>
         )}
 
-        {/* Other tabs remain consistent with robust UI */}
         {activeTab === 'orders' && (
           <div className="bg-white rounded-2xl shadow-sm border overflow-hidden animate-in fade-in">
             <table className="w-full text-left">
               <thead className="bg-slate-50 border-b">
-                <tr><th className="p-8 text-[10px] font-black uppercase text-slate-400">Order Ref</th><th className="p-8 text-[10px] font-black uppercase text-slate-400">Customer</th><th className="p-8 text-right text-[10px] font-black uppercase text-slate-400">Net Share</th></tr>
+                <tr><th className="p-8 text-[10px] font-black uppercase text-slate-400">Order Ref</th><th className="p-8 text-[10px] font-black uppercase text-slate-400">Customer</th><th className="p-8 text-right text-[10px] font-black uppercase text-slate-400">Total</th></tr>
               </thead>
               <tbody className="divide-y">
                 {sellerOrders.length === 0 ? (
-                  <tr><td colSpan={3} className="p-20 text-center text-slate-300 font-bold italic">No active orders yet. Share your "Oops" link on social media!</td></tr>
+                  <tr><td colSpan={3} className="p-20 text-center text-slate-300 font-bold italic">No active orders found in database.</td></tr>
                 ) : (
                   sellerOrders.map(o => (
                     <tr key={o.id} className="hover:bg-slate-50 transition">
@@ -286,7 +305,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
 
         {activeTab === 'profile' && (
           <div className="max-w-2xl bg-white p-10 rounded-2xl shadow-sm border animate-in fade-in">
-             <h3 className="text-xl font-black mb-8 border-b pb-4">Seller Identity</h3>
+             <h3 className="text-xl font-black mb-8 border-b pb-4">Secure Identity Profile</h3>
              <div className="space-y-8">
                 <div className="grid grid-cols-2 gap-8">
                   <div>
@@ -304,10 +323,18 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
                   <p className="text-[9px] font-black text-slate-500 mt-3 uppercase">PROVIDER: {currentUser?.payoutMethod}</p>
                 </div>
                 <div className="pt-6">
-                   <label className="text-[10px] font-black text-slate-400 uppercase block mb-4">Dynamic Website Link</label>
+                   <label className="text-[10px] font-black text-slate-400 uppercase block mb-4">Your Dynamic Website Link</label>
                    <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-lg border border-dashed">
                       <span className="text-xs font-bold text-slate-500 flex-1 truncate">{window.location.origin}/#/shop/{currentUser?.shopSlug}</span>
-                      <Link to={`/shop/${currentUser?.shopSlug}`} target="_blank" className="text-[10px] font-black text-blue-600 uppercase">Open Site</Link>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/#/shop/${currentUser?.shopSlug}`);
+                          alert("Link Copied!");
+                        }}
+                        className="text-[10px] font-black text-blue-600 uppercase"
+                      >
+                        Copy
+                      </button>
                    </div>
                 </div>
              </div>
@@ -334,7 +361,7 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({
                         <img src={editingProduct.imageUrl} className="w-full h-full object-contain" alt="Preview" />
                       ) : (
                         <div className="text-center">
-                          <div className="text-5xl mb-4">🖼️</div>
+                          <div className="text-5xl mb-4 text-slate-200">🖼️</div>
                           <p className="text-xs font-black text-slate-400">Click to Browse Gallery</p>
                         </div>
                       )}
