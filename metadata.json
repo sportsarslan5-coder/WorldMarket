@@ -1,0 +1,7 @@
+{
+  "name": "WorldMarket - Global Multi-Vendor Platform",
+  "description": "An international multi-vendor platform where sellers from across the globe create mini-shops, and administration handles global logistics and payments with a standard commission model.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
