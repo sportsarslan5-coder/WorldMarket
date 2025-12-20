@@ -55,6 +55,8 @@ export const mockOrders: Order[] = [
   {
     id: 'PK-8821',
     sellerId: 's1',
+    // Fix: Added missing sellerName property required by Order interface
+    sellerName: 'Ahmed Electronics',
     customerName: 'Zainab Bibi',
     customerPhone: '03331112223',
     customerEmail: 'zainab@example.com',

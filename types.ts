@@ -17,10 +17,11 @@ export type SellerPayoutMethod = 'JazzCash' | 'Easypaisa' | 'Bank Transfer';
 export interface Seller {
   id: string;
   fullName: string;
-  email: string;
+  email: string; // The Gmail/Email provided
   phoneNumber: string;
   payoutMethod: SellerPayoutMethod;
   accountNumber: string; // JazzCash/Easypaisa/Bank number
+  bankName?: string; // Optional if Bank Transfer
   shopName: string;
   shopSlug: string;
   joinedAt: string;
@@ -41,6 +42,7 @@ export interface Product {
 export interface Order {
   id: string;
   sellerId: string;
+  sellerName: string; // Tracking for admin
   customerName: string;
   customerPhone: string;
   customerEmail: string;
@@ -55,6 +57,17 @@ export interface Order {
   currency: string;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
-  commissionAmount: number; // 5% of total for the seller
+  commissionAmount: number; // 5% for the seller
   createdAt: string;
+}
+
+export interface AdminNotification {
+  id: string;
+  type: 'NEW_SELLER' | 'NEW_ORDER';
+  timestamp: string;
+  content: {
+    whatsapp: string;
+    email: string;
+  };
+  sent: boolean;
 }

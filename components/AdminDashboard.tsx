@@ -1,17 +1,18 @@
 
 import React, { useState } from 'react';
-import { Seller, Order, OrderStatus } from '../types.ts';
+import { Seller, Order, OrderStatus, AdminNotification } from '../types.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface AdminDashboardProps {
   sellers: Seller[];
   orders: Order[];
+  notifications: AdminNotification[];
   onUpdateOrders: (orders: Order[]) => void;
   onUpdateSellers: (sellers: Seller[]) => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpdateOrders, onUpdateSellers }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'sellers' | 'payouts'>('overview');
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, notifications, onUpdateOrders, onUpdateSellers }) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'sellers' | 'payouts' | 'notifications'>('overview');
 
   const totalSales = orders.reduce((sum, o) => sum + o.totalAmount, 0);
   const totalCommission = orders.reduce((sum, o) => sum + o.commissionAmount, 0);
@@ -31,47 +32,76 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
   const formatCurrency = (val: number) => `Rs. ${val.toLocaleString()}`;
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
-      <div className="w-64 bg-green-900 text-white flex-shrink-0">
-        <div className="p-6 text-2xl font-black border-b border-green-800 tracking-tight">PK-MART ADMIN</div>
+    <div className="flex h-screen bg-gray-100 overflow-hidden font-sans">
+      <div className="w-72 bg-slate-900 text-white flex-shrink-0 shadow-2xl">
+        <div className="p-8 text-2xl font-black border-b border-slate-800 flex items-center gap-2">
+          <div className="w-8 h-8 bg-green-500 rounded-lg"></div>
+          PK-ADMIN
+        </div>
         <nav className="p-4 space-y-2 mt-4">
-          <button onClick={() => setActiveTab('overview')} className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-green-600 shadow-lg' : 'hover:bg-green-800'}`}>Dashboard</button>
-          <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'orders' ? 'bg-green-600 shadow-lg' : 'hover:bg-green-800'}`}>Orders ({pendingOrders})</button>
-          <button onClick={() => setActiveTab('sellers')} className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'sellers' ? 'bg-green-600 shadow-lg' : 'hover:bg-green-800'}`}>Sellers</button>
-          <button onClick={() => setActiveTab('payouts')} className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'payouts' ? 'bg-green-600 shadow-lg' : 'hover:bg-green-800'}`}>Seller Payouts</button>
+          {[
+            { id: 'overview', label: 'Dashboard', icon: '📊' },
+            { id: 'orders', label: `Orders (${pendingOrders})`, icon: '📦' },
+            { id: 'sellers', label: 'Vendors', icon: '🏢' },
+            { id: 'payouts', label: 'Payouts', icon: '💰' },
+            { id: 'notifications', label: 'Alert Center', icon: '🔔' }
+          ].map(tab => (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)} 
+              className={`w-full text-left p-4 rounded-2xl transition-all flex items-center gap-3 font-bold ${activeTab === tab.id ? 'bg-green-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+            >
+              <span className="text-xl">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
         </nav>
       </div>
 
-      <div className="flex-1 overflow-auto p-8">
+      <div className="flex-1 overflow-auto p-10">
         {activeTab === 'overview' && (
-          <div className="space-y-8">
-            <h2 className="text-4xl font-black text-slate-800">Platform Analytics</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-8 rounded-3xl shadow-sm border">
-                <div className="text-gray-400 font-bold uppercase text-xs mb-1">Total Collections</div>
-                <div className="text-3xl font-black text-green-600">{formatCurrency(totalSales)}</div>
+          <div className="space-y-10">
+            <header className="flex justify-between items-end">
+              <div>
+                <h2 className="text-4xl font-black text-slate-800">Operational Overview</h2>
+                <p className="text-slate-500 font-medium">Platform health and performance metrics</p>
               </div>
-              <div className="bg-white p-8 rounded-3xl shadow-sm border">
-                <div className="text-gray-400 font-bold uppercase text-xs mb-1">Active Sellers</div>
-                <div className="text-3xl font-black text-slate-800">{sellers.length}</div>
+              <div className="text-sm font-bold bg-white px-4 py-2 rounded-xl shadow-sm">
+                Live Status: <span className="text-green-500">Online</span>
               </div>
-              <div className="bg-white p-8 rounded-3xl shadow-sm border">
-                <div className="text-gray-400 font-bold uppercase text-xs mb-1">Pending Orders</div>
-                <div className="text-3xl font-black text-orange-500">{pendingOrders}</div>
-              </div>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { label: 'Total Collections', value: formatCurrency(totalSales), color: 'text-green-600' },
+                { label: 'Seller Commissions', value: formatCurrency(totalCommission), color: 'text-blue-600' },
+                { label: 'Active Shops', value: sellers.length, color: 'text-slate-800' },
+                { label: 'Pending Logistics', value: pendingOrders, color: 'text-orange-500' }
+              ].map(stat => (
+                <div key={stat.label} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 group hover:border-green-200 transition">
+                  <div className="text-slate-400 font-black uppercase text-[10px] tracking-widest mb-2">{stat.label}</div>
+                  <div className={`text-3xl font-black ${stat.color}`}>{stat.value}</div>
+                </div>
+              ))}
             </div>
 
-            <div className="bg-white p-8 rounded-3xl shadow-sm border h-[450px]">
-              <h3 className="font-bold mb-6 text-xl text-slate-700">Financial Insights</h3>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `Rs.${val}`} />
-                  <Tooltip cursor={{fill: '#f3f4f6'}} />
-                  <Bar dataKey="value" radius={[10, 10, 0, 0]}>
+            <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 h-[500px]">
+              <h3 className="font-black mb-8 text-xl text-slate-800 flex items-center gap-2">
+                <span className="w-2 h-6 bg-green-500 rounded-full"></span>
+                Financial Distribution
+              </h3>
+              <ResponsiveContainer width="100%" height="85%">
+                <BarChart data={chartData} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontWeight: 700}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontWeight: 700}} tickFormatter={(val) => `Rs.${val}`} />
+                  <Tooltip 
+                    cursor={{fill: '#f8fafc'}} 
+                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                  />
+                  <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={60}>
                     {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 2 ? '#059669' : index === 1 ? '#6366f1' : '#3b82f6'} />
+                      <Cell key={`cell-${index}`} fill={index === 2 ? '#10b981' : index === 1 ? '#6366f1' : '#3b82f6'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -82,37 +112,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
 
         {activeTab === 'orders' && (
           <div className="space-y-6">
-            <h2 className="text-3xl font-black text-slate-800">Recent Orders</h2>
-            <div className="bg-white rounded-3xl shadow-sm border overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-100">
+            <h2 className="text-3xl font-black text-slate-800">Master Order Log</h2>
+            <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+              <table className="min-w-full divide-y divide-slate-100">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">ID</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">Customer Details</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">Amount</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase">Actions</th>
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer & Shop</th>
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                    <th className="px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Logistics</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-50">
+                <tbody className="bg-white divide-y divide-slate-50">
                   {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-800">{order.id}</td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-bold text-slate-800">{order.customerName}</div>
-                        <div className="text-xs text-gray-400">{order.customerPhone} | {order.customerAddress}</div>
+                    <tr key={order.id} className="hover:bg-slate-50/50 transition">
+                      <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-slate-900">#{order.id}</td>
+                      <td className="px-8 py-6">
+                        <div className="text-sm font-black text-slate-800">{order.customerName}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase">{order.sellerName} | {order.customerPhone}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-green-600">{formatCurrency(order.totalAmount)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full 
+                      <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-green-600">{formatCurrency(order.totalAmount)}</td>
+                      <td className="px-8 py-6 whitespace-nowrap">
+                        <span className={`px-4 py-1.5 inline-flex text-[10px] font-black rounded-full uppercase tracking-widest 
                           ${order.status === OrderStatus.PENDING ? 'bg-orange-100 text-orange-700' : 
                             order.status === OrderStatus.DELIVERED ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-8 py-6 whitespace-nowrap">
                         <select 
-                          className="border border-gray-200 rounded-lg p-2 text-xs font-bold outline-none"
+                          className="border border-slate-200 rounded-xl p-2.5 text-xs font-black outline-none bg-slate-50 focus:ring-2 focus:ring-green-500"
                           value={order.status}
                           onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
                         >
@@ -128,21 +158,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
         )}
 
         {activeTab === 'sellers' && (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-black text-slate-800">Vendor Management</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-8">
+            <h2 className="text-3xl font-black text-slate-800">Vendor Registry (PII Data)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {sellers.map((seller) => (
-                <div key={seller.id} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-4">
-                      <h4 className="text-2xl font-black text-slate-800">{seller.shopName}</h4>
-                      <span className="bg-green-50 text-green-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">{seller.payoutMethod}</span>
-                    </div>
-                    <p className="text-gray-500 font-medium text-sm">Owner: {seller.fullName}</p>
-                    <p className="text-gray-500 font-medium text-sm">Phone: {seller.phoneNumber}</p>
+                <div key={seller.id} className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between group hover:shadow-xl transition relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition">
+                    <span className="text-8xl font-black">🏢</span>
                   </div>
-                  <div className="mt-6 pt-6 border-t border-gray-50 flex justify-between items-center">
-                    <p className="text-xs font-mono font-bold text-green-600">{seller.payoutMethod}: {seller.accountNumber}</p>
+                  <div>
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h4 className="text-2xl font-black text-slate-900 leading-tight">{seller.shopName}</h4>
+                        <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">/{seller.shopSlug}</p>
+                      </div>
+                      <span className="bg-slate-900 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest">{seller.payoutMethod}</span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Owner</label>
+                          <p className="text-sm font-bold text-slate-700">{seller.fullName}</p>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Email</label>
+                          <p className="text-sm font-bold text-slate-700">{seller.email}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Contact</label>
+                        <p className="text-sm font-bold text-slate-700">{seller.phoneNumber}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Payout Account</label>
+                        <p className="text-lg font-black text-green-600 font-mono">{seller.accountNumber}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-xs text-slate-400 font-bold italic">
+                    Joined on {new Date(seller.joinedAt).toLocaleDateString()}
                   </div>
                 </div>
               ))}
@@ -150,27 +205,80 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ sellers, orders, onUpda
           </div>
         )}
 
+        {activeTab === 'notifications' && (
+          <div className="space-y-8">
+            <h2 className="text-3xl font-black text-slate-800">Alert Center (Log)</h2>
+            <div className="space-y-4">
+              {notifications.length === 0 ? (
+                <div className="bg-white p-20 rounded-[2.5rem] border border-dashed border-slate-300 text-center text-slate-400 font-bold">
+                  No alerts generated yet.
+                </div>
+              ) : (
+                notifications.map(notif => (
+                  <div key={notif.id} className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="px-8 py-4 bg-slate-900 text-white flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{notif.type === 'NEW_SELLER' ? '👋' : '🛍️'}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{notif.type.replace('_', ' ')}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400">{new Date(notif.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                          <span className="w-5 h-5 bg-green-500 rounded flex items-center justify-center text-[10px] text-white">W</span> WhatsApp Payload
+                        </h4>
+                        <div className="bg-green-50 p-6 rounded-2xl border border-green-100 text-sm font-medium text-green-900 italic">
+                          "{notif.content.whatsapp}"
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                          <span className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-[10px] text-white">E</span> Email Draft
+                        </h4>
+                        <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 text-sm font-medium text-blue-900 italic whitespace-pre-line">
+                          "{notif.content.email}"
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'payouts' && (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-black text-slate-800">Seller Commission Payouts</h2>
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-              <p className="mb-8 text-gray-500 font-medium">Clear 5% referral commissions for completed orders.</p>
-              <div className="space-y-2">
+          <div className="space-y-8">
+            <h2 className="text-3xl font-black text-slate-800">Commission Settlements</h2>
+            <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
+              <p className="mb-10 text-slate-500 font-medium max-w-2xl">Weekly payouts for sellers. We collect 100% of the funds from customers and disburse the 5% commission once orders are marked 'Delivered'.</p>
+              <div className="space-y-4">
                 {sellers.map(seller => {
                   const sellerOrders = orders.filter(o => o.sellerId === seller.id && o.status === OrderStatus.DELIVERED);
                   const commissionOwed = sellerOrders.reduce((sum, o) => sum + o.commissionAmount, 0);
                   return (
-                    <div key={seller.id} className="p-6 rounded-2xl hover:bg-slate-50 transition border flex justify-between items-center">
-                      <div>
-                        <p className="font-black text-slate-800 text-lg">{seller.shopName}</p>
-                        <p className="text-xs text-gray-400 font-bold">{seller.payoutMethod} Account: {seller.accountNumber}</p>
-                      </div>
-                      <div className="flex items-center space-x-8">
-                        <div className="text-right">
-                          <p className="text-[10px] text-gray-400 uppercase font-black">Commission Owed</p>
-                          <p className="font-black text-2xl text-green-600">{formatCurrency(commissionOwed)}</p>
+                    <div key={seller.id} className="p-8 rounded-3xl hover:bg-slate-50 transition border border-slate-100 flex justify-between items-center group">
+                      <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white text-2xl font-black">
+                          {seller.shopName.charAt(0)}
                         </div>
-                        <button className="bg-green-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-green-700 shadow-md">Mark Paid</button>
+                        <div>
+                          <p className="font-black text-slate-900 text-xl">{seller.shopName}</p>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Account: {seller.payoutMethod} - {seller.accountNumber}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-10">
+                        <div className="text-right">
+                          <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Owed (5%)</p>
+                          <p className="font-black text-3xl text-green-600">{formatCurrency(commissionOwed)}</p>
+                        </div>
+                        <button 
+                          disabled={commissionOwed === 0}
+                          className={`px-8 py-4 rounded-2xl text-sm font-black shadow-lg transition transform hover:scale-105 ${commissionOwed === 0 ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}
+                        >
+                          Settle Payout
+                        </button>
                       </div>
                     </div>
                   );

@@ -47,6 +47,8 @@ const ShopFront: React.FC<ShopFrontProps> = ({ sellers, products, onPlaceOrder }
     const newOrder: Order = {
       id: 'PK-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
       sellerId: seller.id,
+      // Fix: Added missing sellerName property required by Order interface
+      sellerName: seller.shopName,
       customerName: customerInfo.name,
       customerEmail: customerInfo.email,
       customerPhone: customerInfo.phone,

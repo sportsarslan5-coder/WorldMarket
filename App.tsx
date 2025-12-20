@@ -1,22 +1,40 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import SellerDashboard from './components/SellerDashboard.tsx';
 import ShopFront from './components/ShopFront.tsx';
 import LandingPage from './components/LandingPage.tsx';
-import { Seller, Product, Order } from './types.ts';
+import { Seller, Product, Order, AdminNotification } from './types.ts';
 import { mockSellers, mockProducts, mockOrders } from './services/mockData.ts';
+import { generateAdminNotification } from './services/notificationService.ts';
 
 const App: React.FC = () => {
   const [sellers, setSellers] = useState<Seller[]>(mockSellers);
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [currentUser, setCurrentUser] = useState<Seller | null>(null);
 
-  const handleUpdateSellers = (updated: Seller[]) => setSellers(updated);
+  const handleUpdateSellers = async (updated: Seller[]) => {
+    // Check if a new seller was added
+    if (updated.length > sellers.length) {
+      const newSeller = updated[updated.length - 1];
+      const notification = await generateAdminNotification('NEW_SELLER', newSeller);
+      setNotifications(prev => [notification, ...prev]);
+    }
+    setSellers(updated);
+  };
+
   const handleUpdateProducts = (updated: Product[]) => setProducts(updated);
+  
   const handleUpdateOrders = (updated: Order[]) => setOrders(updated);
+
+  const handlePlaceOrder = async (newOrder: Order) => {
+    setOrders([...orders, newOrder]);
+    const notification = await generateAdminNotification('NEW_ORDER', newOrder);
+    setNotifications(prev => [notification, ...prev]);
+  };
 
   return (
     <Router>
@@ -27,6 +45,7 @@ const App: React.FC = () => {
             <AdminDashboard 
               sellers={sellers} 
               orders={orders} 
+              notifications={notifications}
               onUpdateOrders={handleUpdateOrders}
               onUpdateSellers={handleUpdateSellers}
             />
@@ -46,7 +65,7 @@ const App: React.FC = () => {
             <ShopFront 
               sellers={sellers} 
               products={products} 
-              onPlaceOrder={(newOrder) => setOrders([...orders, newOrder])}
+              onPlaceOrder={handlePlaceOrder}
             />
           } />
         </Routes>
