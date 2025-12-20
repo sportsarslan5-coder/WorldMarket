@@ -1,77 +1,125 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { mockProducts, mockSellers } from '../services/mockData.ts';
+import { Product } from '../types.ts';
 
 const LandingPage: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const categories = ['All', 'Electronics', 'Fashion', 'Sports', 'Home'];
+
+  const filteredProducts = useMemo(() => {
+    return mockProducts.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            p.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, activeCategory]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b">
-        <Link className="flex items-center justify-center font-bold text-2xl text-green-700" to="/">
-          PK-MART
+    <div className="min-h-screen bg-[#f3f3f3] font-sans text-slate-900">
+      {/* Amazon-style Nav */}
+      <nav className="bg-[#131921] text-white p-4 flex flex-col md:flex-row items-center gap-6 sticky top-0 z-50">
+        <Link to="/" className="text-2xl font-black text-white px-2">
+          PK<span className="text-[#febd69]">-</span>MART
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/seller">
-            Register as Seller
-          </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/admin">
-            Admin Portal
-          </Link>
-        </nav>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-green-50">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
-                  Own Your <span className="text-green-600">Online Store</span> in Pakistan
-                </h1>
-                <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl">
-                  Build your business. We handle the delivery and payments. You earn 5% on every order you bring to the platform.
-                </p>
-              </div>
-              <div className="space-x-4">
-                <Link to="/seller" className="inline-flex h-12 items-center justify-center rounded-full bg-green-600 px-8 text-sm font-semibold text-white shadow-lg transition-all hover:bg-green-700 hover:scale-105">
-                  Become a Seller
-                </Link>
-                <Link to="/admin" className="inline-flex h-12 items-center justify-center rounded-full border border-gray-200 bg-white px-8 text-sm font-semibold shadow-sm transition-all hover:bg-gray-50">
-                  Manage Platform
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
         
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col items-center space-y-4 text-center">
-                <div className="bg-green-100 p-5 rounded-2xl">
-                  <svg className="w-10 h-10 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg>
-                </div>
-                <h3 className="text-2xl font-bold">Fast Payouts</h3>
-                <p className="text-gray-500">Get your commission directly in your JazzCash or Easypaisa account every week.</p>
-              </div>
-              <div className="flex flex-col items-center space-y-4 text-center">
-                <div className="bg-green-100 p-5 rounded-2xl">
-                  <svg className="w-10 h-10 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h3 className="text-2xl font-bold">Zero Risk</h3>
-                <p className="text-gray-500">You don't need to worry about inventory or delivery. Admin handles everything from packing to shipping.</p>
-              </div>
-              <div className="flex flex-col items-center space-y-4 text-center">
-                <div className="bg-green-100 p-5 rounded-2xl">
-                  <svg className="w-10 h-10 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h3 className="text-2xl font-bold">Trust of Cash on Delivery</h3>
-                <p className="text-gray-500">Integrated Cash on Delivery (COD) for all customers across Pakistan ensures high conversion rates.</p>
-              </div>
-            </div>
+        <div className="flex-1 flex w-full">
+          <select 
+            className="bg-[#f3f3f3] text-slate-600 px-3 rounded-l-md text-xs font-bold border-r border-slate-300"
+            value={activeCategory}
+            onChange={(e) => setActiveCategory(e.target.value)}
+          >
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <input 
+            type="text" 
+            placeholder="Search Amazon style..." 
+            className="flex-1 p-3 outline-none text-slate-900 font-medium"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button className="bg-[#febd69] p-3 rounded-r-md hover:bg-[#f3a847] transition">
+            <svg className="w-6 h-6 text-[#131921]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </button>
+        </div>
+
+        <div className="flex gap-8 items-center text-xs font-bold">
+          <Link to="/seller" className="hover:border border-white p-1 rounded transition">Seller Portal</Link>
+          <Link to="/admin" className="hover:border border-white p-1 rounded transition">Admin Login</Link>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-400">Returns</span>
+            <span className="text-sm font-black">& Orders</span>
           </div>
-        </section>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <header className="relative h-[400px] overflow-hidden">
+        <img 
+          src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=2000" 
+          className="w-full h-full object-cover brightness-50" 
+          alt="Hero" 
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4 drop-shadow-2xl">PAKISTAN'S OWN MARKETPLACE</h1>
+          <p className="text-xl font-medium max-w-2xl opacity-90 drop-shadow-md">Buy directly from local vendors. We handle the quality and delivery across the nation.</p>
+        </div>
+      </header>
+
+      {/* Product Grid */}
+      <main className="max-w-[1440px] mx-auto p-6 -mt-20 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredProducts.map(p => {
+            const seller = mockSellers.find(s => s.id === p.sellerId);
+            return (
+              <div key={p.id} className="bg-white p-6 rounded-md shadow-md flex flex-col group">
+                <div className="h-60 mb-4 overflow-hidden">
+                  <img src={p.imageUrl} className="w-full h-full object-contain group-hover:scale-105 transition duration-500" alt={p.name} />
+                </div>
+                <Link to={`/shop/${seller?.shopSlug}`} className="text-xs font-bold text-blue-600 hover:text-orange-600 mb-1">
+                  Visit {seller?.shopName}
+                </Link>
+                <h3 className="font-bold text-lg mb-2 line-clamp-2">{p.name}</h3>
+                <div className="flex items-center gap-1 mb-2">
+                  <div className="flex text-yellow-500">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className={`w-4 h-4 ${i < Math.floor(p.rating) ? 'fill-current' : 'text-slate-200 fill-current'}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                    ))}
+                  </div>
+                  <span className="text-xs text-blue-600 font-medium">{p.reviewsCount}</span>
+                </div>
+                <div className="mt-auto pt-4 flex items-center justify-between">
+                  <div className="flex items-baseline">
+                    <span className="text-xs font-bold mr-0.5">Rs.</span>
+                    <span className="text-2xl font-black">{p.price.toLocaleString()}</span>
+                  </div>
+                  <Link 
+                    to={`/shop/${seller?.shopSlug}`}
+                    className="bg-[#ffd814] border border-[#fcd200] px-4 py-2 rounded-full text-xs font-bold shadow-sm hover:bg-[#f7ca00] transition"
+                  >
+                    View Store
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-8 w-full shrink-0 items-center px-4 md:px-6 border-t bg-gray-50">
-        <p className="text-xs text-gray-500 font-medium">© 2024 PK-Mart Pakistan. Empowering local entrepreneurs.</p>
+
+      <footer className="bg-[#232f3e] text-white p-20 mt-20 text-center">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <h2 className="text-2xl font-black">PK-MART Pakistan</h2>
+          <p className="opacity-70 text-sm">Empowering local vendors across Lahore, Karachi, Islamabad, and beyond. Centralized logistics, trusted transactions.</p>
+          <div className="flex justify-center gap-10 text-sm font-bold opacity-80">
+            <Link to="/seller" className="hover:underline">Sell on PK-MART</Link>
+            <Link to="/admin" className="hover:underline">Track Shipments</Link>
+            <Link to="/" className="hover:underline">Help Center</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );

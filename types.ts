@@ -33,7 +33,9 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  currency: string;
+  category: string;
+  rating: number;
+  reviewsCount: number;
   imageUrl: string;
   published: boolean;
   createdAt: string;

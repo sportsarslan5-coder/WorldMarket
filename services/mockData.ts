@@ -5,7 +5,7 @@ export const mockSellers: Seller[] = [
   {
     id: 's1',
     fullName: 'Ahmed Khan',
-    email: 'ahmed@example.pk',
+    email: 'ahmed.k@gmail.com',
     phoneNumber: '03001234567',
     payoutMethod: 'JazzCash',
     accountNumber: '03001234567',
@@ -16,13 +16,25 @@ export const mockSellers: Seller[] = [
   {
     id: 's2',
     fullName: 'Fatima Zahra',
-    email: 'fatima@example.pk',
+    email: 'f.zahra@gmail.com',
     phoneNumber: '03217654321',
     payoutMethod: 'Easypaisa',
     accountNumber: '03217654321',
     shopName: 'Zahra Fabrics',
     shopSlug: 'zahra-fabrics',
     joinedAt: '2024-02-15'
+  },
+  {
+    id: 's3',
+    fullName: 'Salman Sheikh',
+    email: 'salman.sports@gmail.com',
+    phoneNumber: '03450009988',
+    payoutMethod: 'Bank Transfer',
+    accountNumber: 'PK12ALPH000001234567',
+    bankName: 'Alfalah Bank',
+    shopName: 'Salman Sports',
+    shopSlug: 'salman-sports',
+    joinedAt: '2024-03-01'
   }
 ];
 
@@ -30,45 +42,74 @@ export const mockProducts: Product[] = [
   {
     id: 'p1',
     sellerId: 's1',
-    name: 'Wireless Bluetooth Buds',
-    description: 'High quality bass with 20h battery life.',
-    price: 2500,
-    currency: 'PKR',
-    imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&q=80&w=400',
+    name: 'Wireless Pro Buds',
+    description: 'Noise cancelling Bluetooth 5.3 earbuds with 40h playtime.',
+    price: 3500,
+    category: 'Electronics',
+    rating: 4.8,
+    reviewsCount: 124,
+    imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
     published: true,
     createdAt: '2024-03-01'
   },
   {
     id: 'p2',
     sellerId: 's2',
-    name: 'Luxury Lawn Suit',
-    description: 'Unstitched 3-piece luxury embroidered lawn suit.',
-    price: 4500,
-    currency: 'PKR',
-    imageUrl: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&q=80&w=400',
+    name: 'Embroidered Lawn Dress',
+    description: '3-Piece premium unstitched collection for Summer 2024.',
+    price: 5200,
+    category: 'Fashion',
+    rating: 4.5,
+    reviewsCount: 89,
+    imageUrl: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400',
     published: true,
     createdAt: '2024-03-05'
+  },
+  {
+    id: 'p3',
+    sellerId: 's3',
+    name: 'Cricket Willow Bat (G1)',
+    description: 'Grade 1 English Willow professional cricket bat.',
+    price: 15500,
+    category: 'Sports',
+    rating: 4.9,
+    reviewsCount: 45,
+    imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400',
+    published: true,
+    createdAt: '2024-03-08'
+  },
+  {
+    id: 'p4',
+    sellerId: 's1',
+    name: 'Smart Watch Series 9',
+    description: 'Amoled display, SPO2 tracking, and 7-day battery life.',
+    price: 7800,
+    category: 'Electronics',
+    rating: 4.2,
+    reviewsCount: 230,
+    imageUrl: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=400',
+    published: true,
+    createdAt: '2024-03-10'
   }
 ];
 
 export const mockOrders: Order[] = [
   {
-    id: 'PK-8821',
+    id: 'PK-MAR-1001',
     sellerId: 's1',
-    // Fix: Added missing sellerName property required by Order interface
     sellerName: 'Ahmed Electronics',
     customerName: 'Zainab Bibi',
     customerPhone: '03331112223',
     customerEmail: 'zainab@example.com',
     customerAddress: 'House 12, St 4, DHA Phase 5, Lahore',
     items: [
-      { productId: 'p1', productName: 'Wireless Bluetooth Buds', quantity: 1, price: 2500 }
+      { productId: 'p1', productName: 'Wireless Pro Buds', quantity: 1, price: 3500 }
     ],
-    totalAmount: 2500,
+    totalAmount: 3500,
     currency: 'PKR',
     paymentMethod: PaymentMethod.COD,
     status: OrderStatus.PENDING,
-    commissionAmount: 125, // 2500 * 0.05
+    commissionAmount: 175,
     createdAt: '2024-03-10T10:00:00Z'
   }
 ];
