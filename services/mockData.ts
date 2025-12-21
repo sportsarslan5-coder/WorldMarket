@@ -53,6 +53,10 @@ export const mockProducts: Product[] = [
     rating: 4.8,
     reviewsCount: 124,
     imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
+    // Added missing properties to satisfy Product interface
+    images: [],
+    sizes: [],
+    stock: 50,
     published: true,
     createdAt: '2024-03-01'
   },
@@ -67,6 +71,10 @@ export const mockProducts: Product[] = [
     rating: 4.5,
     reviewsCount: 89,
     imageUrl: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400',
+    // Added missing properties to satisfy Product interface
+    images: [],
+    sizes: ['S', 'M', 'L'],
+    stock: 35,
     published: true,
     createdAt: '2024-03-05'
   },
@@ -81,6 +89,10 @@ export const mockProducts: Product[] = [
     rating: 4.9,
     reviewsCount: 45,
     imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400',
+    // Added missing properties to satisfy Product interface
+    images: [],
+    sizes: [],
+    stock: 12,
     published: true,
     createdAt: '2024-03-08'
   }

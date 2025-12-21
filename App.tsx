@@ -6,7 +6,7 @@ import SellerDashboard from './components/SellerDashboard.tsx';
 import ShopFront from './components/ShopFront.tsx';
 import LandingPage from './components/LandingPage.tsx';
 import { Seller, Product, Order, AdminNotification } from './types.ts';
-import { db } from './services/db.ts';
+import { api } from './services/api.ts';
 import { generateAdminNotification } from './services/notificationService.ts';
 
 const App: React.FC = () => {
@@ -17,69 +17,66 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<Seller | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initial Hydration from Persistent Storage
+  // Global Hydration - Works across refreshes and direct links
   useEffect(() => {
-    const hydrate = () => {
-      setSellers(db.getSellers());
-      setProducts(db.getProducts());
-      setOrders(db.getOrders());
-      setIsLoading(false);
+    const init = async () => {
+      try {
+        const [s, p, o] = await Promise.all([
+          api.fetchSellers(),
+          api.fetchProducts(),
+          api.fetchOrders()
+        ]);
+        setSellers(s);
+        setProducts(p);
+        setOrders(o);
+      } catch (err) {
+        console.error("Initial Sync Failed:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    hydrate();
+    init();
   }, []);
 
   const handleUpdateSellers = async (updated: Seller[]) => {
-    // Only persist the latest addition/update
     const lastSeller = updated[updated.length - 1];
-    if (lastSeller) db.saveSeller(lastSeller);
-    
-    if (updated.length > sellers.length) {
+    if (lastSeller) await api.saveSeller(lastSeller);
+    setSellers(updated);
+
+    // AI Notifications
+    if (updated.length > sellers.length && lastSeller) {
       try {
         const notification = await generateAdminNotification('NEW_SELLER', lastSeller);
         setNotifications(prev => [notification, ...prev]);
-      } catch (err) {
-        console.error("AI Notification Error:", err);
-      }
+      } catch (err) { console.error(err); }
     }
-    setSellers(updated);
   };
 
-  const handleToggleSellerStatus = (sellerId: string) => {
-    const seller = sellers.find(s => s.id === sellerId);
-    if (!seller) return;
-    const newStatus = seller.status === 'active' ? 'inactive' : 'active';
-    const updatedSellers = db.updateSellerStatus(sellerId, newStatus);
+  const handleToggleSellerStatus = async (sellerId: string) => {
+    const updatedSellers = await api.toggleSeller(sellerId);
     setSellers(updatedSellers);
   };
 
-  const handleUpdateProducts = (updated: Product[]) => {
+  const handleUpdateProducts = async (updated: Product[]) => {
     const lastProduct = updated[updated.length - 1];
-    if (lastProduct) db.saveProduct(lastProduct);
+    if (lastProduct) await api.saveProduct(lastProduct);
     setProducts(updated);
   };
 
-  const handleUpdateOrders = (updated: Order[]) => {
-    // Note: Admin dashboard might update existing orders, for now we treat orders as push-only
-    setOrders(updated);
-  };
-
   const handlePlaceOrder = async (newOrder: Order) => {
-    db.saveOrder(newOrder);
+    await api.saveOrder(newOrder);
     setOrders(prev => [...prev, newOrder]);
     try {
       const notification = await generateAdminNotification('NEW_ORDER', newOrder);
       setNotifications(prev => [notification, ...prev]);
-    } catch (err) {
-      console.error("AI Notification Error:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white font-sans">
-        <div className="w-16 h-16 border-4 border-[#febd69] border-t-transparent rounded-full animate-spin mb-6"></div>
-        <h2 className="text-xl font-black uppercase tracking-widest">Loading PK-MART</h2>
-        <p className="text-slate-500 font-bold mt-2">Connecting to Seller Protex Secure Database...</p>
+      <div className="min-h-screen bg-[#131921] flex flex-col items-center justify-center text-white font-sans">
+        <div className="w-12 h-12 border-4 border-[#febd69] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-xs font-black uppercase tracking-widest text-slate-500">Global Sync Active</p>
       </div>
     );
   }
@@ -94,7 +91,7 @@ const App: React.FC = () => {
               sellers={sellers} 
               orders={orders} 
               notifications={notifications}
-              onUpdateOrders={handleUpdateOrders}
+              onUpdateOrders={setOrders}
               onUpdateSellers={handleUpdateSellers}
               onToggleSellerStatus={handleToggleSellerStatus}
             />

@@ -25,20 +25,23 @@ export interface Seller {
   shopName: string;
   shopSlug: string;
   joinedAt: string;
-  status: 'active' | 'inactive'; // Added for activation logic
+  status: 'active' | 'inactive';
 }
 
 export interface Product {
   id: string;
   sellerId: string;
-  shopId: string; // Added for robust linking
+  shopId: string;
   name: string;
   description: string;
   price: number;
   category: string;
   rating: number;
   reviewsCount: number;
-  imageUrl: string;
+  imageUrl: string; // Primary image
+  images: string[]; // Additional gallery images
+  sizes: string[]; // e.g. ["S", "M", "L"]
+  stock: number;
   published: boolean;
   createdAt: string;
 }
@@ -56,12 +59,13 @@ export interface Order {
     productName: string;
     quantity: number;
     price: number;
+    size?: string;
   }[];
   totalAmount: number;
   currency: string;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
-  commissionAmount: number; // 5% for the seller
+  commissionAmount: number;
   createdAt: string;
 }
 
