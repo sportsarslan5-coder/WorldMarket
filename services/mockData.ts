@@ -108,7 +108,14 @@ export const mockOrders: Order[] = [
     customerEmail: 'zainab@example.com',
     customerAddress: 'House 12, St 4, DHA Phase 5, Lahore',
     items: [
-      { productId: 'p1', productName: 'Wireless Pro Buds', quantity: 1, price: 3500 }
+      // Fix: Added productImageUrl to satisfy the Order interface requirements (Line 111)
+      { 
+        productId: 'p1', 
+        productName: 'Wireless Pro Buds', 
+        productImageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
+        quantity: 1, 
+        price: 3500 
+      }
     ],
     totalAmount: 3500,
     currency: 'PKR',

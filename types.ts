@@ -57,6 +57,7 @@ export interface Order {
   items: {
     productId: string;
     productName: string;
+    productImageUrl: string; // New field for Admin visibility
     quantity: number;
     price: number;
     size?: string;
