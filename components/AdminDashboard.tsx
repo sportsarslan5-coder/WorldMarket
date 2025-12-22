@@ -1,31 +1,30 @@
 
-import React, { useState, useEffect } from 'react';
-import { api } from '../services/api.ts';
-import { Shop, ShopStatus, Order } from '../types.ts';
+import React, { useState } from 'react';
+import { Shop, ShopStatus, Order, Seller, AdminNotification } from '../types.ts';
 import { useNavigate } from 'react-router-dom';
 
 const MASTER_PIN = "PK-MART-9988";
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  shops: Shop[];
+  sellers: Seller[];
+  orders: Order[];
+  notifications: AdminNotification[];
+  onRefresh: () => Promise<void>;
+  onToggleSellerStatus: (id: string) => Promise<void>;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
+  shops, 
+  orders, 
+  notifications, 
+  onRefresh, 
+  onToggleSellerStatus 
+}) => {
   const navigate = useNavigate();
   const [isAuth, setIsAuth] = useState(false);
   const [pin, setPin] = useState('');
-  const [shops, setShops] = useState<Shop[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [activeTab, setActiveTab] = useState<'approvals' | 'shops' | 'orders' | 'payouts'>('approvals');
-
-  useEffect(() => {
-    if (isAuth) {
-      loadData();
-    }
-  }, [isAuth]);
-
-  const loadData = async () => {
-    const s = await api.fetchAllShops();
-    const o = await api.fetchAllOrders();
-    setShops(s);
-    setOrders(o);
-  };
+  const [activeTab, setActiveTab] = useState<'approvals' | 'shops' | 'orders' | 'payouts' | 'notifications'>('approvals');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +33,9 @@ const AdminDashboard: React.FC = () => {
   };
 
   const approveShop = async (id: string) => {
-    await api.adminApproveShop(id);
-    await loadData();
+    // In our simplified model, approving a shop is toggling it to active
+    await onToggleSellerStatus(id); 
+    await onRefresh();
     alert("Shop officially activated on PK-MART.");
   };
 
@@ -65,6 +65,9 @@ const AdminDashboard: React.FC = () => {
           <button onClick={() => setActiveTab('shops')} className={`w-full text-left p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition ${activeTab === 'shops' ? 'bg-[#febd69] text-black' : 'text-slate-500 hover:bg-white/5'}`}>All Shops</button>
           <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition ${activeTab === 'orders' ? 'bg-[#febd69] text-black' : 'text-slate-500 hover:bg-white/5'}`}>Master Orders</button>
           <button onClick={() => setActiveTab('payouts')} className={`w-full text-left p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition ${activeTab === 'payouts' ? 'bg-[#febd69] text-black' : 'text-slate-500 hover:bg-white/5'}`}>Settlements</button>
+          <button onClick={() => setActiveTab('notifications')} className={`w-full text-left p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition ${activeTab === 'notifications' ? 'bg-[#febd69] text-black' : 'text-slate-500 hover:bg-white/5'}`}>
+            AI Alerts {notifications.length > 0 && <span className="ml-2 bg-[#febd69] text-black px-2 rounded-full text-[10px]">{notifications.length}</span>}
+          </button>
         </div>
         <button onClick={() => navigate('/')} className="text-slate-600 text-[10px] font-black uppercase hover:text-white transition">Terminate Session</button>
       </nav>
@@ -84,96 +87,94 @@ const AdminDashboard: React.FC = () => {
                           <h3 className="text-3xl font-black">{s.name}</h3>
                           <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">Verified ID</span>
                        </div>
-                       <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">WhatsApp: {s.whatsappNumber} • Email: {s.email}</p>
+                       {/* Fix: Property name is whatsappNumber in Shop interface */}
+                       <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">WhatsApp: {s.whatsappNumber}</p>
                     </div>
-                    <button onClick={() => approveShop(s.id)} className="bg-emerald-500 text-white px-12 py-5 rounded-3xl font-black shadow-2xl shadow-emerald-200 active:scale-95 transition">ACTIVATE VENDOR</button>
+                    <button 
+                      onClick={() => approveShop(s.ownerId)} 
+                      className="bg-[#febd69] text-black px-10 py-4 rounded-3xl font-black text-xs uppercase tracking-widest hover:shadow-xl transition"
+                    >
+                      APPROVE STORE
+                    </button>
                   </div>
                 ))}
                 {shops.filter(s => s.status === ShopStatus.PENDING_ADMIN_APPROVAL).length === 0 && (
-                  <div className="p-32 text-center bg-white rounded-[60px] border-4 border-dashed border-slate-100">
-                     <p className="text-slate-300 font-black text-sm uppercase tracking-[0.3em]">No pending approvals today.</p>
+                  <div className="bg-white p-20 rounded-[50px] text-center border-4 border-dashed border-slate-100">
+                    <p className="text-slate-300 font-black text-sm uppercase tracking-widest">Approval queue is clear.</p>
                   </div>
                 )}
              </div>
           </div>
         )}
 
-        {activeTab === 'payouts' && (
-           <div className="space-y-10">
-              <h2 className="text-5xl font-black italic uppercase tracking-tighter">Settlement Hub</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                 {shops.filter(s => s.status === ShopStatus.ACTIVE).map(s => {
-                    const shopOrders = orders.filter(o => o.shopId === s.id);
-                    const totalSales = shopOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-                    const commission = totalSales * 0.05;
-                    const vendorDue = totalSales - commission;
-                    
-                    return (
-                       <div key={s.id} className="bg-white p-8 rounded-[40px] border shadow-sm space-y-6">
-                          <div>
-                             <h4 className="font-black text-xl">{s.name}</h4>
-                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Payout: {s.payoutInfo?.method || 'N/A'}</p>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                             <div className="bg-slate-50 p-4 rounded-2xl">
-                                <p className="text-[8px] font-black text-slate-400 uppercase">Gross Sales</p>
-                                <p className="font-black text-sm">Rs. {totalSales.toLocaleString()}</p>
-                             </div>
-                             <div className="bg-emerald-50 p-4 rounded-2xl">
-                                <p className="text-[8px] font-black text-emerald-600 uppercase">Vendor Due</p>
-                                <p className="font-black text-sm text-emerald-700">Rs. {vendorDue.toLocaleString()}</p>
-                             </div>
-                          </div>
-                          <div className="text-[10px] font-bold text-slate-400 bg-slate-100 p-4 rounded-xl">
-                             <p>TITLE: {s.payoutInfo?.accountTitle || '---'}</p>
-                             <p>NUMBER: {s.payoutInfo?.accountNumber || '---'}</p>
-                          </div>
-                          <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest">Mark as Settled</button>
-                       </div>
-                    );
-                 })}
-              </div>
-           </div>
+        {activeTab === 'shops' && (
+          <div className="space-y-10">
+             <h2 className="text-5xl font-black italic uppercase tracking-tighter">Inventory: Shops</h2>
+             <div className="grid gap-6">
+                {shops.map(s => (
+                  <div key={s.id} className="bg-white p-8 rounded-[40px] border border-slate-100 flex justify-between items-center">
+                    <div>
+                      <h3 className="text-xl font-black">{s.name}</h3>
+                      <p className="text-slate-400 text-xs font-bold uppercase">{s.category} • {s.status}</p>
+                    </div>
+                    <button onClick={() => onToggleSellerStatus(s.ownerId)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Toggle Status</button>
+                  </div>
+                ))}
+             </div>
+          </div>
         )}
 
         {activeTab === 'orders' && (
-           <div className="space-y-10 animate-in fade-in duration-500">
-              <h2 className="text-5xl font-black italic uppercase tracking-tighter">Global Transaction Log</h2>
-              <div className="bg-white rounded-[50px] border-2 border-slate-50 overflow-hidden shadow-sm">
-                 <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50 border-b">
-                       <tr>
-                          <th className="p-10 text-[10px] font-black uppercase text-slate-400">Transaction</th>
-                          <th className="p-10 text-[10px] font-black uppercase text-slate-400">Recipient</th>
-                          <th className="p-10 text-[10px] font-black uppercase text-slate-400 text-right">Settlement</th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                       {orders.map(o => (
-                          <tr key={o.id} className="hover:bg-slate-50/50 transition duration-300">
-                             <td className="p-10">
-                                <p className="font-black text-slate-900 mb-1">{o.id}</p>
-                                <p className="text-[10px] font-bold text-slate-300 uppercase">{o.shopName}</p>
-                             </td>
-                             <td className="p-10">
-                                <p className="font-black text-slate-900">{o.customerName}</p>
-                                <p className="text-[10px] text-blue-600 font-bold uppercase">{o.customerPhone}</p>
-                             </td>
-                             <td className="p-10 text-right">
-                                <p className="text-3xl font-black text-emerald-600 tracking-tighter">Rs. {o.totalAmount.toLocaleString()}</p>
-                                <p className="text-[10px] font-black uppercase text-slate-300 mt-2">{o.paymentMethod} • UNPAID</p>
-                             </td>
-                          </tr>
-                       ))}
-                       {orders.length === 0 && (
-                          <tr>
-                             <td colSpan={3} className="p-24 text-center text-slate-300 font-black uppercase text-xs tracking-widest">No global sales recorded.</td>
-                          </tr>
-                       )}
-                    </tbody>
-                 </table>
-              </div>
-           </div>
+          <div className="space-y-10">
+             <h2 className="text-5xl font-black italic uppercase tracking-tighter">Logistics: Master Orders</h2>
+             <div className="bg-white rounded-[40px] overflow-hidden border border-slate-100">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest">
+                    <tr>
+                      <th className="p-6">Order ID</th>
+                      <th className="p-6">Store</th>
+                      <th className="p-6">Customer</th>
+                      <th className="p-6">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {orders.map(o => (
+                      <tr key={o.id}>
+                        <td className="p-6 font-bold">{o.id}</td>
+                        <td className="p-6 font-bold">{o.shopName}</td>
+                        <td className="p-6 font-bold">{o.customerName}</td>
+                        <td className="p-6 font-black">Rs. {o.totalAmount.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="space-y-10">
+             <h2 className="text-5xl font-black italic uppercase tracking-tighter">AI Alerts: Terminal Logs</h2>
+             <div className="space-y-6">
+                {notifications.map(n => (
+                  <div key={n.id} className="bg-white p-8 rounded-[40px] border border-slate-100">
+                    <div className="flex justify-between mb-4">
+                       <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{n.type}</span>
+                       <span className="text-slate-400 text-[10px] font-bold">{new Date(n.timestamp).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm font-bold text-slate-800 mb-4">{n.content.whatsapp}</p>
+                    <div className="p-4 bg-slate-50 rounded-2xl text-[10px] font-mono text-slate-500 whitespace-pre-wrap">
+                       {n.content.email}
+                    </div>
+                  </div>
+                ))}
+                {notifications.length === 0 && (
+                  <div className="bg-white p-20 rounded-[50px] text-center border-4 border-dashed border-slate-100">
+                    <p className="text-slate-300 font-black text-sm uppercase tracking-widest">No recent system notifications.</p>
+                  </div>
+                )}
+             </div>
+          </div>
         )}
       </main>
     </div>

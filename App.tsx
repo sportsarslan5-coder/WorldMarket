@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './components/AdminDashboard.tsx';
@@ -41,36 +40,9 @@ const App: React.FC = () => {
     syncData();
   }, []);
 
-  const handleUpdateSellers = async (updated: Seller[]) => {
-    // In this app, sellers are derived from shops in the API
-    // If a seller is new, we might trigger a notification
-    const lastSeller = updated[updated.length - 1];
-    
-    if (updated.length > sellers.length && lastSeller) {
-      try {
-        const notification = await generateAdminNotification('NEW_SELLER', lastSeller);
-        setNotifications(prev => [notification, ...prev]);
-      } catch (err) { console.error("Notification Engine Error:", err); }
-    }
-    await syncData();
-  };
-
   const handleToggleSellerStatus = async (sellerId: string) => {
     await api.toggleSeller(sellerId);
     await syncData();
-  };
-
-  const handleUpdateProducts = async () => {
-    await syncData();
-  };
-
-  const handlePlaceOrder = async (newOrder: Order) => {
-    await api.saveOrder(newOrder);
-    await syncData();
-    try {
-      const notification = await generateAdminNotification('NEW_ORDER', newOrder);
-      setNotifications(prev => [notification, ...prev]);
-    } catch (err) { console.error("Notification Engine Error:", err); }
   };
 
   if (isLoading) {
@@ -97,4 +69,12 @@ const App: React.FC = () => {
               onToggleSellerStatus={handleToggleSellerStatus}
             />
           } />
-          <Route
+          <Route path="/seller/*" element={<SellerDashboard />} />
+          <Route path="/shop/:slug" element={<ShopFront />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+};
+
+export default App;
