@@ -1,18 +1,17 @@
 
-export enum OrderStatus {
-  PENDING = 'Pending',
-  PROCESSING = 'Processing',
-  SHIPPED = 'Shipped',
-  DELIVERED = 'Delivered',
-  CANCELLED = 'Cancelled'
+export enum ShopStatus {
+  PENDING_VERIFICATION = 'PENDING_VERIFICATION',
+  PENDING_ADMIN_APPROVAL = 'PENDING_ADMIN_APPROVAL',
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED'
 }
 
-export enum PaymentMethod {
-  COD = 'Cash on Delivery',
-  BANK_TRANSFER = 'Bank Transfer'
+export interface PayoutInfo {
+  method: 'JazzCash' | 'Easypaisa' | 'Bank';
+  accountNumber: string;
+  accountTitle: string;
+  bankName?: string;
 }
-
-export type SellerPayoutMethod = 'JazzCash' | 'Easypaisa' | 'Bank Transfer';
 
 export interface Shop {
   id: string;
@@ -21,46 +20,36 @@ export interface Shop {
   slug: string;
   description: string;
   logoUrl: string;
-  status: 'active' | 'inactive';
+  status: ShopStatus;
   verified: boolean;
-}
-
-export interface Seller {
-  id: string;
-  fullName: string;
+  otpCode?: string; 
+  whatsappNumber: string;
   email: string;
-  phoneNumber: string;
-  payoutMethod: SellerPayoutMethod;
-  accountNumber: string;
-  bankName?: string;
-  shopId: string; // Linked to Shop
+  category: string;
   joinedAt: string;
-  // Added fields to match application usage and mock data
-  status?: 'active' | 'inactive';
-  shopName?: string;
-  shopSlug?: string;
+  payoutInfo?: PayoutInfo;
 }
 
 export interface Product {
   id: string;
-  shopId: string; // Critical: Linked to Shop, not just Seller
+  shopId: string;
   name: string;
   description: string;
   price: number;
   category: string;
-  imageUrl: string;
-  images: string[];
+  imageUrl: string; 
+  images: string[]; 
   sizes: string[];
+  colors: string[];
   stock: number;
   published: boolean;
   createdAt: string;
-  // Added field to match mock data
-  sellerId?: string;
 }
 
 export interface Order {
   id: string;
   shopId: string;
+  shopName: string;
   customerName: string;
   customerPhone: string;
   customerAddress: string;
@@ -71,13 +60,23 @@ export interface Order {
     quantity: number;
     price: number;
     size?: string;
+    color?: string;
   }[];
   totalAmount: number;
-  status: OrderStatus;
+  paymentStatus: 'unpaid' | 'paid' | 'payout_processed';
+  paymentMethod: 'COD' | 'ONLINE';
   createdAt: string;
-  // Added fields to match application usage and notifications
-  sellerId?: string;
-  sellerName?: string;
+}
+
+export interface Seller {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  shopId: string;
+  joinedAt: string;
+  shopName?: string; // Virtual property for notifications
+  payoutInfo?: PayoutInfo;
 }
 
 export interface AdminNotification {
@@ -88,6 +87,5 @@ export interface AdminNotification {
     whatsapp: string;
     email: string;
   };
-  // Added field to satisfy notification logic
-  sent?: boolean;
+  sent: boolean;
 }

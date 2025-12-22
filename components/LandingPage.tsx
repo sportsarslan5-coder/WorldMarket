@@ -1,33 +1,34 @@
 
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Product, Seller } from '../types.ts';
+import { Product, Seller, Shop, ShopStatus } from '../types.ts';
 
 interface LandingPageProps {
   sellers: Seller[];
+  shops: Shop[];
   products: Product[];
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], products = [] }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], shops = [], products = [] }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
-  const categories = ['All', 'Electronics', 'Fashion', 'Sports', 'Home'];
+  const categories = ['All', 'Fashion', 'Electronics', 'Sports', 'Home'];
 
-  // Critical fix: Only show products from ACTIVE sellers
-  const activeSellersIds = useMemo(() => {
-    return sellers.filter(s => s.status === 'active').map(s => s.id);
-  }, [sellers]);
+  // Map active shop IDs for efficient filtering
+  const activeShopIds = useMemo(() => {
+    return shops.filter(s => s.status === ShopStatus.ACTIVE).map(s => s.id);
+  }, [shops]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const isFromActiveSeller = activeSellersIds.includes(p.sellerId) || activeSellersIds.includes(p.shopId);
+      const isFromActiveShop = activeShopIds.includes(p.shopId);
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             p.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-      return isFromActiveSeller && matchesSearch && matchesCategory && p.published;
+      return isFromActiveShop && matchesSearch && matchesCategory && p.published;
     });
-  }, [searchQuery, activeCategory, products, activeSellersIds]);
+  }, [searchQuery, activeCategory, products, activeShopIds]);
 
   return (
     <div className="min-h-screen bg-[#f3f3f3] font-sans text-slate-900">
@@ -62,32 +63,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], products = [] }
         </div>
       </nav>
 
-      <header className="relative h-[450px] overflow-hidden">
+      <header className="relative h-[400px] overflow-hidden">
         <img 
           src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=2000" 
-          className="w-full h-full object-cover brightness-[0.35]" 
+          className="w-full h-full object-cover brightness-[0.4]" 
           alt="Hero" 
         />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center animate-in fade-in duration-1000">
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-4 drop-shadow-2xl italic uppercase">Local. Trusted. Fast.</h1>
-          <p className="text-xl font-bold max-w-2xl opacity-80 drop-shadow-md tracking-tight">Buy directly from authenticated Pakistani vendors with Seller Protex protection.</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4 italic uppercase">Pakistan's Global Mall</h1>
+          <p className="text-lg font-bold max-w-2xl opacity-90 tracking-tight">Authenticated vendors. COD support. Fast logistics.</p>
         </div>
       </header>
 
-      <main className="max-w-[1440px] mx-auto p-6 -mt-24 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <main className="max-w-[1440px] mx-auto p-10 -mt-20 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {filteredProducts.map(p => {
-            const seller = sellers.find(s => s.id === p.sellerId || s.id === p.shopId);
+            const shop = shops.find(s => s.id === p.shopId);
             return (
-              <div key={p.id} className="bg-white p-6 rounded-xl shadow-lg flex flex-col group hover:shadow-2xl transition-all duration-300 border border-slate-100">
-                <div className="h-60 mb-6 overflow-hidden relative rounded-lg bg-slate-50 p-4">
-                  <img src={p.imageUrl} className="w-full h-full object-contain group-hover:scale-110 transition duration-700" alt={p.name} />
-                  <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[7px] font-black uppercase px-2 py-1 rounded shadow-sm">Active Now</div>
+              <div key={p.id} className="bg-white p-6 rounded-[30px] shadow-sm flex flex-col group hover:shadow-2xl transition-all duration-500 border border-slate-100">
+                <div className="h-56 mb-6 overflow-hidden relative rounded-2xl bg-slate-50 p-6">
+                  <img src={p.imageUrl} className="w-full h-full object-contain group-hover:scale-110 transition duration-1000" alt={p.name} />
                 </div>
-                <Link to={`/shop/${seller?.shopSlug}`} className="text-[10px] font-black text-blue-600 hover:text-orange-600 mb-2 uppercase tracking-widest border-b border-transparent hover:border-orange-600 inline-block transition">
-                  {seller?.shopName} • Visit Official Store
+                <Link to={`/shop/${shop?.slug}`} className="text-[10px] font-black text-blue-600 mb-2 uppercase tracking-widest hover:underline">
+                  {shop?.name} • Official Store
                 </Link>
-                <h3 className="font-bold text-lg mb-4 line-clamp-2 leading-tight tracking-tight text-slate-800">{p.name}</h3>
+                <h3 className="font-bold text-lg mb-4 line-clamp-2 leading-tight text-slate-800">{p.name}</h3>
                 
                 <div className="mt-auto pt-6 flex items-center justify-between border-t border-slate-50">
                   <div className="flex items-baseline text-slate-900">
@@ -95,10 +95,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], products = [] }
                     <span className="text-2xl font-black tracking-tighter">{p.price.toLocaleString()}</span>
                   </div>
                   <Link 
-                    to={`/shop/${seller?.shopSlug}`}
-                    className="bg-[#ffd814] text-[#131921] px-5 py-2.5 rounded-full text-[10px] font-black shadow-md hover:bg-[#f7ca00] transition active:scale-95"
+                    to={`/shop/${shop?.slug}`}
+                    className="bg-[#febd69] text-slate-900 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-[#f7ca00] transition active:scale-95"
                   >
-                    View Details
+                    View
                   </Link>
                 </div>
               </div>
@@ -107,22 +107,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], products = [] }
         </div>
 
         {filteredProducts.length === 0 && (
-          <div className="bg-white p-20 rounded-3xl text-center shadow-xl border">
-             <div className="text-6xl mb-4">📭</div>
-             <h2 className="text-2xl font-black text-slate-400 uppercase tracking-widest">No listings found</h2>
-             <p className="text-slate-400 font-bold mt-2">Try adjusting your search or category.</p>
+          <div className="bg-white p-32 rounded-[50px] text-center border-4 border-dashed border-slate-100">
+             <div className="text-6xl mb-6">🏜️</div>
+             <h2 className="text-xl font-black text-slate-300 uppercase tracking-widest">No matching SKUs found</h2>
           </div>
         )}
       </main>
 
-      <footer className="bg-[#232f3e] text-white p-20 mt-20 text-center border-t-8 border-[#febd69]">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <h2 className="text-4xl font-black tracking-tighter">PK-MART PAKISTAN</h2>
-          <p className="opacity-60 text-sm font-medium leading-relaxed">The premier multi-vendor marketplace solution for Pakistan. Secure payments, localized logistics, and professional vendor tools.</p>
-          <div className="flex flex-wrap justify-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
-            <Link to="/seller" className="hover:text-[#febd69] transition">Join as Vendor</Link>
-            <Link to="/admin" className="hover:text-[#febd69] transition">Platform Admin</Link>
-            <Link to="/" className="hover:text-[#febd69] transition">Privacy Policy</Link>
+      <footer className="bg-[#131921] text-white p-20 mt-20 text-center border-t-4 border-[#febd69]">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <h2 className="text-3xl font-black italic tracking-tighter uppercase">PK-MART Terminal</h2>
+          <p className="opacity-50 text-xs font-bold uppercase tracking-widest">Global Logistics & Multi-Vendor Hub</p>
+          <div className="flex justify-center gap-10 text-[9px] font-black uppercase tracking-[0.3em] opacity-80 pt-10">
+            <Link to="/seller" className="hover:text-[#febd69] transition">Vendor Login</Link>
+            <Link to="/admin" className="hover:text-[#febd69] transition">System Admin</Link>
           </div>
         </div>
       </footer>
