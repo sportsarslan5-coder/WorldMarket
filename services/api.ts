@@ -1,19 +1,46 @@
 
 import { Shop, Product, Order, ShopStatus, Seller, PayoutInfo } from '../types.ts';
+import { mockSellers, mockProducts, mockOrders } from './mockData.ts';
 
 class CloudDatabaseService {
-  private static STORAGE_KEY = 'PK_MART_MASTER_DATA_V4';
+  private static STORAGE_KEY = 'PK_MART_MASTER_DATA_V5';
 
   private getRegistry() {
     const data = localStorage.getItem(CloudDatabaseService.STORAGE_KEY);
-    return data ? JSON.parse(data) : { shops: [], products: [], orders: [], sellers: [] };
+    if (!data) {
+      // Seed initial data
+      const initialShops: Shop[] = mockSellers.map(s => ({
+        id: s.shopId,
+        ownerId: s.id,
+        name: s.shopName || s.fullName + "'s Store",
+        slug: (s.shopName || s.fullName).toLowerCase().replace(/\s+/g, '-'),
+        description: 'Premium vendor on PK-MART',
+        logoUrl: '',
+        status: ShopStatus.ACTIVE,
+        verified: true,
+        whatsappNumber: s.phoneNumber,
+        email: s.email,
+        category: 'General',
+        joinedAt: s.joinedAt,
+        payoutInfo: s.payoutInfo
+      }));
+
+      const registry = { 
+        shops: initialShops, 
+        products: mockProducts, 
+        orders: mockOrders, 
+        sellers: mockSellers 
+      };
+      this.saveRegistry(registry);
+      return registry;
+    }
+    return JSON.parse(data);
   }
 
   private saveRegistry(data: any) {
     localStorage.setItem(CloudDatabaseService.STORAGE_KEY, JSON.stringify(data));
   }
 
-  // --- SHOP & SELLER LOGIC ---
   async createShop(data: { name: string, email: string, whatsapp: string, category: string, payoutInfo: PayoutInfo }): Promise<Shop> {
     const registry = this.getRegistry();
     const shopId = 'shop_' + Math.random().toString(36).substr(2, 9);
@@ -53,19 +80,9 @@ class CloudDatabaseService {
     return false;
   }
 
-  async adminApproveShop(shopId: string): Promise<void> {
-    const registry = this.getRegistry();
-    const shop = registry.shops.find((s: Shop) => s.id === shopId);
-    if (shop) {
-      shop.status = ShopStatus.ACTIVE;
-      shop.verified = true;
-      this.saveRegistry(registry);
-    }
-  }
-
   async fetchShopBySlug(slug: string): Promise<Shop | null> {
     const registry = this.getRegistry();
-    return registry.shops.find((s: Shop) => s.slug === slug && s.status === ShopStatus.ACTIVE) || null;
+    return registry.shops.find((s: Shop) => s.slug === slug) || null;
   }
 
   async fetchAllShops(): Promise<Shop[]> {
@@ -86,29 +103,17 @@ class CloudDatabaseService {
     }));
   }
 
-  async saveSeller(seller: Seller): Promise<void> {
-    const registry = this.getRegistry();
-    const shop = registry.shops.find((s: Shop) => s.ownerId === seller.id);
-    if (shop) {
-      shop.name = seller.fullName;
-      shop.email = seller.email;
-      shop.whatsappNumber = seller.phoneNumber;
-      shop.payoutInfo = seller.payoutInfo;
-      this.saveRegistry(registry);
-    }
-  }
-
   async toggleSeller(sellerId: string): Promise<Seller[]> {
     const registry = this.getRegistry();
     const shop = registry.shops.find((s: Shop) => s.ownerId === sellerId);
     if (shop) {
-      shop.status = shop.status === ShopStatus.ACTIVE ? ShopStatus.SUSPENDED : ShopStatus.ACTIVE;
+      if (shop.status === ShopStatus.ACTIVE) shop.status = ShopStatus.SUSPENDED;
+      else shop.status = ShopStatus.ACTIVE;
       this.saveRegistry(registry);
     }
     return this.fetchAllSellers();
   }
 
-  // --- PRODUCT LOGIC ---
   async saveProduct(product: Product): Promise<void> {
     const registry = this.getRegistry();
     const index = registry.products.findIndex((p: Product) => p.id === product.id);
@@ -125,7 +130,6 @@ class CloudDatabaseService {
     return this.getRegistry().products;
   }
 
-  // --- ORDER LOGIC ---
   async saveOrder(order: Order): Promise<void> {
     const registry = this.getRegistry();
     registry.orders.push(order);

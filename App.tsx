@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import SellerDashboard from './components/SellerDashboard.tsx';
@@ -16,8 +17,7 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Global Hydration - The single source of truth sync
-  const syncData = async () => {
+  const syncData = useCallback(async () => {
     try {
       const [s, sh, p, o] = await Promise.all([
         api.fetchAllSellers(),
@@ -34,11 +34,17 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const addNotification = useCallback(async (type: 'NEW_SELLER' | 'NEW_ORDER', data: any) => {
+    const newNotif = await generateAdminNotification(type, data);
+    setNotifications(prev => [newNotif, ...prev]);
+    await syncData();
+  }, [syncData]);
 
   useEffect(() => {
     syncData();
-  }, []);
+  }, [syncData]);
 
   const handleToggleSellerStatus = async (sellerId: string) => {
     await api.toggleSeller(sellerId);
@@ -69,8 +75,8 @@ const App: React.FC = () => {
               onToggleSellerStatus={handleToggleSellerStatus}
             />
           } />
-          <Route path="/seller/*" element={<SellerDashboard />} />
-          <Route path="/shop/:slug" element={<ShopFront />} />
+          <Route path="/seller/*" element={<SellerDashboard onNotify={addNotification} />} />
+          <Route path="/shop/:slug" element={<ShopFront onNotify={addNotification} />} />
         </Routes>
       </div>
     </Router>
