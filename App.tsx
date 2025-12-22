@@ -21,10 +21,11 @@ const App: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
+        // Fix: Use the correct method names as defined in services/api.ts
         const [s, p, o] = await Promise.all([
-          api.fetchSellers(),
-          api.fetchProducts(),
-          api.fetchOrders()
+          api.fetchAllSellers(),
+          api.fetchAllProducts(),
+          api.fetchAllOrders()
         ]);
         setSellers(s);
         setProducts(p);
@@ -53,6 +54,7 @@ const App: React.FC = () => {
   };
 
   const handleToggleSellerStatus = async (sellerId: string) => {
+    // Fix: Use toggleSeller method from api.ts
     const updatedSellers = await api.toggleSeller(sellerId);
     setSellers(updatedSellers);
   };

@@ -16,14 +16,14 @@ export const generateAdminNotification = async (
        Name: ${(data as Seller).fullName}
        Email: ${(data as Seller).email}
        Phone: ${(data as Seller).phoneNumber}
-       Shop Name: ${(data as Seller).shopName}
+       Shop Name: ${(data as Seller).shopName || 'New Shop'}
        Payout: ${(data as Seller).payoutMethod} - ${(data as Seller).accountNumber}
        
        Draft a WhatsApp message and a formal Email for the Admin to review this vendor.`
     : `URGENT ORDER ALERT: A customer placed an order.
        ORDER DETAILS:
        Order ID: ${(data as Order).id}
-       Shop: ${(data as Order).sellerName}
+       Shop: ${(data as Order).sellerName || 'Partner Shop'}
        Customer: ${(data as Order).customerName} (${(data as Order).customerPhone})
        Address: ${(data as Order).customerAddress}
        Amount: Rs. ${(data as Order).totalAmount}
@@ -87,18 +87,4 @@ export const generateAdminNotification = async (
       sent: false
     };
   }
-};
-
-const createFallbackNotification = (type: string, data: any): AdminNotification => {
-  const title = type === 'NEW_SELLER' ? 'New Vendor' : 'New Order';
-  return {
-    id: 'f-' + Date.now(),
-    type: type as any,
-    timestamp: new Date().toISOString(),
-    content: {
-      whatsapp: `ADMIN ALERT: ${title} registered. ID: ${data.id}. Please check your dashboard for PII details.`,
-      email: `System alert for ${type}. Check Master Logs.`
-    },
-    sent: false
-  };
 };

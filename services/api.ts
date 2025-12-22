@@ -1,76 +1,100 @@
 
-import { Seller, Product, Order } from '../types.ts';
+import { Seller, Product, Order, Shop } from '../types.ts';
 import { mockSellers, mockProducts, mockOrders } from './mockData.ts';
 
 /**
- * GLOBAL API SERVICE
- * In a production Vercel environment, these methods would call:
- * fetch('/api/sellers') or supabase.from('sellers').select('*')
+ * CLOUD API GATEWAY
+ * This service replaces the local-only storage.
+ * In a real Vercel/Next.js app, these would be calls to:
+ * - supabase.from('products').select('*')
+ * - firebase.firestore().collection('orders').add(order)
  */
-class ApiService {
-  private isInitialLoad = true;
+class CloudApiService {
+  // We use a shared in-memory object for this session to simulate a central DB.
+  // On a real server, this would be a persistent SQL/NoSQL DB.
+  private static centralRegistry: {
+    sellers: Seller[];
+    products: Product[];
+    orders: Order[];
+    shops: Shop[];
+  } = {
+    sellers: [...mockSellers.map(s => ({ ...s, shopId: s.id }))], // Mapping mock
+    products: [...mockProducts],
+    orders: [...mockOrders],
+    shops: mockSellers.map(s => ({
+      id: s.id,
+      ownerId: s.id,
+      // Fix: Access shopName and shopSlug which are now part of the Seller interface
+      name: s.shopName || 'Untitled Shop',
+      slug: s.shopSlug || s.id,
+      description: 'Official Store',
+      logoUrl: '',
+      status: 'active',
+      verified: true
+    }))
+  };
 
-  // Simulation of a remote global database
-  private async getGlobalData<T>(key: string, fallback: T[]): Promise<T[]> {
-    const data = localStorage.getItem(`global_pkmart_${key}`);
-    if (!data && this.isInitialLoad) {
-      return fallback;
-    }
-    return data ? JSON.parse(data) : [];
+  async fetchShops(): Promise<Shop[]> {
+    return CloudApiService.centralRegistry.shops;
   }
 
-  private async saveGlobalData<T>(key: string, data: T[]) {
-    localStorage.setItem(`global_pkmart_${key}`, JSON.stringify(data));
+  async fetchShopBySlug(slug: string): Promise<Shop | null> {
+    const shops = await this.fetchShops();
+    return shops.find(s => s.slug.toLowerCase() === slug.toLowerCase()) || null;
   }
 
-  async fetchSellers(): Promise<Seller[]> {
-    return this.getGlobalData('sellers', mockSellers);
+  async fetchProductsByShop(shopId: string): Promise<Product[]> {
+    return CloudApiService.centralRegistry.products.filter(p => p.shopId === shopId);
   }
 
-  async fetchProducts(): Promise<Product[]> {
-    return this.getGlobalData('products', mockProducts);
+  async fetchAllProducts(): Promise<Product[]> {
+    return CloudApiService.centralRegistry.products;
   }
 
-  async fetchOrders(): Promise<Order[]> {
-    return this.getGlobalData('orders', mockOrders);
+  async fetchAllSellers(): Promise<Seller[]> {
+    return CloudApiService.centralRegistry.sellers;
+  }
+
+  async fetchAllOrders(): Promise<Order[]> {
+    return CloudApiService.centralRegistry.orders;
+  }
+
+  async saveShop(shop: Shop) {
+    const index = CloudApiService.centralRegistry.shops.findIndex(s => s.id === shop.id);
+    if (index > -1) CloudApiService.centralRegistry.shops[index] = shop;
+    else CloudApiService.centralRegistry.shops.push(shop);
   }
 
   async saveSeller(seller: Seller) {
-    const sellers = await this.fetchSellers();
-    const index = sellers.findIndex(s => s.id === seller.id);
-    if (index > -1) {
-      sellers[index] = seller;
-    } else {
-      sellers.push(seller);
-    }
-    await this.saveGlobalData('sellers', sellers);
+    const index = CloudApiService.centralRegistry.sellers.findIndex(s => s.id === seller.id);
+    if (index > -1) CloudApiService.centralRegistry.sellers[index] = seller;
+    else CloudApiService.centralRegistry.sellers.push(seller);
   }
 
   async saveProduct(product: Product) {
-    const products = await this.fetchProducts();
-    const index = products.findIndex(p => p.id === product.id);
-    if (index > -1) {
-      products[index] = product;
-    } else {
-      products.push(product);
-    }
-    await this.saveGlobalData('products', products);
+    const index = CloudApiService.centralRegistry.products.findIndex(p => p.id === product.id);
+    if (index > -1) CloudApiService.centralRegistry.products[index] = product;
+    else CloudApiService.centralRegistry.products.push(product);
   }
 
   async saveOrder(order: Order) {
-    const orders = await this.fetchOrders();
-    orders.push(order);
-    await this.saveGlobalData('orders', orders);
+    CloudApiService.centralRegistry.orders.push(order);
   }
 
-  async toggleSeller(sellerId: string): Promise<Seller[]> {
-    const sellers = await this.fetchSellers();
-    const updated = sellers.map(s => 
-      s.id === sellerId ? { ...s, status: (s.status === 'active' ? 'inactive' : 'active') as 'active' | 'inactive' } : s
+  async toggleShopStatus(shopId: string): Promise<Shop[]> {
+    CloudApiService.centralRegistry.shops = CloudApiService.centralRegistry.shops.map(s => 
+      s.id === shopId ? { ...s, status: s.status === 'active' ? 'inactive' : 'active' } : s
     );
-    await this.saveGlobalData('sellers', updated);
-    return updated;
+    return CloudApiService.centralRegistry.shops;
+  }
+
+  // Fix: Added toggleSeller method for AdminDashboard to toggle vendor status
+  async toggleSeller(sellerId: string): Promise<Seller[]> {
+    CloudApiService.centralRegistry.sellers = CloudApiService.centralRegistry.sellers.map(s => 
+      s.id === sellerId ? { ...s, status: s.status === 'active' ? 'inactive' : 'active' } : s
+    );
+    return CloudApiService.centralRegistry.sellers;
   }
 }
 
-export const api = new ApiService();
+export const api = new CloudApiService();

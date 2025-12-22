@@ -9,10 +9,21 @@ export enum OrderStatus {
 
 export enum PaymentMethod {
   COD = 'Cash on Delivery',
-  BANK_TRANSFER = 'Bank Transfer (Admin Account)'
+  BANK_TRANSFER = 'Bank Transfer'
 }
 
 export type SellerPayoutMethod = 'JazzCash' | 'Easypaisa' | 'Bank Transfer';
+
+export interface Shop {
+  id: string;
+  ownerId: string;
+  name: string;
+  slug: string;
+  description: string;
+  logoUrl: string;
+  status: 'active' | 'inactive';
+  verified: boolean;
+}
 
 export interface Seller {
   id: string;
@@ -22,52 +33,51 @@ export interface Seller {
   payoutMethod: SellerPayoutMethod;
   accountNumber: string;
   bankName?: string;
-  shopName: string;
-  shopSlug: string;
+  shopId: string; // Linked to Shop
   joinedAt: string;
-  status: 'active' | 'inactive';
+  // Added fields to match application usage and mock data
+  status?: 'active' | 'inactive';
+  shopName?: string;
+  shopSlug?: string;
 }
 
 export interface Product {
   id: string;
-  sellerId: string;
-  shopId: string;
+  shopId: string; // Critical: Linked to Shop, not just Seller
   name: string;
   description: string;
   price: number;
   category: string;
-  rating: number;
-  reviewsCount: number;
-  imageUrl: string; // Primary image
-  images: string[]; // Additional gallery images
-  sizes: string[]; // e.g. ["S", "M", "L"]
+  imageUrl: string;
+  images: string[];
+  sizes: string[];
   stock: number;
   published: boolean;
   createdAt: string;
+  // Added field to match mock data
+  sellerId?: string;
 }
 
 export interface Order {
   id: string;
-  sellerId: string;
-  sellerName: string;
+  shopId: string;
   customerName: string;
   customerPhone: string;
-  customerEmail: string;
   customerAddress: string;
   items: {
     productId: string;
     productName: string;
-    productImageUrl: string; // New field for Admin visibility
+    productImageUrl: string;
     quantity: number;
     price: number;
     size?: string;
   }[];
   totalAmount: number;
-  currency: string;
-  paymentMethod: PaymentMethod;
   status: OrderStatus;
-  commissionAmount: number;
   createdAt: string;
+  // Added fields to match application usage and notifications
+  sellerId?: string;
+  sellerName?: string;
 }
 
 export interface AdminNotification {
@@ -78,5 +88,6 @@ export interface AdminNotification {
     whatsapp: string;
     email: string;
   };
-  sent: boolean;
+  // Added field to satisfy notification logic
+  sent?: boolean;
 }
