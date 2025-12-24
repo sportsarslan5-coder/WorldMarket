@@ -1,15 +1,7 @@
 
 export enum ShopStatus {
-  INACTIVE = 'INACTIVE',
-  PENDING_ACTIVATION = 'PENDING_ACTIVATION',
   ACTIVE = 'ACTIVE',
   SUSPENDED = 'SUSPENDED'
-}
-
-export interface OTP {
-  code: string;
-  isUsed: boolean;
-  expiresAt: string;
 }
 
 export interface PayoutInfo {
@@ -17,6 +9,18 @@ export interface PayoutInfo {
   accountNumber: string;
   accountTitle: string;
   bankName?: string;
+}
+
+// Added Seller interface to fix import errors in App.tsx, services/mockData.ts, services/db.ts, and services/notificationService.ts
+export interface Seller {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  shopId: string;
+  joinedAt: string;
+  payoutInfo?: PayoutInfo;
+  status?: string;
 }
 
 export interface Shop {
@@ -38,7 +42,8 @@ export interface Shop {
 
 export interface Product {
   id: string;
-  sellerId: string; // The primary anchor for isolation
+  sellerId: string; 
+  sellerName: string;
   name: string;
   description: string;
   price: number;
@@ -67,28 +72,18 @@ export interface Order {
   id: string;
   shopId: string;
   shopName: string;
+  sellerWhatsApp: string;
   customerName: string;
   customerPhone: string;
   customerEmail: string;
   customerAddress: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentStatus: 'unpaid' | 'paid' | 'payout_processed';
+  paymentStatus: 'unpaid' | 'paid';
   paymentMethod: 'COD' | 'ONLINE';
   currency: string;
   createdAt: string;
   status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
-}
-
-export interface Seller {
-  id: string;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  shopId: string;
-  joinedAt: string;
-  shopName?: string;
-  payoutInfo?: PayoutInfo;
 }
 
 export interface AdminNotification {

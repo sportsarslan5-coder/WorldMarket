@@ -1,136 +1,82 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.ts';
-import { Shop, ShopStatus, Product, PayoutInfo } from '../types.ts';
+import { Shop, Product } from '../types.ts';
 import { Link } from 'react-router-dom';
 
-const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
-  const [step, setStep] = useState<'register' | 'activate' | 'active'>('register');
+const SellerDashboard: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [otpArray, setOtpArray] = useState(['', '', '', '', '', '']);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showSKUModal, setShowSKUModal] = useState(false);
-  const [incomingSMS, setIncomingSMS] = useState<string | null>(null);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [showModal, setShowModal] = useState(false);
   
-  const [regData, setRegData] = useState({ 
-    name: '', email: '', whatsapp: '', category: 'Fashion',
-    payoutInfo: { method: 'JazzCash', accountNumber: '', accountTitle: '' } as PayoutInfo
-  });
-
-  const [skuData, setSkuData] = useState({
-    name: '', price: '', stock: '', img: '', sizes: 'S,M,L,XL', colors: 'Black,White'
-  });
+  const [regData, setRegData] = useState({ name: '', email: '', whatsapp: '', category: 'Fashion' });
+  const [skuData, setSkuData] = useState({ name: '', price: '', stock: '10', img: '', sizes: 'S,M,L', colors: 'Multi' });
 
   useEffect(() => {
-    const authId = localStorage.getItem('PK_MART_SELLER_TOKEN');
+    const authId = localStorage.getItem('PK_MART_SELLER_ID');
     if (authId) {
       api.fetchAllShops().then(all => {
         const found = all.find(s => s.id === authId);
         if (found) {
           setShop(found);
-          if (found.status === ShopStatus.ACTIVE) {
-            setStep('active');
-            api.fetchProductsBySeller(found.id).then(setProducts);
-          } else {
-            setStep('activate');
-          }
+          setIsLoggedIn(true);
+          api.fetchProductsBySeller(found.id).then(setProducts);
         }
       });
     }
+  }, []);
 
-    // Listener for Simulated SMS messages
-    const checkInbox = async () => {
-      const messages = await api.getSimulatedMessages();
-      if (messages.length > 0 && shop) {
-        const lastMsg = messages[messages.length - 1];
-        if (lastMsg.to === shop.whatsappNumber) {
-          setIncomingSMS(lastMsg.message);
-          setTimeout(() => setIncomingSMS(null), 10000);
-        }
-      }
-    };
-
-    window.addEventListener('cloud_sync', checkInbox);
-    return () => window.removeEventListener('cloud_sync', checkInbox);
-  }, [shop]);
-
-  const onRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSyncing(true);
     const created = await api.createShop(regData);
     setShop(created);
-    localStorage.setItem('PK_MART_SELLER_TOKEN', created.id);
-    if (onNotify) onNotify('NEW_SELLER', created);
-    setStep('activate');
+    localStorage.setItem('PK_MART_SELLER_ID', created.id);
+    setIsLoggedIn(true);
     setIsSyncing(false);
   };
 
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newOtp = [...otpArray];
-    newOtp[index] = value.toUpperCase();
-    setOtpArray(newOtp);
-    if (value && index < 5) otpRefs.current[index + 1]?.focus();
-  };
-
-  const onActivate = async () => {
-    if (!shop) return;
-    const fullCode = otpArray.join('');
-    setIsSyncing(true);
-    const success = await api.activateVendorSite(fullCode, shop.id);
-    if (success) {
-      setStep('active');
-      const updatedShop = await api.fetchShopBySlug(shop.slug);
-      setShop(updatedShop);
-      api.fetchProductsBySeller(shop.id).then(setProducts);
-    } else {
-      alert("Invalid Activation Key. Reach out to Admin.");
-      setOtpArray(['', '', '', '', '', '']);
-      otpRefs.current[0]?.focus();
-    }
-    setIsSyncing(false);
-  };
-
-  const uploadSKU = async () => {
+  const handleUpload = async () => {
     if (!shop) return;
     setIsSyncing(true);
-    const p: Product = {
-      id: 'SKU-' + Date.now(),
+    const newProduct: Product = {
+      id: 'PROD-' + Date.now(),
       sellerId: shop.id,
+      sellerName: shop.name,
       name: skuData.name,
-      description: 'Authentic PK-MART Global Supply SKU.',
+      description: 'Official Vendor SKU',
       price: Number(skuData.price),
       currency: 'PKR',
       category: shop.category,
-      imageUrl: skuData.img || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
+      imageUrl: skuData.img || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
       images: [],
-      sizes: skuData.sizes.split(',').map(s => s.trim()),
-      colors: skuData.colors.split(',').map(c => c.trim()),
+      sizes: skuData.sizes.split(','),
+      colors: skuData.colors.split(','),
       stock: Number(skuData.stock),
       published: true,
       createdAt: new Date().toISOString()
     };
-    await api.saveProduct(p);
+    await api.saveProduct(newProduct);
     const refreshed = await api.fetchProductsBySeller(shop.id);
     setProducts(refreshed);
-    setShowSKUModal(false);
+    setShowModal(false);
     setIsSyncing(false);
   };
 
-  if (step === 'register') {
+  if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <div className="bg-white max-w-2xl w-full p-12 md:p-16 rounded-[60px] animate-slide-up">
-          <h2 className="text-4xl font-black uppercase mb-2 tracking-tighter text-slate-900">Start Selling</h2>
-          <p className="text-slate-400 font-bold mb-10 text-sm uppercase tracking-widest">Initialize Global Vendor Node</p>
-          <form onSubmit={onRegister} className="space-y-4">
-            <input required placeholder="Full Shop Name" className="w-full p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={regData.name} onChange={e => setRegData({...regData, name: e.target.value})} />
-            <input required placeholder="Contact Email" type="email" className="w-full p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} />
-            <input required placeholder="WhatsApp Number" className="w-full p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={regData.whatsapp} onChange={e => setRegData({...regData, whatsapp: e.target.value})} />
-            <button disabled={isSyncing} className="w-full bg-slate-900 text-white py-6 rounded-[30px] font-black text-xl uppercase tracking-widest mt-6 hover:bg-blue-600 transition shadow-xl">
-               {isSyncing ? 'Syncing...' : 'Begin Onboarding'}
+        <div className="bg-white p-12 md:p-16 rounded-[60px] max-w-xl w-full animate-slide-up shadow-2xl">
+          <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 mb-2">Vendor Hub</h2>
+          <p className="text-slate-400 font-bold mb-10 text-xs uppercase tracking-widest">Immediate Global Access</p>
+          <form onSubmit={handleRegister} className="space-y-4">
+            <input required placeholder="Shop Name" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-blue-600 transition" value={regData.name} onChange={e => setRegData({...regData, name: e.target.value})} />
+            <input required placeholder="Email" type="email" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} />
+            <input required placeholder="WhatsApp Number" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={regData.whatsapp} onChange={e => setRegData({...regData, whatsapp: e.target.value})} />
+            <button disabled={isSyncing} className="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-xl hover:bg-blue-600 transition disabled:opacity-50">
+              {isSyncing ? 'CREATING NODE...' : 'START SELLING NOW'}
             </button>
           </form>
         </div>
@@ -138,131 +84,56 @@ const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
     );
   }
 
-  if (step === 'activate') {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
-        {/* Incoming SMS Toast */}
-        {incomingSMS && (
-          <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[500] bg-white p-6 rounded-3xl shadow-2xl flex items-start gap-4 animate-slide-up max-w-md w-full border-t-4 border-emerald-500">
-             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M20,2H4C2.9,2,2,2.9,2,4v18l4-4h14c1.1,0,2-0.9,2-2V4C22,2.9,21.1,2,20,2z"/></svg>
-             </div>
-             <div>
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-1">New SMS Message</p>
-                <p className="text-slate-900 font-bold leading-relaxed">{incomingSMS}</p>
-             </div>
-          </div>
-        )}
-
-        <div className="bg-slate-900 p-16 rounded-[60px] max-w-xl w-full text-center border border-white/5 shadow-2xl">
-           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-8">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-           </div>
-           <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Enter Activation Code</h2>
-           <p className="text-slate-500 font-bold mb-12 uppercase text-[10px] tracking-[0.2em]">Enter the 6-digit key from the Admin</p>
-           
-           <div className="flex justify-between gap-3 mb-12">
-              {otpArray.map((digit, idx) => (
-                 <input 
-                    key={idx}
-                    // Fix: Ensure the ref callback returns void to comply with React types
-                    ref={el => { otpRefs.current[idx] = el; }}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={e => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Backspace' && !digit && idx > 0) otpRefs.current[idx-1]?.focus();
-                    }}
-                    className="w-14 h-20 bg-black rounded-2xl text-blue-500 font-black text-3xl text-center outline-none border-2 border-transparent focus:border-blue-600 transition uppercase"
-                 />
-              ))}
-           </div>
-
-           <button 
-              disabled={isSyncing || otpArray.some(d => !d)}
-              onClick={onActivate}
-              className="w-full bg-blue-600 text-white py-6 rounded-[30px] font-black text-xl hover:shadow-2xl hover:shadow-blue-500/30 disabled:opacity-30 transition"
-           >
-              {isSyncing ? 'Validating Node...' : 'ACTIVATE LIVE STORE'}
-           </button>
-           <p className="mt-8 text-[10px] font-black text-slate-600 uppercase tracking-widest">Dev Code: DEBUG-777</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
-      <aside className="w-full md:w-80 bg-slate-900 text-white p-10 flex flex-col sticky top-0 h-screen">
-         <div className="text-2xl font-black italic tracking-tighter mb-20 flex items-center gap-3">
-            <div className="bg-emerald-500 w-8 h-8 rounded-lg"></div> VENDOR_NODE
-         </div>
-         <nav className="space-y-4 flex-1">
-            <button className="w-full text-left p-5 bg-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg">Warehouse View</button>
-            <Link to="/" className="w-full block p-5 text-slate-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition">Marketplace Hub</Link>
-         </nav>
-         <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
-            <p className="text-[9px] font-black text-slate-500 uppercase mb-2 tracking-widest">Global Link</p>
-            <Link to={`/shop/${shop?.slug}`} className="text-blue-400 font-bold text-xs truncate block hover:text-white transition">pkmart.pk/{shop?.slug}</Link>
-         </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+      <aside className="w-full lg:w-80 bg-slate-900 p-10 text-white flex flex-col h-screen sticky top-0">
+        <div className="text-2xl font-black italic tracking-tighter mb-20">PK_VENDOR</div>
+        <div className="space-y-4 flex-1">
+          <button className="w-full text-left p-5 bg-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest">Inventory</button>
+          <Link to="/" className="block p-5 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-white transition">Marketplace</Link>
+          <Link to={`/shop/${shop?.slug}`} className="block p-5 text-emerald-400 font-black text-[10px] uppercase tracking-widest border border-emerald-400/20 rounded-2xl hover:bg-emerald-400 hover:text-white transition">View Live Shop</Link>
+        </div>
+        <button onClick={() => { localStorage.removeItem('PK_MART_SELLER_ID'); window.location.reload(); }} className="text-slate-600 font-black text-[10px] uppercase">Logout</button>
       </aside>
 
-      <main className="flex-1 p-8 lg:p-16 overflow-y-auto">
-         <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
-            <div>
-               <div className="flex items-center gap-3 mb-2">
-                  <span className="text-[10px] font-black text-emerald-500 uppercase bg-emerald-500/10 px-3 py-1 rounded-full">Active Site</span>
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">Node ID: {shop?.id}</span>
-               </div>
-               <h1 className="text-6xl font-black uppercase tracking-tighter text-slate-900">{shop?.name}</h1>
-            </div>
-            <button onClick={() => setShowSKUModal(true)} className="bg-slate-900 text-white px-10 py-5 rounded-3xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-blue-600 transition">Deploy New SKU</button>
-         </div>
+      <main className="flex-1 p-8 lg:p-16">
+        <div className="flex justify-between items-end mb-16">
+          <div>
+            <h1 className="text-5xl font-black uppercase tracking-tighter text-slate-900">{shop?.name}</h1>
+            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">Global Vendor ID: {shop?.id}</p>
+          </div>
+          <button onClick={() => setShowModal(true)} className="bg-slate-900 text-white px-10 py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl">Add Product</button>
+        </div>
 
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {products.length === 0 ? (
-               <div className="col-span-full py-40 text-center bg-white rounded-[60px] border-2 border-dashed border-slate-200">
-                  <p className="text-slate-400 font-black uppercase text-sm tracking-widest">Warehouse is empty</p>
-               </div>
-            ) : products.map(p => (
-              <div key={p.id} className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 group hover:shadow-xl transition flex flex-col">
-                 <div className="h-64 bg-slate-50 rounded-[30px] p-8 mb-6 flex items-center justify-center overflow-hidden">
-                    <img src={p.imageUrl} className="max-h-full max-w-full object-contain group-hover:scale-110 transition" alt="p" />
-                 </div>
-                 <h3 className="font-bold text-xl mb-2 text-slate-900 line-clamp-1">{p.name}</h3>
-                 <p className="text-3xl font-black text-slate-900">Rs. {p.price.toLocaleString()}</p>
-                 <div className="flex justify-between items-center mt-6 pt-6 border-t border-slate-50">
-                    <span className="text-[10px] font-black text-slate-400 uppercase">Stock: {p.stock}</span>
-                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Live On Grid</span>
-                 </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          {products.map(p => (
+            <div key={p.id} className="bg-white p-8 rounded-[40px] border border-slate-100 flex flex-col shadow-sm">
+              <div className="h-48 bg-slate-50 rounded-3xl mb-6 flex items-center justify-center p-6">
+                <img src={p.imageUrl} className="max-h-full object-contain" alt="p" />
               </div>
-            ))}
-         </div>
+              <h3 className="font-black text-xl text-slate-900 mb-2">{p.name}</h3>
+              <p className="text-2xl font-black text-slate-900 mb-6">Rs. {p.price.toLocaleString()}</p>
+              <div className="mt-auto pt-6 border-t border-slate-50 flex justify-between">
+                <span className="text-[10px] font-black text-slate-400 uppercase">Stock: {p.stock}</span>
+                <span className="text-[10px] font-black text-blue-600 uppercase">Live</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </main>
 
-      {showSKUModal && (
-        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[400] flex items-center justify-center p-6">
-           <div className="bg-white w-full max-w-2xl p-12 md:p-16 rounded-[60px] relative shadow-2xl animate-slide-up">
-              <button onClick={() => setShowSKUModal(false)} className="absolute top-10 right-10 w-10 h-10 flex items-center justify-center font-black">✕</button>
-              <h2 className="text-4xl font-black mb-1 text-slate-900 uppercase tracking-tighter">Global SKU Deployment</h2>
-              <p className="text-slate-400 font-bold mb-10 text-xs uppercase tracking-widest">Inventory will sync across all mobile devices</p>
-              <div className="space-y-4">
-                 <input placeholder="Product Name" className="w-full p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={skuData.name} onChange={e => setSkuData({...skuData, name: e.target.value})} />
-                 <div className="grid grid-cols-2 gap-4">
-                    <input placeholder="Price (PKR)" className="p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={skuData.price} onChange={e => setSkuData({...skuData, price: e.target.value})} />
-                    <input placeholder="Stock Quantity" className="p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={skuData.stock} onChange={e => setSkuData({...skuData, stock: e.target.value})} />
-                 </div>
-                 <input placeholder="Product Image URL" className="w-full p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={skuData.img} onChange={e => setSkuData({...skuData, img: e.target.value})} />
-                 <div className="grid grid-cols-2 gap-4">
-                    <input placeholder="Sizes (e.g. S,M,L)" className="p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={skuData.sizes} onChange={e => setSkuData({...skuData, sizes: e.target.value})} />
-                    <input placeholder="Colors (e.g. Red,Blue)" className="p-5 bg-slate-50 rounded-2xl font-bold border border-transparent focus:border-blue-500 outline-none" value={skuData.colors} onChange={e => setSkuData({...skuData, colors: e.target.value})} />
-                 </div>
-                 <button onClick={uploadSKU} disabled={isSyncing} className="w-full py-8 bg-blue-600 text-white rounded-[40px] font-black uppercase text-xl mt-8 shadow-xl shadow-blue-500/20 active:scale-95 transition">
-                    {isSyncing ? 'Deploying...' : 'SYNC TO WORLD GRID'}
-                 </button>
-              </div>
-           </div>
+      {showModal && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[200] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-xl p-12 rounded-[50px] animate-slide-up relative">
+            <button onClick={() => setShowModal(false)} className="absolute top-10 right-10 font-black">✕</button>
+            <h2 className="text-3xl font-black mb-10 uppercase tracking-tighter">New SKU Upload</h2>
+            <div className="space-y-4">
+              <input placeholder="Product Title" className="w-full p-5 bg-slate-50 rounded-2xl font-bold" value={skuData.name} onChange={e => setSkuData({...skuData, name: e.target.value})} />
+              <input placeholder="Price (PKR)" className="w-full p-5 bg-slate-50 rounded-2xl font-bold" value={skuData.price} onChange={e => setSkuData({...skuData, price: e.target.value})} />
+              <input placeholder="Image URL" className="w-full p-5 bg-slate-50 rounded-2xl font-bold" value={skuData.img} onChange={e => setSkuData({...skuData, img: e.target.value})} />
+              <button onClick={handleUpload} className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xl">PUSH TO GLOBAL GRID</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
