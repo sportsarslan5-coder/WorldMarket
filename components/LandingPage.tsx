@@ -1,21 +1,20 @@
 
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Product, Seller, Shop, ShopStatus } from '../types.ts';
+import { Product, Shop, ShopStatus } from '../types.ts';
 
 interface LandingPageProps {
-  sellers: Seller[];
+  sellers: any[];
   shops: Shop[];
   products: Product[];
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], shops = [], products = [] }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
 
-  const categories = ['All', 'Fashion', 'Electronics', 'Sports', 'Home'];
+  const categories = ['All', 'Fashion', 'Electronics', 'Sports', 'Home', 'Art'];
 
-  // Map active shop IDs for efficient filtering
   const activeShopIds = useMemo(() => {
     return shops.filter(s => s.status === ShopStatus.ACTIVE).map(s => s.id);
   }, [shops]);
@@ -31,15 +30,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], shops = [], pro
   }, [searchQuery, activeCategory, products, activeShopIds]);
 
   return (
-    <div className="min-h-screen bg-[#f3f3f3] font-sans text-slate-900">
-      <nav className="bg-[#131921] text-white p-4 flex flex-col md:flex-row items-center gap-6 sticky top-0 z-50 shadow-2xl">
-        <Link to="/" className="text-2xl font-black text-white px-2 tracking-tighter">
-          PK<span className="text-[#febd69]">-</span>MART
-        </Link>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
+      {/* Premium Global Navigation */}
+      <nav className="glass sticky top-0 z-50 border-b border-slate-200/50 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-10 w-full md:w-auto">
+          <Link to="/" className="text-2xl font-black text-slate-900 tracking-tighter flex items-center gap-2">
+            <span className="bg-slate-900 text-white px-2 py-0.5 rounded">W</span>
+            <span>WORLD<span className="text-blue-600">SHOP</span></span>
+          </Link>
+
+          <div className="hidden md:flex gap-6 text-[11px] font-black uppercase tracking-widest text-slate-500">
+            <Link to="/seller" className="hover:text-blue-600 transition">Seller Hub</Link>
+            <Link to="/admin" className="hover:text-blue-600 transition">Console</Link>
+          </div>
+        </div>
         
-        <div className="flex-1 flex w-full shadow-lg rounded-md overflow-hidden">
+        <div className="flex-1 max-w-2xl w-full flex bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
           <select 
-            className="bg-[#f3f3f3] text-slate-600 px-3 text-[10px] font-black uppercase border-r border-slate-300 outline-none"
+            className="bg-transparent text-slate-500 px-4 text-[10px] font-black uppercase border-r border-slate-200 outline-none"
             value={activeCategory}
             onChange={(e) => setActiveCategory(e.target.value)}
           >
@@ -47,59 +55,101 @@ const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], shops = [], pro
           </select>
           <input 
             type="text" 
-            placeholder="Search Pakistan's best local deals..." 
-            className="flex-1 p-3 outline-none text-slate-900 font-bold placeholder:font-medium placeholder:text-slate-400"
+            placeholder="Search global suppliers and unique crafts..." 
+            className="flex-1 bg-transparent p-3 outline-none text-slate-900 font-bold placeholder:font-medium placeholder:text-slate-400"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button className="bg-[#febd69] p-3 hover:bg-[#f3a847] transition px-6">
-            <svg className="w-5 h-5 text-[#131921]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <button className="p-3 text-slate-400 hover:text-blue-600 transition px-4">
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           </button>
         </div>
 
-        <div className="flex gap-8 items-center text-[11px] font-black uppercase tracking-widest">
-          <Link to="/seller" className="hover:text-[#febd69] transition">Seller Portal</Link>
-          <Link to="/admin" className="hover:text-[#febd69] transition">Admin</Link>
+        <div className="flex items-center gap-6">
+           <button className="relative group">
+              <svg className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+              <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[8px] font-black h-4 w-4 flex items-center justify-center rounded-full">0</span>
+           </button>
+           <div className="w-8 h-8 rounded-full bg-slate-200 border border-slate-300"></div>
         </div>
       </nav>
 
-      <header className="relative h-[400px] overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=2000" 
-          className="w-full h-full object-cover brightness-[0.4]" 
-          alt="Hero" 
-        />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4 italic uppercase">Pakistan's Global Mall</h1>
-          <p className="text-lg font-bold max-w-2xl opacity-90 tracking-tight">Authenticated vendors. COD support. Fast logistics.</p>
+      {/* Modern Hero Section */}
+      <header className="container mx-auto px-6 py-20 flex flex-col items-center text-center">
+        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-8 border border-blue-100 shadow-sm">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+          </span>
+          Now Shipping to 190+ Countries
+        </div>
+        <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] mb-6 max-w-5xl">
+          THE WORLD'S <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500 italic">CRAFTSMANSHIP</span> HUB
+        </h1>
+        <p className="text-lg font-medium text-slate-500 max-w-2xl leading-relaxed">
+          From Sialkot's heritage to global innovation. Discover premium suppliers, authenticated products, and seamless logistics.
+        </p>
+        <div className="flex gap-4 mt-12">
+          <button className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-slate-800 transition transform hover:-translate-y-1">Start Exploring</button>
+          <Link to="/seller" className="bg-white border border-slate-200 text-slate-900 px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-blue-600 transition">Sell Globally</Link>
         </div>
       </header>
 
-      <main className="max-w-[1440px] mx-auto p-10 -mt-20 relative z-10">
+      {/* Global Product Feed */}
+      <main className="max-w-[1440px] mx-auto px-6 pb-20">
+        <div className="flex items-center justify-between mb-12">
+           <h2 className="text-xl font-black uppercase tracking-tighter text-slate-900">Featured Collections</h2>
+           <div className="h-px flex-1 bg-slate-200 mx-10"></div>
+           <div className="flex gap-2">
+              <button className="p-2 border border-slate-200 rounded-lg hover:bg-white transition"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg></button>
+              <button className="p-2 border border-slate-200 rounded-lg hover:bg-white transition"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg></button>
+           </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {filteredProducts.map(p => {
             const shop = shops.find(s => s.id === p.shopId);
             return (
-              <div key={p.id} className="bg-white p-6 rounded-[30px] shadow-sm flex flex-col group hover:shadow-2xl transition-all duration-500 border border-slate-100">
-                <div className="h-56 mb-6 overflow-hidden relative rounded-2xl bg-slate-50 p-6">
+              <div key={p.id} className="bg-white group rounded-[32px] overflow-hidden border border-slate-100 flex flex-col transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/5 hover:-translate-y-2">
+                <div className="h-64 overflow-hidden relative bg-slate-50 flex items-center justify-center p-10">
                   <img src={p.imageUrl} className="w-full h-full object-contain group-hover:scale-110 transition duration-1000" alt={p.name} />
-                </div>
-                <Link to={`/shop/${shop?.slug}`} className="text-[10px] font-black text-blue-600 mb-2 uppercase tracking-widest hover:underline">
-                  {shop?.name} • Official Store
-                </Link>
-                <h3 className="font-bold text-lg mb-4 line-clamp-2 leading-tight text-slate-800">{p.name}</h3>
-                
-                <div className="mt-auto pt-6 flex items-center justify-between border-t border-slate-50">
-                  <div className="flex items-baseline text-slate-900">
-                    <span className="text-xs font-black mr-0.5">Rs.</span>
-                    <span className="text-2xl font-black tracking-tighter">{p.price.toLocaleString()}</span>
+                  <div className="absolute top-4 right-4 flex flex-col gap-2">
+                     <button className="bg-white/90 backdrop-blur p-2 rounded-xl text-slate-400 hover:text-red-500 transition shadow-sm">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                     </button>
                   </div>
-                  <Link 
-                    to={`/shop/${shop?.slug}`}
-                    className="bg-[#febd69] text-slate-900 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-[#f7ca00] transition active:scale-95"
-                  >
-                    View
-                  </Link>
+                  {p.price > 10000 && (
+                    <div className="absolute top-4 left-4 priority-gradient text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                      Global Priority
+                    </div>
+                  )}
+                </div>
+                
+                <div className="p-8 flex flex-col flex-grow">
+                   <div className="flex items-center gap-2 mb-3">
+                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{p.category}</span>
+                      <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Global Shipping</span>
+                   </div>
+                   <h3 className="font-bold text-lg mb-4 line-clamp-2 leading-tight text-slate-800 group-hover:text-blue-600 transition-colors">
+                      {p.name}
+                   </h3>
+                   
+                   <div className="mt-auto pt-6 flex items-center justify-between">
+                     <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Pricing</span>
+                        <div className="flex items-baseline text-slate-900 font-black">
+                           <span className="text-xs mr-0.5">Rs.</span>
+                           <span className="text-2xl tracking-tighter">{p.price.toLocaleString()}</span>
+                        </div>
+                     </div>
+                     <Link 
+                       to={`/shop/${shop?.slug}`}
+                       className="bg-slate-100 text-slate-900 w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition group-hover:shadow-lg active:scale-90"
+                     >
+                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                     </Link>
+                   </div>
                 </div>
               </div>
             );
@@ -107,21 +157,30 @@ const LandingPage: React.FC<LandingPageProps> = ({ sellers = [], shops = [], pro
         </div>
 
         {filteredProducts.length === 0 && (
-          <div className="bg-white p-32 rounded-[50px] text-center border-4 border-dashed border-slate-100">
-             <div className="text-6xl mb-6">🏜️</div>
-             <h2 className="text-xl font-black text-slate-300 uppercase tracking-widest">No matching SKUs found</h2>
+          <div className="bg-white p-32 rounded-[50px] text-center border-2 border-dashed border-slate-200">
+             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+             </div>
+             <h2 className="text-xl font-black text-slate-400 uppercase tracking-widest">No local or global matches</h2>
+             <p className="text-slate-400 text-sm mt-2">Try searching for broader terms like "Crafts" or "Sports".</p>
           </div>
         )}
       </main>
 
-      <footer className="bg-[#131921] text-white p-20 mt-20 text-center border-t-4 border-[#febd69]">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <h2 className="text-3xl font-black italic tracking-tighter uppercase">PK-MART Terminal</h2>
-          <p className="opacity-50 text-xs font-bold uppercase tracking-widest">Global Logistics & Multi-Vendor Hub</p>
-          <div className="flex justify-center gap-10 text-[9px] font-black uppercase tracking-[0.3em] opacity-80 pt-10">
-            <Link to="/seller" className="hover:text-[#febd69] transition">Vendor Login</Link>
-            <Link to="/admin" className="hover:text-[#febd69] transition">System Admin</Link>
+      <footer className="bg-slate-900 text-white p-20 mt-20 text-center relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-emerald-500"></div>
+        <div className="max-w-4xl mx-auto space-y-10 relative z-10">
+          <div className="text-3xl font-black italic tracking-tighter uppercase flex items-center justify-center gap-2">
+            <span className="bg-white text-slate-900 px-2 rounded">W</span>
+            WORLD-SHOP
           </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <Link to="/" className="hover:text-white transition">Home</Link>
+            <Link to="/seller" className="hover:text-white transition">Sell</Link>
+            <Link to="/admin" className="hover:text-white transition">Consoles</Link>
+            <button className="hover:text-white transition">Language</button>
+          </div>
+          <p className="opacity-30 text-[9px] font-bold uppercase tracking-[0.4em]">© 2024 WORLD-SHOP | Global Multi-Vendor Master Node</p>
         </div>
       </footer>
     </div>

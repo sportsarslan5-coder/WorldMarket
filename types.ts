@@ -7,7 +7,7 @@ export enum ShopStatus {
 }
 
 export interface PayoutInfo {
-  method: 'JazzCash' | 'Easypaisa' | 'Bank';
+  method: 'JazzCash' | 'Easypaisa' | 'Bank' | 'Stripe' | 'PayPal';
   accountNumber: string;
   accountTitle: string;
   bankName?: string;
@@ -28,6 +28,7 @@ export interface Shop {
   category: string;
   joinedAt: string;
   payoutInfo?: PayoutInfo;
+  country: string;
 }
 
 export interface Product {
@@ -36,6 +37,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  currency: string;
   category: string;
   imageUrl: string; 
   images: string[]; 
@@ -44,6 +46,7 @@ export interface Product {
   stock: number;
   published: boolean;
   createdAt: string;
+  isPriority?: boolean;
 }
 
 export interface Order {
@@ -65,6 +68,7 @@ export interface Order {
   totalAmount: number;
   paymentStatus: 'unpaid' | 'paid' | 'payout_processed';
   paymentMethod: 'COD' | 'ONLINE';
+  currency: string;
   createdAt: string;
 }
 
@@ -75,7 +79,7 @@ export interface Seller {
   phoneNumber: string;
   shopId: string;
   joinedAt: string;
-  shopName?: string; // Virtual property for notifications
+  shopName?: string;
   payoutInfo?: PayoutInfo;
 }
 

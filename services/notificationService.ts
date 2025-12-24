@@ -6,31 +6,29 @@ export const generateAdminNotification = async (
   type: 'NEW_SELLER' | 'NEW_ORDER',
   data: Seller | Order
 ): Promise<AdminNotification> => {
+  // Named parameter initialization
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   let prompt = "";
   if (type === 'NEW_SELLER') {
     const seller = data as Seller;
-    prompt = `CRITICAL ADMIN ALERT: A new vendor has registered on PK-MART.
+    prompt = `GLOBAL ADMIN ALERT: A new international vendor has registered.
        VENDOR DETAILS:
        Name: ${seller.fullName}
        Email: ${seller.email}
        Phone: ${seller.phoneNumber}
        Payout Method: ${seller.payoutInfo?.method || 'Not Set'}
-       Account: ${seller.payoutInfo?.accountNumber || 'N/A'}
        
-       Draft a professional Urdu-inflected English WhatsApp message and a formal Email for the Admin to review this vendor. Ensure the tone is urgent but professional.`;
+       Draft a professional English notification for the Global Admin Console. Use a sophisticated tone.`;
   } else {
     const order = data as Order;
-    prompt = `URGENT ORDER ALERT: A customer placed a new order.
+    prompt = `URGENT ORDER ALERT: A global customer placed a new order.
        ORDER DETAILS:
        Order ID: ${order.id}
-       Shop Name: ${order.shopName}
-       Customer: ${order.customerName} (${order.customerPhone})
-       Address: ${order.customerAddress}
-       Amount: Rs. ${order.totalAmount.toLocaleString()}
+       Store: ${order.shopName}
+       Total: Rs. ${order.totalAmount.toLocaleString()}
        
-       Draft a WhatsApp message and an Email for the Admin to initiate logistics. Include a reminder about the 5% platform commission.`;
+       Draft a notification message for logistics dispatch. Mention the platform fee calculation.`;
   }
 
   try {
@@ -44,11 +42,11 @@ export const generateAdminNotification = async (
           properties: {
             whatsapp: {
               type: Type.STRING,
-              description: 'WhatsApp notification message.'
+              description: 'Notification message.'
             },
             email: {
               type: Type.STRING,
-              description: 'Email notification template.'
+              description: 'Email summary.'
             }
           },
           required: ["whatsapp", "email"]
@@ -56,6 +54,7 @@ export const generateAdminNotification = async (
       }
     });
 
+    // Correct property access
     const responseText = response.text;
     if (!responseText) throw new Error("No response text from AI");
     
@@ -66,21 +65,20 @@ export const generateAdminNotification = async (
       type,
       timestamp: new Date().toISOString(),
       content: {
-        whatsapp: content.whatsapp || "New platform activity detected.",
-        email: content.email || "Platform event logged. Check Admin Dashboard."
+        whatsapp: content.whatsapp || "New global activity detected.",
+        email: content.email || "Platform event logged in Master Node."
       },
       sent: true
     };
   } catch (error) {
     console.error("Failed to generate AI notification:", error);
-    const title = type === 'NEW_SELLER' ? 'New Vendor' : 'New Order';
     return {
       id: 'f-' + Date.now(),
       type,
       timestamp: new Date().toISOString(),
       content: {
-        whatsapp: `ADMIN ALERT: ${title} registered. ID: ${data.id}. Please check your dashboard for details.`,
-        email: `System alert for ${type}. Check Master Logs.`
+        whatsapp: `ADMIN ALERT: ${type} registered. ID: ${data.id}.`,
+        email: `System alert for ${type}.`
       },
       sent: false
     };

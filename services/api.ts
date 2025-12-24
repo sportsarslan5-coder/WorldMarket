@@ -22,7 +22,9 @@ class CloudDatabaseService {
         email: s.email,
         category: 'General',
         joinedAt: s.joinedAt,
-        payoutInfo: s.payoutInfo
+        payoutInfo: s.payoutInfo,
+        // Fix: Added missing country property
+        country: 'Pakistan'
       }));
 
       const registry = { 
@@ -61,7 +63,9 @@ class CloudDatabaseService {
       email: data.email,
       category: data.category,
       joinedAt: new Date().toISOString(),
-      payoutInfo: data.payoutInfo
+      payoutInfo: data.payoutInfo,
+      // Fix: Added missing country property
+      country: 'Pakistan'
     };
 
     registry.shops.push(newShop);

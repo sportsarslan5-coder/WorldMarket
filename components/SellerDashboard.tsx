@@ -250,10 +250,13 @@ const SellerDashboard: React.FC<SellerDashboardProps> = ({ onNotify }) => {
                 const img = (document.getElementById('p-img') as HTMLInputElement).value;
                 if (!name || !shop) return;
                 
+                // Fix: Added missing currency property
                 await api.saveProduct({
                   id: 'sku_' + Date.now(),
                   shopId: shop.id,
-                  name, price, stock, imageUrl: img || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+                  name, price, stock, 
+                  currency: 'PKR',
+                  imageUrl: img || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
                   description: 'Premium quality item from PK-MART.', category: shop.category,
                   images: [], sizes: ['M'], colors: ['Default'],
                   published: true, createdAt: new Date().toISOString()

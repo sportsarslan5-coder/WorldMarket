@@ -42,7 +42,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
 
   const submitOrder = async () => {
     if (!customer.name || !customer.phone || !shop) return;
-    const orderId = 'PK-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    const orderId = 'WS-' + Math.random().toString(36).substr(2, 6).toUpperCase();
     const total = cart.reduce((s, i) => s + (i.p.price * i.qty), 0);
     
     const newOrder: Order = {
@@ -62,102 +62,119 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
       totalAmount: total,
       paymentStatus: 'unpaid',
       paymentMethod: 'COD',
+      currency: 'PKR',
       createdAt: new Date().toISOString()
     };
 
     await api.saveOrder(newOrder);
-    
-    // Trigger AI Notification for Admin
-    if (onNotify) {
-      await onNotify('NEW_ORDER', newOrder);
-    }
+    if (onNotify) await onNotify('NEW_ORDER', newOrder);
 
     const itemsList = cart.map(i => `- ${i.p.name} (x${i.qty})`).join('\n');
-    const msg = `*🚨 NEW ORDER: ${orderId}*\n*Store:* ${shop.name}\n\n*Items:*\n${itemsList}\n\n*Total:* Rs. ${total.toLocaleString()}\n\n*Logistics:* \n👤 ${customer.name}\n📞 ${customer.phone}\n📍 ${customer.address}`;
+    const msg = `*WORLD-SHOP ORDER: ${orderId}*\n*Vendor:* ${shop.name}\n\n*Items:*\n${itemsList}\n\n*Total:* Rs. ${total.toLocaleString()}`;
     window.open(`https://wa.me/${shop.whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank');
     
-    alert("Order Deployed. Seller notified via WhatsApp.");
     setCart([]);
     setShowCheckout(false);
+    alert("Order submitted to Global Hub.");
   };
 
   if (isLoading) return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-       <div className="w-16 h-16 border-8 border-slate-200 border-t-[#febd69] rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+       <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
     </div>
   );
 
   if (!shop) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-10 text-center">
-       <h1 className="text-6xl font-black italic uppercase text-slate-900 mb-6">Inactive Link</h1>
-       <Link to="/" className="bg-[#131921] text-white px-12 py-5 rounded-[25px] font-black uppercase text-xs">Return</Link>
+       <h1 className="text-4xl font-black text-slate-900 mb-6">Store Offline</h1>
+       <Link to="/" className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs">Back to Hub</Link>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] font-sans text-slate-900">
-      <nav className="bg-[#131921] text-white p-6 sticky top-0 z-50 flex justify-between items-center shadow-2xl">
-        <Link to="/" className="text-2xl font-black italic tracking-tighter">PK-MART</Link>
-        <button onClick={() => setShowCheckout(true)} className="bg-[#febd69] text-slate-900 px-8 py-3 rounded-2xl font-black flex items-center gap-3 shadow-lg">
-           🛒 {cart.reduce((s,i)=>s+i.qty, 0)} Units
+    <div className="min-h-screen bg-[#fcfcfc] text-slate-900">
+      <nav className="glass sticky top-0 z-50 p-6 flex justify-between items-center border-b border-slate-200/50">
+        <Link to="/" className="text-xl font-black tracking-tighter uppercase flex items-center gap-2">
+           <span className="bg-slate-900 text-white px-1.5 rounded">W</span>
+           WORLD<span className="text-blue-600">SHOP</span>
+        </Link>
+        <button onClick={() => setShowCheckout(true)} className="bg-slate-900 text-white px-6 py-2.5 rounded-2xl font-black text-xs flex items-center gap-3 shadow-lg hover:bg-slate-800 transition">
+           CART ({cart.reduce((s,i)=>s+i.qty, 0)})
         </button>
       </nav>
 
-      <header className="bg-white py-32 text-center border-b-2 border-slate-50">
-         <h1 className="text-8xl font-black italic uppercase tracking-tighter mb-4">{shop.name}</h1>
-         <span className="bg-emerald-50 text-emerald-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Verified PK-Vendor</span>
+      <header className="container mx-auto px-6 py-24 text-center">
+         <div className="inline-block bg-emerald-50 text-emerald-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 border border-emerald-100">
+            Certified Vendor • 100% Guaranteed
+         </div>
+         <h1 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter mb-4 leading-none text-slate-900">{shop.name}</h1>
+         <p className="text-slate-400 font-medium max-w-xl mx-auto">{shop.description}</p>
       </header>
 
-      <main className="max-w-7xl mx-auto p-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+      <main className="max-w-7xl mx-auto px-6 pb-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
         {products.map(p => (
-          <div key={p.id} className="bg-white group rounded-[45px] overflow-hidden border-2 border-transparent hover:border-slate-100 transition-all duration-700">
-             <div className="h-72 bg-slate-50 flex items-center justify-center p-12">
+          <div key={p.id} className="bg-white group rounded-[40px] overflow-hidden border border-slate-100 hover:border-blue-600/20 transition-all duration-700 hover:shadow-2xl hover:shadow-blue-500/5">
+             <div className="h-72 bg-slate-50 flex items-center justify-center p-12 overflow-hidden relative">
                 <img src={p.imageUrl} className="max-h-full max-w-full object-contain group-hover:scale-110 transition duration-1000" alt="" />
+                {p.price > 10000 && <div className="absolute top-4 left-4 bg-slate-900 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase">Prime</div>}
              </div>
-             <div className="p-10 text-center">
-                <h3 className="font-bold text-xl mb-4 text-slate-800 line-clamp-2">{p.name}</h3>
-                <p className="text-4xl font-black tracking-tighter text-slate-900 mb-8">Rs. {p.price.toLocaleString()}</p>
-                <button onClick={() => addToCart(p)} className="w-full bg-[#ffd814] py-5 rounded-[25px] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95">Add to Basket</button>
+             <div className="p-8">
+                <h3 className="font-bold text-lg mb-2 text-slate-800 line-clamp-2 leading-tight h-10">{p.name}</h3>
+                <div className="flex items-baseline mb-8 text-slate-900">
+                   <span className="text-xs font-black mr-0.5 opacity-40 uppercase">Rs</span>
+                   <span className="text-3xl font-black tracking-tighter">{p.price.toLocaleString()}</span>
+                </div>
+                <button 
+                  onClick={() => addToCart(p)} 
+                  className="w-full bg-slate-100 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform active:scale-95"
+                >
+                  Add to Cart
+                </button>
              </div>
           </div>
         ))}
       </main>
 
       {showCheckout && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl z-[100] flex justify-end">
-           <div className="bg-white w-full max-w-xl h-full p-10 md:p-16 flex flex-col shadow-2xl overflow-y-auto">
-              <div className="flex justify-between items-center mb-16">
-                 <h2 className="text-4xl font-black italic uppercase tracking-tighter">Your Hub</h2>
-                 <button onClick={() => setShowCheckout(false)} className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-full">✕</button>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex justify-end">
+           <div className="bg-white w-full max-w-xl h-full p-10 md:p-16 flex flex-col shadow-2xl overflow-y-auto animate-slide-in-right">
+              <div className="flex justify-between items-center mb-12">
+                 <h2 className="text-3xl font-black uppercase tracking-tighter">Your Package</h2>
+                 <button onClick={() => setShowCheckout(false)} className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full hover:bg-slate-200 transition">✕</button>
               </div>
               
-              <div className="flex-1 space-y-8">
+              <div className="flex-1 space-y-6">
                  {cart.map((item, idx) => (
-                   <div key={idx} className="flex gap-6 items-center bg-slate-50/50 p-6 rounded-[35px] border border-slate-100">
-                      <div className="w-20 h-20 bg-white rounded-2xl p-2 flex items-center justify-center">
+                   <div key={idx} className="flex gap-4 items-center bg-slate-50 p-6 rounded-[32px] border border-slate-100">
+                      <div className="w-16 h-16 bg-white rounded-xl p-2 flex items-center justify-center">
                          <img src={item.p.imageUrl} className="max-h-full max-w-full object-contain" alt="" />
                       </div>
                       <div className="flex-1">
-                         <p className="font-bold text-lg leading-tight">{item.p.name}</p>
-                         <div className="flex justify-between items-end mt-2">
-                            <p className="text-xs font-black text-slate-400 uppercase">Qty: {item.qty}</p>
-                            <p className="font-black text-emerald-600">Rs. {(item.p.price * item.qty).toLocaleString()}</p>
+                         <p className="font-bold text-sm leading-tight text-slate-800">{item.p.name}</p>
+                         <div className="flex justify-between items-center mt-2">
+                            <p className="text-[10px] font-black text-slate-400 uppercase">x {item.qty}</p>
+                            <p className="font-black text-slate-900">Rs. {(item.p.price * item.qty).toLocaleString()}</p>
                          </div>
                       </div>
                    </div>
                  ))}
+                 {cart.length === 0 && (
+                   <div className="text-center py-20">
+                      <p className="text-slate-400 font-bold italic">Cart is empty.</p>
+                   </div>
+                 )}
               </div>
 
-              <div className="mt-16 pt-12 border-t-2 border-slate-50 space-y-4">
+              <div className="mt-12 pt-10 border-t border-slate-100 space-y-4">
                  <div className="flex justify-between items-baseline mb-10">
-                    <span className="font-black uppercase text-xs text-slate-400">Total</span>
-                    <span className="text-5xl font-black tracking-tighter">Rs. {cart.reduce((s, i) => s + (i.p.price * i.qty), 0).toLocaleString()}</span>
+                    <span className="font-black uppercase text-[10px] text-slate-400 tracking-widest">Total Pay</span>
+                    <span className="text-4xl font-black tracking-tighter">Rs. {cart.reduce((s, i) => s + (i.p.price * i.qty), 0).toLocaleString()}</span>
                  </div>
-                 <input placeholder="Name" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-[#febd69] rounded-2xl font-bold" value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} />
-                 <input placeholder="WhatsApp (03XX...)" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-[#febd69] rounded-2xl font-bold" value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} />
-                 <textarea placeholder="Address" className="w-full p-5 bg-slate-50 border-2 border-transparent focus:border-[#febd69] rounded-2xl font-bold h-24" value={customer.address} onChange={e => setCustomer({...customer, address: e.target.value})} />
-                 <button onClick={submitOrder} className="w-full bg-[#25D366] text-white py-6 rounded-3xl font-black text-xl shadow-2xl mt-8 active:scale-95 transition">
-                   Deploy Order
+                 <input placeholder="Full Name" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 transition" value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} />
+                 <input placeholder="WhatsApp Number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 transition" value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} />
+                 <textarea placeholder="Global Delivery Address" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold h-24 outline-none focus:border-blue-500 transition" value={customer.address} onChange={e => setCustomer({...customer, address: e.target.value})} />
+                 <button onClick={submitOrder} disabled={cart.length === 0} className="w-full bg-slate-900 text-white py-6 rounded-[30px] font-black text-lg shadow-xl mt-8 active:scale-95 transition disabled:opacity-30">
+                   Confirm Order
                  </button>
               </div>
            </div>
