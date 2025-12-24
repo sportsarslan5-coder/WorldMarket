@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api.ts';
 import { Shop, ShopStatus, Product, PayoutInfo } from '../types.ts';
 import { Link } from 'react-router-dom';
@@ -8,9 +8,11 @@ const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
   const [step, setStep] = useState<'register' | 'activate' | 'active'>('register');
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [otpCode, setOtpCode] = useState('');
+  const [otpArray, setOtpArray] = useState(['', '', '', '', '', '']);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSKUModal, setShowSKUModal] = useState(false);
+  const [incomingSMS, setIncomingSMS] = useState<string | null>(null);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   const [regData, setRegData] = useState({ 
     name: '', email: '', whatsapp: '', category: 'Fashion',
@@ -37,7 +39,22 @@ const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
         }
       });
     }
-  }, []);
+
+    // Listener for Simulated SMS messages
+    const checkInbox = async () => {
+      const messages = await api.getSimulatedMessages();
+      if (messages.length > 0 && shop) {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.to === shop.whatsappNumber) {
+          setIncomingSMS(lastMsg.message);
+          setTimeout(() => setIncomingSMS(null), 10000);
+        }
+      }
+    };
+
+    window.addEventListener('cloud_sync', checkInbox);
+    return () => window.removeEventListener('cloud_sync', checkInbox);
+  }, [shop]);
 
   const onRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,10 +67,19 @@ const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
     setIsSyncing(false);
   };
 
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    const newOtp = [...otpArray];
+    newOtp[index] = value.toUpperCase();
+    setOtpArray(newOtp);
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  };
+
   const onActivate = async () => {
     if (!shop) return;
+    const fullCode = otpArray.join('');
     setIsSyncing(true);
-    const success = await api.activateVendorSite(otpCode, shop.id);
+    const success = await api.activateVendorSite(fullCode, shop.id);
     if (success) {
       setStep('active');
       const updatedShop = await api.fetchShopBySlug(shop.slug);
@@ -61,6 +87,8 @@ const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
       api.fetchProductsBySeller(shop.id).then(setProducts);
     } else {
       alert("Invalid Activation Key. Reach out to Admin.");
+      setOtpArray(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
     }
     setIsSyncing(false);
   };
@@ -70,7 +98,7 @@ const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
     setIsSyncing(true);
     const p: Product = {
       id: 'SKU-' + Date.now(),
-      sellerId: shop.id, // THE FIX: STRICT ISOLATION
+      sellerId: shop.id,
       name: skuData.name,
       description: 'Authentic PK-MART Global Supply SKU.',
       price: Number(skuData.price),
@@ -112,25 +140,53 @@ const SellerDashboard: React.FC<{onNotify?: any}> = ({ onNotify }) => {
 
   if (step === 'activate') {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
+        {/* Incoming SMS Toast */}
+        {incomingSMS && (
+          <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[500] bg-white p-6 rounded-3xl shadow-2xl flex items-start gap-4 animate-slide-up max-w-md w-full border-t-4 border-emerald-500">
+             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M20,2H4C2.9,2,2,2.9,2,4v18l4-4h14c1.1,0,2-0.9,2-2V4C22,2.9,21.1,2,20,2z"/></svg>
+             </div>
+             <div>
+                <p className="text-[10px] font-black uppercase text-slate-400 mb-1">New SMS Message</p>
+                <p className="text-slate-900 font-bold leading-relaxed">{incomingSMS}</p>
+             </div>
+          </div>
+        )}
+
         <div className="bg-slate-900 p-16 rounded-[60px] max-w-xl w-full text-center border border-white/5 shadow-2xl">
            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-8">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
            </div>
-           <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Enter Command Key</h2>
-           <p className="text-slate-500 font-bold mb-12 uppercase text-[10px] tracking-[0.2em]">Contact Master Admin for your 6-digit site key</p>
-           <input 
-              maxLength={6}
-              className="w-full p-10 bg-black rounded-3xl text-blue-500 font-black text-6xl text-center outline-none border-4 border-transparent focus:border-blue-600 transition tracking-[0.3em]"
-              value={otpCode} onChange={e => setOtpCode(e.target.value.toUpperCase())}
-           />
+           <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Enter Activation Code</h2>
+           <p className="text-slate-500 font-bold mb-12 uppercase text-[10px] tracking-[0.2em]">Enter the 6-digit key from the Admin</p>
+           
+           <div className="flex justify-between gap-3 mb-12">
+              {otpArray.map((digit, idx) => (
+                 <input 
+                    key={idx}
+                    // Fix: Ensure the ref callback returns void to comply with React types
+                    ref={el => { otpRefs.current[idx] = el; }}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={e => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Backspace' && !digit && idx > 0) otpRefs.current[idx-1]?.focus();
+                    }}
+                    className="w-14 h-20 bg-black rounded-2xl text-blue-500 font-black text-3xl text-center outline-none border-2 border-transparent focus:border-blue-600 transition uppercase"
+                 />
+              ))}
+           </div>
+
            <button 
-              disabled={isSyncing || otpCode.length < 6}
+              disabled={isSyncing || otpArray.some(d => !d)}
               onClick={onActivate}
-              className="w-full bg-blue-600 text-white py-6 rounded-[30px] font-black text-xl mt-12 hover:shadow-2xl hover:shadow-blue-500/30 disabled:opacity-30 transition"
+              className="w-full bg-blue-600 text-white py-6 rounded-[30px] font-black text-xl hover:shadow-2xl hover:shadow-blue-500/30 disabled:opacity-30 transition"
            >
-              {isSyncing ? 'Validating...' : 'UNLOCK LIVE STORE'}
+              {isSyncing ? 'Validating Node...' : 'ACTIVATE LIVE STORE'}
            </button>
+           <p className="mt-8 text-[10px] font-black text-slate-600 uppercase tracking-widest">Dev Code: DEBUG-777</p>
         </div>
       </div>
     );

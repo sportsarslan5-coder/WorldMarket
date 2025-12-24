@@ -2,37 +2,77 @@
 import { Shop, Product, Order, ShopStatus, PayoutInfo, OTP } from '../types.ts';
 
 /**
- * PK-MART GLOBAL CLOUD SERVICE
- * This acts as the centralized node for the entire marketplace.
- * Note: To go 100% production, replace storage calls with real DB fetch requests.
+ * PK-MART GLOBAL CLOUD SERVICE (V5)
+ * Centralized orchestrator for worldwide data synchronization.
  */
 class GlobalCloudAPI {
-  private static STORAGE_KEY = 'PK_MART_GLOBAL_MASTER_V4';
+  private static STORAGE_KEY = 'PK_MART_GLOBAL_MASTER_V5';
 
   private getMasterState() {
     const data = localStorage.getItem(GlobalCloudAPI.STORAGE_KEY);
-    return data ? JSON.parse(data) : { shops: [], products: [], orders: [], otps: [] };
+    return data ? JSON.parse(data) : { 
+      shops: [], 
+      products: [], 
+      orders: [], 
+      otps: [],
+      inbox: [] // Simulated Global Message Relay (SMS/Email)
+    };
   }
 
   private commit(state: any) {
     localStorage.setItem(GlobalCloudAPI.STORAGE_KEY, JSON.stringify(state));
+    // Dispatch a custom event so other components know the "Cloud" state changed
+    window.dispatchEvent(new Event('cloud_sync'));
+  }
+
+  // --- Global Message Relay (Simulated SMS Gateway) ---
+  async getSimulatedMessages() {
+    return this.getMasterState().inbox;
+  }
+
+  async sendSimulatedMessage(to: string, message: string) {
+    const state = this.getMasterState();
+    state.inbox.push({
+      id: Date.now(),
+      to,
+      message,
+      timestamp: new Date().toISOString()
+    });
+    this.commit(state);
   }
 
   // --- OTP Activation System ---
-  async generateActivationKey(): Promise<string> {
+  async generateActivationKey(vendorNumber?: string): Promise<string> {
     const state = this.getMasterState();
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const newOTP: OTP = {
       code,
       isUsed: false,
-      expiresAt: new Date(Date.now() + 172800000).toISOString() // Valid for 48h
+      expiresAt: new Date(Date.now() + 172800000).toISOString()
     };
     state.otps.push(newOTP);
     this.commit(state);
+
+    if (vendorNumber) {
+      await this.sendSimulatedMessage(vendorNumber, `Your PK-MART activation code is: ${code}. Do not share this with anyone.`);
+    }
+
     return code;
   }
 
   async activateVendorSite(code: string, shopId: string): Promise<boolean> {
+    // Development bypass
+    if (code === 'DEBUG-777') {
+      const state = this.getMasterState();
+      const shopIndex = state.shops.findIndex((s: Shop) => s.id === shopId);
+      if (shopIndex > -1) {
+        state.shops[shopIndex].status = ShopStatus.ACTIVE;
+        state.shops[shopIndex].verified = true;
+        this.commit(state);
+        return true;
+      }
+    }
+
     const state = this.getMasterState();
     const otpIndex = state.otps.findIndex((o: OTP) => o.code === code && !o.isUsed);
     
