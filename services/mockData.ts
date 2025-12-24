@@ -50,7 +50,8 @@ export const mockSellers: Seller[] = [
 export const mockProducts: Product[] = [
   {
     id: 'p1',
-    shopId: 's1',
+    // Fix: Using sellerId instead of shopId to match types.ts
+    sellerId: 's1',
     name: 'Wireless Pro Buds',
     description: 'Noise cancelling Bluetooth 5.3 earbuds with 40h playtime.',
     price: 3500,
@@ -67,7 +68,8 @@ export const mockProducts: Product[] = [
   },
   {
     id: 'p2',
-    shopId: 's2',
+    // Fix: Using sellerId instead of shopId to match types.ts
+    sellerId: 's2',
     name: 'Embroidered Lawn Dress',
     description: '3-Piece premium unstitched collection for Summer 2024.',
     price: 5200,
@@ -84,7 +86,8 @@ export const mockProducts: Product[] = [
   },
   {
     id: 'p3',
-    shopId: 's3',
+    // Fix: Using sellerId instead of shopId to match types.ts
+    sellerId: 's3',
     name: 'Cricket Willow Bat (G1)',
     description: 'Grade 1 English Willow professional cricket bat.',
     price: 15500,

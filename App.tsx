@@ -55,15 +55,8 @@ const App: React.FC = () => {
     syncData();
   }, [syncData]);
 
-  const handleToggleSellerStatus = async (sellerId: string) => {
-    // Legacy mapping logic
-    const shop = shops.find(s => s.ownerId === sellerId);
-    if (shop) {
-      const newStatus = shop.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-      await api.updateShopStatus(shop.id, newStatus as any);
-      await syncData();
-    }
-  };
+  // Fix: Removed unused handleToggleSellerStatus which was only used for an invalid prop in AdminDashboard.
+  // AdminDashboard manages shop status updates internally.
 
   if (isLoading) {
     return (
@@ -78,12 +71,13 @@ const App: React.FC = () => {
     <Router>
       <div className="min-h-screen">
         <Routes>
-          <Route path="/" element={<LandingPage sellers={sellers} shops={shops} products={products} />} />
+          {/* Fix: LandingPage does not accept props, it manages its own state and data fetching. */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/admin/*" element={
             <AdminDashboard 
               notifications={notifications}
               onRefresh={syncData}
-              onToggleSellerStatus={handleToggleSellerStatus}
+              /* Fix: Removed onToggleSellerStatus as it is not declared in AdminDashboard props. */
             />
           } />
           <Route path="/seller/*" element={<SellerDashboard onNotify={addNotification} />} />

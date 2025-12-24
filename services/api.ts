@@ -1,108 +1,133 @@
 
-import { Shop, Product, Order, ShopStatus, PayoutInfo } from '../types.ts';
-import { mockProducts, mockOrders } from './mockData.ts';
+import { Shop, Product, Order, ShopStatus, PayoutInfo, OTP } from '../types.ts';
 
 /**
- * GLOBAL PERSISTENCE ENGINE (Simulation)
- * IMPORTANT: To enable TRUE cross-device sync (Global Visibility), 
- * replace the localStorage calls with `fetch('https://your-api.com/...')`
+ * PK-MART GLOBAL CLOUD SERVICE
+ * This acts as the centralized node for the entire marketplace.
+ * Note: To go 100% production, replace storage calls with real DB fetch requests.
  */
-class GlobalDatabaseService {
-  private static STORAGE_KEY = 'PK_MART_GLOBAL_DATA_V2';
+class GlobalCloudAPI {
+  private static STORAGE_KEY = 'PK_MART_GLOBAL_MASTER_V4';
 
-  private getRegistry() {
-    const data = localStorage.getItem(GlobalDatabaseService.STORAGE_KEY);
-    if (!data) {
-      const initial = { shops: [], products: mockProducts, orders: mockOrders };
-      this.sync(initial);
-      return initial;
-    }
-    return JSON.parse(data);
+  private getMasterState() {
+    const data = localStorage.getItem(GlobalCloudAPI.STORAGE_KEY);
+    return data ? JSON.parse(data) : { shops: [], products: [], orders: [], otps: [] };
   }
 
-  private sync(data: any) {
-    localStorage.setItem(GlobalDatabaseService.STORAGE_KEY, JSON.stringify(data));
-    // In production, this would be: await fetch('/api/sync', { method: 'POST', body: JSON.stringify(data) });
+  private commit(state: any) {
+    localStorage.setItem(GlobalCloudAPI.STORAGE_KEY, JSON.stringify(state));
   }
 
-  // --- SHOP ACTIONS ---
-  async createShop(data: { name: string, email: string, whatsapp: string, category: string, payoutInfo: PayoutInfo }): Promise<Shop> {
-    const db = this.getRegistry();
+  // --- OTP Activation System ---
+  async generateActivationKey(): Promise<string> {
+    const state = this.getMasterState();
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const newOTP: OTP = {
+      code,
+      isUsed: false,
+      expiresAt: new Date(Date.now() + 172800000).toISOString() // Valid for 48h
+    };
+    state.otps.push(newOTP);
+    this.commit(state);
+    return code;
+  }
+
+  async activateVendorSite(code: string, shopId: string): Promise<boolean> {
+    const state = this.getMasterState();
+    const otpIndex = state.otps.findIndex((o: OTP) => o.code === code && !o.isUsed);
     
-    // Prevent duplicates and errors
-    const id = 'SH-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-    const slug = data.name.toLowerCase().trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '');
+    if (otpIndex === -1) return false;
 
+    state.otps[otpIndex].isUsed = true;
+    const shopIndex = state.shops.findIndex((s: Shop) => s.id === shopId);
+    if (shopIndex > -1) {
+      state.shops[shopIndex].status = ShopStatus.ACTIVE;
+      state.shops[shopIndex].verified = true;
+    }
+    
+    this.commit(state);
+    return true;
+  }
+
+  // --- Shop Management ---
+  async createShop(data: any): Promise<Shop> {
+    const state = this.getMasterState();
+    const id = 'SH-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
     const newShop: Shop = {
       id,
       ownerId: 'USER-' + id,
       name: data.name,
       slug,
-      description: `Official ${data.name} Pakistan Store. Quality guaranteed.`,
+      description: data.description || `Premium Global Vendor`,
       logoUrl: '',
-      status: ShopStatus.PENDING_ADMIN_APPROVAL, // Default to pending for safety
+      status: ShopStatus.PENDING_ACTIVATION,
       verified: false,
       whatsappNumber: data.whatsapp,
       email: data.email,
       category: data.category,
       joinedAt: new Date().toISOString(),
-      payoutInfo: data.payoutInfo,
-      country: 'Pakistan'
+      country: 'Pakistan',
+      payoutInfo: data.payoutInfo
     };
 
-    db.shops.push(newShop);
-    this.sync(db);
+    state.shops.push(newShop);
+    this.commit(state);
     return newShop;
   }
 
   async fetchShopBySlug(slug: string): Promise<Shop | null> {
-    const db = this.getRegistry();
-    return db.shops.find((s: Shop) => s.slug === slug) || null;
+    const state = this.getMasterState();
+    return state.shops.find((s: Shop) => s.slug === slug) || null;
   }
 
   async fetchAllShops(): Promise<Shop[]> {
-    return this.getRegistry().shops;
+    return this.getMasterState().shops;
   }
 
   async updateShopStatus(shopId: string, status: ShopStatus): Promise<void> {
-    const db = this.getRegistry();
-    const shop = db.shops.find((s: Shop) => s.id === shopId);
-    if (shop) {
-      shop.status = status;
-      this.sync(db);
+    const state = this.getMasterState();
+    const idx = state.shops.findIndex((s: Shop) => s.id === shopId);
+    if (idx > -1) {
+      state.shops[idx].status = status;
+      this.commit(state);
     }
   }
 
-  // --- PRODUCT ACTIONS ---
-  async saveProduct(p: Product): Promise<void> {
-    const db = this.getRegistry();
-    const idx = db.products.findIndex((item: Product) => item.id === p.id);
-    if (idx > -1) db.products[idx] = p;
-    else db.products.push(p);
-    this.sync(db);
-  }
-
-  async fetchProductsByShop(shopId: string): Promise<Product[]> {
-    const db = this.getRegistry();
-    return db.products.filter((p: Product) => p.shopId === shopId);
+  // --- Global Product Inventory ---
+  async saveProduct(product: Product): Promise<void> {
+    const state = this.getMasterState();
+    const idx = state.products.findIndex((p: Product) => p.id === product.id);
+    if (idx > -1) state.products[idx] = product;
+    else state.products.push(product);
+    this.commit(state);
   }
 
   async fetchAllProducts(): Promise<Product[]> {
-    return this.getRegistry().products;
+    return this.getMasterState().products;
   }
 
-  // --- ORDER ACTIONS ---
+  async fetchProductsBySeller(sellerId: string): Promise<Product[]> {
+    const state = this.getMasterState();
+    return state.products.filter((p: Product) => p.sellerId === sellerId);
+  }
+
+  // --- Transaction Stream ---
   async saveOrder(order: Order): Promise<void> {
-    const db = this.getRegistry();
-    db.orders.push(order);
-    this.sync(db);
+    const state = this.getMasterState();
+    state.orders.push(order);
+    this.commit(state);
+  }
+
+  async fetchOrderDetails(orderId: string): Promise<Order | null> {
+    const state = this.getMasterState();
+    return state.orders.find((o: Order) => o.id === orderId) || null;
   }
 
   async fetchAllOrders(): Promise<Order[]> {
-    return this.getRegistry().orders;
+    return this.getMasterState().orders;
   }
 }
 
-export const api = new GlobalDatabaseService();
+export const api = new GlobalCloudAPI();

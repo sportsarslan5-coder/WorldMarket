@@ -1,9 +1,15 @@
 
 export enum ShopStatus {
-  PENDING_VERIFICATION = 'PENDING_VERIFICATION',
-  PENDING_ADMIN_APPROVAL = 'PENDING_ADMIN_APPROVAL',
+  INACTIVE = 'INACTIVE',
+  PENDING_ACTIVATION = 'PENDING_ACTIVATION',
   ACTIVE = 'ACTIVE',
   SUSPENDED = 'SUSPENDED'
+}
+
+export interface OTP {
+  code: string;
+  isUsed: boolean;
+  expiresAt: string;
 }
 
 export interface PayoutInfo {
@@ -32,7 +38,7 @@ export interface Shop {
 
 export interface Product {
   id: string;
-  shopId: string;
+  sellerId: string; // The primary anchor for isolation
   name: string;
   description: string;
   price: number;
@@ -45,7 +51,6 @@ export interface Product {
   stock: number;
   published: boolean;
   createdAt: string;
-  isPriority?: boolean;
 }
 
 export interface OrderItem {
@@ -83,7 +88,6 @@ export interface Seller {
   shopId: string;
   joinedAt: string;
   shopName?: string;
-  // Fix: Added payoutInfo to Seller interface to match usage in mock data and components
   payoutInfo?: PayoutInfo;
 }
 
