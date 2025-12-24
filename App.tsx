@@ -19,18 +19,27 @@ const App: React.FC = () => {
 
   const syncData = useCallback(async () => {
     try {
-      const [s, sh, p, o] = await Promise.all([
-        api.fetchAllSellers(),
+      const [sh, p, o] = await Promise.all([
         api.fetchAllShops(),
         api.fetchAllProducts(),
         api.fetchAllOrders()
       ]);
-      setSellers(s);
       setShops(sh);
       setProducts(p);
       setOrders(o);
+      
+      // Map shops to sellers for legacy compatibility
+      setSellers(sh.map(s => ({
+        id: s.ownerId,
+        fullName: s.name,
+        email: s.email,
+        phoneNumber: s.whatsappNumber,
+        shopId: s.id,
+        joinedAt: s.joinedAt,
+        payoutInfo: s.payoutInfo
+      })));
     } catch (err) {
-      console.error("Initial Sync Failed:", err);
+      console.error("Cloud Sync Failed:", err);
     } finally {
       setIsLoading(false);
     }
@@ -47,15 +56,20 @@ const App: React.FC = () => {
   }, [syncData]);
 
   const handleToggleSellerStatus = async (sellerId: string) => {
-    await api.toggleSeller(sellerId);
-    await syncData();
+    // Legacy mapping logic
+    const shop = shops.find(s => s.ownerId === sellerId);
+    if (shop) {
+      const newStatus = shop.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+      await api.updateShopStatus(shop.id, newStatus as any);
+      await syncData();
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#131921] flex flex-col items-center justify-center text-white font-sans">
-        <div className="w-16 h-16 border-4 border-[#febd69] border-t-transparent rounded-full animate-spin mb-6"></div>
-        <p className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">PK-MART GLOBAL SYNC</p>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white font-sans">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+        <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-500">BOOTING MASTER NODE</p>
       </div>
     );
   }
@@ -67,9 +81,6 @@ const App: React.FC = () => {
           <Route path="/" element={<LandingPage sellers={sellers} shops={shops} products={products} />} />
           <Route path="/admin/*" element={
             <AdminDashboard 
-              shops={shops}
-              sellers={sellers} 
-              orders={orders} 
               notifications={notifications}
               onRefresh={syncData}
               onToggleSellerStatus={handleToggleSellerStatus}

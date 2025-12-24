@@ -1,143 +1,103 @@
 
-import { Shop, Product, Order, ShopStatus, Seller, PayoutInfo } from '../types.ts';
-import { mockSellers, mockProducts, mockOrders } from './mockData.ts';
+import { Shop, Product, Order, ShopStatus, PayoutInfo } from '../types.ts';
+import { mockProducts, mockOrders } from './mockData.ts';
 
-class CloudDatabaseService {
-  private static STORAGE_KEY = 'PK_MART_MASTER_DATA_V5';
+/**
+ * GLOBAL PERSISTENCE ENGINE (Simulation)
+ * IMPORTANT: To enable TRUE cross-device sync (Global Visibility), 
+ * replace the localStorage calls with `fetch('https://your-api.com/...')`
+ */
+class GlobalDatabaseService {
+  private static STORAGE_KEY = 'PK_MART_GLOBAL_DATA_V2';
 
   private getRegistry() {
-    const data = localStorage.getItem(CloudDatabaseService.STORAGE_KEY);
+    const data = localStorage.getItem(GlobalDatabaseService.STORAGE_KEY);
     if (!data) {
-      // Seed initial data
-      const initialShops: Shop[] = mockSellers.map(s => ({
-        id: s.shopId,
-        ownerId: s.id,
-        name: s.shopName || s.fullName + "'s Store",
-        slug: (s.shopName || s.fullName).toLowerCase().replace(/\s+/g, '-'),
-        description: 'Premium vendor on PK-MART',
-        logoUrl: '',
-        status: ShopStatus.ACTIVE,
-        verified: true,
-        whatsappNumber: s.phoneNumber,
-        email: s.email,
-        category: 'General',
-        joinedAt: s.joinedAt,
-        payoutInfo: s.payoutInfo,
-        // Fix: Added missing country property
-        country: 'Pakistan'
-      }));
-
-      const registry = { 
-        shops: initialShops, 
-        products: mockProducts, 
-        orders: mockOrders, 
-        sellers: mockSellers 
-      };
-      this.saveRegistry(registry);
-      return registry;
+      const initial = { shops: [], products: mockProducts, orders: mockOrders };
+      this.sync(initial);
+      return initial;
     }
     return JSON.parse(data);
   }
 
-  private saveRegistry(data: any) {
-    localStorage.setItem(CloudDatabaseService.STORAGE_KEY, JSON.stringify(data));
+  private sync(data: any) {
+    localStorage.setItem(GlobalDatabaseService.STORAGE_KEY, JSON.stringify(data));
+    // In production, this would be: await fetch('/api/sync', { method: 'POST', body: JSON.stringify(data) });
   }
 
+  // --- SHOP ACTIONS ---
   async createShop(data: { name: string, email: string, whatsapp: string, category: string, payoutInfo: PayoutInfo }): Promise<Shop> {
-    const registry = this.getRegistry();
-    const shopId = 'shop_' + Math.random().toString(36).substr(2, 9);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const db = this.getRegistry();
+    
+    // Prevent duplicates and errors
+    const id = 'SH-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    const slug = data.name.toLowerCase().trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
 
     const newShop: Shop = {
-      id: shopId,
-      ownerId: 'seller_' + shopId,
+      id,
+      ownerId: 'USER-' + id,
       name: data.name,
-      slug: slug,
-      description: `Official ${data.name} Store`,
+      slug,
+      description: `Official ${data.name} Pakistan Store. Quality guaranteed.`,
       logoUrl: '',
-      status: ShopStatus.PENDING_VERIFICATION,
+      status: ShopStatus.PENDING_ADMIN_APPROVAL, // Default to pending for safety
       verified: false,
-      otpCode: otp,
       whatsappNumber: data.whatsapp,
       email: data.email,
       category: data.category,
       joinedAt: new Date().toISOString(),
       payoutInfo: data.payoutInfo,
-      // Fix: Added missing country property
       country: 'Pakistan'
     };
 
-    registry.shops.push(newShop);
-    this.saveRegistry(registry);
+    db.shops.push(newShop);
+    this.sync(db);
     return newShop;
   }
 
-  async verifyOTP(shopId: string, code: string): Promise<boolean> {
-    const registry = this.getRegistry();
-    const shop = registry.shops.find((s: Shop) => s.id === shopId);
-    if (shop && (shop.otpCode === code || code === '000000')) {
-      shop.status = ShopStatus.PENDING_ADMIN_APPROVAL;
-      this.saveRegistry(registry);
-      return true;
-    }
-    return false;
-  }
-
   async fetchShopBySlug(slug: string): Promise<Shop | null> {
-    const registry = this.getRegistry();
-    return registry.shops.find((s: Shop) => s.slug === slug) || null;
+    const db = this.getRegistry();
+    return db.shops.find((s: Shop) => s.slug === slug) || null;
   }
 
   async fetchAllShops(): Promise<Shop[]> {
     return this.getRegistry().shops;
   }
 
-  async fetchAllSellers(): Promise<Seller[]> {
-    const registry = this.getRegistry();
-    return registry.shops.map((s: Shop) => ({
-      id: s.ownerId,
-      fullName: s.name,
-      email: s.email,
-      phoneNumber: s.whatsappNumber,
-      shopId: s.id,
-      joinedAt: s.joinedAt,
-      shopName: s.name,
-      payoutInfo: s.payoutInfo
-    }));
-  }
-
-  async toggleSeller(sellerId: string): Promise<Seller[]> {
-    const registry = this.getRegistry();
-    const shop = registry.shops.find((s: Shop) => s.ownerId === sellerId);
+  async updateShopStatus(shopId: string, status: ShopStatus): Promise<void> {
+    const db = this.getRegistry();
+    const shop = db.shops.find((s: Shop) => s.id === shopId);
     if (shop) {
-      if (shop.status === ShopStatus.ACTIVE) shop.status = ShopStatus.SUSPENDED;
-      else shop.status = ShopStatus.ACTIVE;
-      this.saveRegistry(registry);
+      shop.status = status;
+      this.sync(db);
     }
-    return this.fetchAllSellers();
   }
 
-  async saveProduct(product: Product): Promise<void> {
-    const registry = this.getRegistry();
-    const index = registry.products.findIndex((p: Product) => p.id === product.id);
-    if (index > -1) registry.products[index] = product;
-    else registry.products.push(product);
-    this.saveRegistry(registry);
+  // --- PRODUCT ACTIONS ---
+  async saveProduct(p: Product): Promise<void> {
+    const db = this.getRegistry();
+    const idx = db.products.findIndex((item: Product) => item.id === p.id);
+    if (idx > -1) db.products[idx] = p;
+    else db.products.push(p);
+    this.sync(db);
   }
 
   async fetchProductsByShop(shopId: string): Promise<Product[]> {
-    return this.getRegistry().products.filter((p: Product) => p.shopId === shopId);
+    const db = this.getRegistry();
+    return db.products.filter((p: Product) => p.shopId === shopId);
   }
 
   async fetchAllProducts(): Promise<Product[]> {
     return this.getRegistry().products;
   }
 
+  // --- ORDER ACTIONS ---
   async saveOrder(order: Order): Promise<void> {
-    const registry = this.getRegistry();
-    registry.orders.push(order);
-    this.saveRegistry(registry);
+    const db = this.getRegistry();
+    db.orders.push(order);
+    this.sync(db);
   }
 
   async fetchAllOrders(): Promise<Order[]> {
@@ -145,4 +105,4 @@ class CloudDatabaseService {
   }
 }
 
-export const api = new CloudDatabaseService();
+export const api = new GlobalDatabaseService();

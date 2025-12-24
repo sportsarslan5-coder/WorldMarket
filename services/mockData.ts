@@ -108,6 +108,8 @@ export const mockOrders: Order[] = [
     shopName: 'Ahmed Electronics',
     customerName: 'Zainab Bibi',
     customerPhone: '03331112223',
+    // Fix: Added missing customerEmail and status properties
+    customerEmail: 'zainab@example.com',
     customerAddress: 'House 12, St 4, DHA Phase 5, Lahore',
     items: [
       { 
@@ -123,6 +125,7 @@ export const mockOrders: Order[] = [
     paymentStatus: 'unpaid',
     // Fix: Added missing currency property
     currency: 'PKR',
-    createdAt: '2024-03-10T10:00:00Z'
+    createdAt: '2024-03-10T10:00:00Z',
+    status: 'pending'
   }
 ];

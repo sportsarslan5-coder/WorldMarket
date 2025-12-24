@@ -22,7 +22,6 @@ export interface Shop {
   logoUrl: string;
   status: ShopStatus;
   verified: boolean;
-  otpCode?: string; 
   whatsappNumber: string;
   email: string;
   category: string;
@@ -41,12 +40,22 @@ export interface Product {
   category: string;
   imageUrl: string; 
   images: string[]; 
-  sizes: string[];
-  colors: string[];
+  sizes: string[]; 
+  colors: string[]; 
   stock: number;
   published: boolean;
   createdAt: string;
   isPriority?: boolean;
+}
+
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  productImageUrl: string;
+  quantity: number;
+  price: number;
+  size?: string;
+  color?: string;
 }
 
 export interface Order {
@@ -55,21 +64,15 @@ export interface Order {
   shopName: string;
   customerName: string;
   customerPhone: string;
+  customerEmail: string;
   customerAddress: string;
-  items: {
-    productId: string;
-    productName: string;
-    productImageUrl: string;
-    quantity: number;
-    price: number;
-    size?: string;
-    color?: string;
-  }[];
+  items: OrderItem[];
   totalAmount: number;
   paymentStatus: 'unpaid' | 'paid' | 'payout_processed';
   paymentMethod: 'COD' | 'ONLINE';
   currency: string;
   createdAt: string;
+  status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
 }
 
 export interface Seller {
@@ -80,6 +83,7 @@ export interface Seller {
   shopId: string;
   joinedAt: string;
   shopName?: string;
+  // Fix: Added payoutInfo to Seller interface to match usage in mock data and components
   payoutInfo?: PayoutInfo;
 }
 
