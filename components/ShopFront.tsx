@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Shop, Product, Order } from '../types.ts';
 import { api } from '../services/api.ts';
+import GlobalShareModal from './GlobalShareModal.tsx';
+import { ShareIcon } from './IconComponents.tsx';
 
 interface ShopFrontProps {
   onNotify?: (type: 'NEW_ORDER' | 'NEW_SELLER', data: any) => Promise<void>;
@@ -16,6 +18,13 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
   const [cart, setCart] = useState<{p: Product, qty: number}[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '' });
+  
+  // Share State
+  const [shareData, setShareData] = useState<{ isOpen: boolean, title: string, url: string }>({
+    isOpen: false,
+    title: '',
+    url: ''
+  });
 
   useEffect(() => {
     const init = async () => {
@@ -31,6 +40,15 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
     };
     init();
   }, [slug]);
+
+  const handleShare = (p: Product) => {
+    const url = `${window.location.origin}/#/shop/${slug}?product=${p.id}`;
+    setShareData({
+      isOpen: true,
+      title: `Check out ${p.name} on WORLD-SHOP`,
+      url: url
+    });
+  };
 
   const addToCart = (p: Product) => {
     setCart(prev => {
@@ -79,7 +97,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
   };
 
   if (isLoading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
        <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
     </div>
   );
@@ -92,30 +110,41 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-slate-900">
-      <nav className="glass sticky top-0 z-50 p-6 flex justify-between items-center border-b border-slate-200/50">
+    <div className="min-h-screen bg-[#fcfcfc] text-slate-900 pb-20 md:pb-0">
+      <nav className="glass sticky top-0 z-50 p-4 md:p-6 flex justify-between items-center border-b border-slate-200/50">
         <Link to="/" className="text-xl font-black tracking-tighter uppercase flex items-center gap-2">
            <span className="bg-slate-900 text-white px-1.5 rounded">W</span>
            WORLD<span className="text-blue-600">SHOP</span>
         </Link>
-        <button onClick={() => setShowCheckout(true)} className="bg-slate-900 text-white px-6 py-2.5 rounded-2xl font-black text-xs flex items-center gap-3 shadow-lg hover:bg-slate-800 transition">
-           CART ({cart.reduce((s,i)=>s+i.qty, 0)})
-        </button>
+        <div className="flex gap-2">
+           <button onClick={() => setShowCheckout(true)} className="bg-slate-900 text-white px-5 md:px-6 py-2.5 rounded-2xl font-black text-[10px] md:text-xs flex items-center gap-3 shadow-lg hover:bg-slate-800 transition">
+              CART ({cart.reduce((s,i)=>s+i.qty, 0)})
+           </button>
+        </div>
       </nav>
 
-      <header className="container mx-auto px-6 py-24 text-center">
+      <header className="container mx-auto px-6 py-16 md:py-24 text-center">
          <div className="inline-block bg-emerald-50 text-emerald-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 border border-emerald-100">
-            Certified Vendor • 100% Guaranteed
+            Certified Vendor • Global Node
          </div>
-         <h1 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter mb-4 leading-none text-slate-900">{shop.name}</h1>
-         <p className="text-slate-400 font-medium max-w-xl mx-auto">{shop.description}</p>
+         <h1 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter mb-4 leading-none text-slate-900">{shop.name}</h1>
+         <p className="text-slate-400 font-medium max-w-xl mx-auto text-sm md:text-base">{shop.description}</p>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 pb-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+      <main className="max-w-7xl mx-auto px-6 pb-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
         {products.map(p => (
           <div key={p.id} className="bg-white group rounded-[40px] overflow-hidden border border-slate-100 hover:border-blue-600/20 transition-all duration-700 hover:shadow-2xl hover:shadow-blue-500/5">
-             <div className="h-72 bg-slate-50 flex items-center justify-center p-12 overflow-hidden relative">
+             <div className="h-64 md:h-72 bg-slate-50 flex items-center justify-center p-12 overflow-hidden relative">
                 <img src={p.imageUrl} className="max-h-full max-w-full object-contain group-hover:scale-110 transition duration-1000" alt="" />
+                
+                {/* Share Trigger */}
+                <button 
+                  onClick={() => handleShare(p)}
+                  className="absolute top-4 right-4 bg-white/80 backdrop-blur p-3 rounded-2xl text-slate-400 hover:text-blue-600 transition shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 duration-300"
+                >
+                  <ShareIcon className="w-5 h-5" />
+                </button>
+
                 {p.price > 10000 && <div className="absolute top-4 left-4 bg-slate-900 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase">Prime</div>}
              </div>
              <div className="p-8">
@@ -124,20 +153,35 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
                    <span className="text-xs font-black mr-0.5 opacity-40 uppercase">Rs</span>
                    <span className="text-3xl font-black tracking-tighter">{p.price.toLocaleString()}</span>
                 </div>
-                <button 
-                  onClick={() => addToCart(p)} 
-                  className="w-full bg-slate-100 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform active:scale-95"
-                >
-                  Add to Cart
-                </button>
+                <div className="flex gap-2">
+                   <button 
+                     onClick={() => addToCart(p)} 
+                     className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all transform active:scale-95"
+                   >
+                     Add to Cart
+                   </button>
+                   <button 
+                     onClick={() => handleShare(p)} 
+                     className="md:hidden bg-slate-100 p-4 rounded-2xl"
+                   >
+                     <ShareIcon className="w-5 h-5" />
+                   </button>
+                </div>
              </div>
           </div>
         ))}
       </main>
 
+      <GlobalShareModal 
+        isOpen={shareData.isOpen} 
+        onClose={() => setShareData({ ...shareData, isOpen: false })} 
+        title={shareData.title}
+        url={shareData.url}
+      />
+
       {showCheckout && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex justify-end">
-           <div className="bg-white w-full max-w-xl h-full p-10 md:p-16 flex flex-col shadow-2xl overflow-y-auto animate-slide-in-right">
+           <div className="bg-white w-full max-w-xl h-full p-8 md:p-16 flex flex-col shadow-2xl overflow-y-auto animate-slide-in-right">
               <div className="flex justify-between items-center mb-12">
                  <h2 className="text-3xl font-black uppercase tracking-tighter">Your Package</h2>
                  <button onClick={() => setShowCheckout(false)} className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full hover:bg-slate-200 transition">✕</button>
@@ -145,15 +189,15 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
               
               <div className="flex-1 space-y-6">
                  {cart.map((item, idx) => (
-                   <div key={idx} className="flex gap-4 items-center bg-slate-50 p-6 rounded-[32px] border border-slate-100">
-                      <div className="w-16 h-16 bg-white rounded-xl p-2 flex items-center justify-center">
+                   <div key={idx} className="flex gap-4 items-center bg-slate-50 p-4 md:p-6 rounded-[32px] border border-slate-100">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-white rounded-xl p-2 flex items-center justify-center">
                          <img src={item.p.imageUrl} className="max-h-full max-w-full object-contain" alt="" />
                       </div>
                       <div className="flex-1">
-                         <p className="font-bold text-sm leading-tight text-slate-800">{item.p.name}</p>
+                         <p className="font-bold text-xs md:text-sm leading-tight text-slate-800">{item.p.name}</p>
                          <div className="flex justify-between items-center mt-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase">x {item.qty}</p>
-                            <p className="font-black text-slate-900">Rs. {(item.p.price * item.qty).toLocaleString()}</p>
+                            <p className="font-black text-slate-900 text-sm">Rs. {(item.p.price * item.qty).toLocaleString()}</p>
                          </div>
                       </div>
                    </div>
@@ -168,7 +212,7 @@ const ShopFront: React.FC<ShopFrontProps> = ({ onNotify }) => {
               <div className="mt-12 pt-10 border-t border-slate-100 space-y-4">
                  <div className="flex justify-between items-baseline mb-10">
                     <span className="font-black uppercase text-[10px] text-slate-400 tracking-widest">Total Pay</span>
-                    <span className="text-4xl font-black tracking-tighter">Rs. {cart.reduce((s, i) => s + (i.p.price * i.qty), 0).toLocaleString()}</span>
+                    <span className="text-3xl md:text-4xl font-black tracking-tighter">Rs. {cart.reduce((s, i) => s + (i.p.price * i.qty), 0).toLocaleString()}</span>
                  </div>
                  <input placeholder="Full Name" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 transition" value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} />
                  <input placeholder="WhatsApp Number" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500 transition" value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} />

@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Product, Shop, ShopStatus } from '../types.ts';
+import { DownloadIcon } from './IconComponents.tsx';
 
 interface LandingPageProps {
   sellers: any[];
@@ -60,17 +61,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button className="p-3 text-slate-400 hover:text-blue-600 transition px-4">
-             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </button>
         </div>
 
         <div className="flex items-center gap-6">
-           <button className="relative group">
-              <svg className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-              <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[8px] font-black h-4 w-4 flex items-center justify-center rounded-full">0</span>
+           <button 
+             onClick={() => alert("To install: Tap 'Share' then 'Add to Home Screen' on iPhone, or click 'Install' in your browser menu on Android.")}
+             className="bg-blue-600 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition"
+           >
+              <DownloadIcon className="w-4 h-4" /> Install App
            </button>
-           <div className="w-8 h-8 rounded-full bg-slate-200 border border-slate-300"></div>
+           <div className="hidden md:block w-8 h-8 rounded-full bg-slate-200 border border-slate-300"></div>
         </div>
       </nav>
 
@@ -81,7 +81,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
           </span>
-          Now Shipping to 190+ Countries
+          Universal Global Node: LIVE
         </div>
         <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] mb-6 max-w-5xl">
           THE WORLD'S <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500 italic">CRAFTSMANSHIP</span> HUB
@@ -89,7 +89,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
         <p className="text-lg font-medium text-slate-500 max-w-2xl leading-relaxed">
           From Sialkot's heritage to global innovation. Discover premium suppliers, authenticated products, and seamless logistics.
         </p>
-        <div className="flex gap-4 mt-12">
+        <div className="flex flex-wrap justify-center gap-4 mt-12">
           <button className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-slate-800 transition transform hover:-translate-y-1">Start Exploring</button>
           <Link to="/seller" className="bg-white border border-slate-200 text-slate-900 px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-blue-600 transition">Sell Globally</Link>
         </div>
@@ -100,10 +100,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
         <div className="flex items-center justify-between mb-12">
            <h2 className="text-xl font-black uppercase tracking-tighter text-slate-900">Featured Collections</h2>
            <div className="h-px flex-1 bg-slate-200 mx-10"></div>
-           <div className="flex gap-2">
-              <button className="p-2 border border-slate-200 rounded-lg hover:bg-white transition"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg></button>
-              <button className="p-2 border border-slate-200 rounded-lg hover:bg-white transition"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg></button>
-           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -113,11 +109,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
               <div key={p.id} className="bg-white group rounded-[32px] overflow-hidden border border-slate-100 flex flex-col transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/5 hover:-translate-y-2">
                 <div className="h-64 overflow-hidden relative bg-slate-50 flex items-center justify-center p-10">
                   <img src={p.imageUrl} className="w-full h-full object-contain group-hover:scale-110 transition duration-1000" alt={p.name} />
-                  <div className="absolute top-4 right-4 flex flex-col gap-2">
-                     <button className="bg-white/90 backdrop-blur p-2 rounded-xl text-slate-400 hover:text-red-500 transition shadow-sm">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                     </button>
-                  </div>
                   {p.price > 10000 && (
                     <div className="absolute top-4 left-4 priority-gradient text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
                       Global Priority
@@ -129,7 +120,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
                    <div className="flex items-center gap-2 mb-3">
                       <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{p.category}</span>
                       <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Global Shipping</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Global Node</span>
                    </div>
                    <h3 className="font-bold text-lg mb-4 line-clamp-2 leading-tight text-slate-800 group-hover:text-blue-600 transition-colors">
                       {p.name}
@@ -161,8 +152,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
              </div>
-             <h2 className="text-xl font-black text-slate-400 uppercase tracking-widest">No local or global matches</h2>
-             <p className="text-slate-400 text-sm mt-2">Try searching for broader terms like "Crafts" or "Sports".</p>
+             <h2 className="text-xl font-black text-slate-400 uppercase tracking-widest">No global matches</h2>
           </div>
         )}
       </main>
@@ -178,7 +168,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ shops = [], products = [] }) 
             <Link to="/" className="hover:text-white transition">Home</Link>
             <Link to="/seller" className="hover:text-white transition">Sell</Link>
             <Link to="/admin" className="hover:text-white transition">Consoles</Link>
-            <button className="hover:text-white transition">Language</button>
+            <button className="hover:text-white transition">Global Node</button>
           </div>
           <p className="opacity-30 text-[9px] font-bold uppercase tracking-[0.4em]">© 2024 WORLD-SHOP | Global Multi-Vendor Master Node</p>
         </div>
