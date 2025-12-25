@@ -14,7 +14,6 @@ const LandingPage: React.FC = () => {
 
   useEffect(() => {
     const syncNetwork = async () => {
-      // Fix: Changed fetchAllProducts to fetchGlobalProducts
       const [sh, p] = await Promise.all([api.fetchAllShops(), api.fetchGlobalProducts()]);
       setShops(sh);
       setProducts(p);
@@ -26,7 +25,6 @@ const LandingPage: React.FC = () => {
   const categories = ['All', 'Fashion', 'Electronics', 'Sports', 'Home', 'Art'];
 
   const filteredProducts = useMemo(() => {
-    // Only products from ACTIVE vendors are visible globally
     const activeShopIds = shops.filter(s => s.status === ShopStatus.ACTIVE).map(s => s.id);
     
     return products.filter(p => {
@@ -48,7 +46,6 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
-      {/* Dynamic Nav */}
       <nav className="sticky top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-6">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-12">
           <Link to="/" className="text-3xl font-black italic tracking-tighter text-slate-900 group">
@@ -64,13 +61,12 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div className="flex gap-4">
-             <Link to="/seller" className="hidden sm:flex items-center px-8 py-4 bg-slate-900 text-white rounded-[20px] font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition shadow-lg shadow-slate-900/10">Vendor Portal</Link>
+             <Link to="/sell" className="hidden sm:flex items-center px-8 py-4 bg-slate-900 text-white rounded-[20px] font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition shadow-lg shadow-slate-900/10">Become a Seller</Link>
              <Link to="/admin" className="bg-slate-200 text-slate-900 px-8 py-4 rounded-[20px] font-black text-[10px] uppercase tracking-widest hover:bg-slate-300 transition">Command Center</Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="bg-slate-900 py-24 px-6 relative overflow-hidden">
          <div className="absolute inset-0 opacity-10 pointer-events-none">
             <GlobeAltIcon className="w-full h-full text-white" />
@@ -82,7 +78,6 @@ const LandingPage: React.FC = () => {
          </div>
       </section>
 
-      {/* Grid Cluster */}
       <main className="max-w-[1400px] mx-auto px-6 py-20">
         <div className="flex items-center gap-10 mb-16 overflow-x-auto pb-4 scrollbar-hide">
            {categories.map(c => (
@@ -139,7 +134,7 @@ const LandingPage: React.FC = () => {
             <h2 className="text-4xl font-black italic tracking-tighter">PK<span className="text-blue-600">MART</span>_GLOBAL</h2>
             <p className="text-slate-500 font-bold max-w-xl mx-auto uppercase text-xs tracking-widest leading-loose">The next generation multi-vendor node. Powered by the master command center for ultimate logistics efficiency.</p>
             <div className="flex justify-center gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
-               <Link to="/seller" className="hover:text-white transition">Vendor Portal</Link>
+               <Link to="/sell" className="hover:text-white transition">Vendor Portal</Link>
                <Link to="/admin" className="hover:text-white transition">Command Center</Link>
                <a href="#" className="hover:text-white transition">Network Specs</a>
             </div>

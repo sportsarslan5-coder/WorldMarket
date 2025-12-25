@@ -3,8 +3,6 @@ import { Shop, Product, Order, ShopStatus } from '../types.ts';
 
 /**
  * PK-MART GLOBAL CLOUD HUB
- * This service acts as the gateway to the permanent database.
- * To use a real backend like Supabase, swap the localStorage calls with fetch() or supabase.from().
  */
 const ADMIN_PHONE = "03079490721";
 
@@ -25,7 +23,6 @@ class GlobalCloudHub {
     window.dispatchEvent(new Event('storage'));
   }
 
-  // Universal WhatsApp Logic
   private triggerWhatsApp(message: string) {
     const encoded = encodeURIComponent(message);
     const url = `https://wa.me/${ADMIN_PHONE}?text=${encoded}`;
@@ -63,6 +60,16 @@ class GlobalCloudHub {
     return newShop;
   }
 
+  async updateShop(shopId: string, updates: Partial<Shop>): Promise<Shop> {
+    const state = this.getMasterState();
+    const index = state.shops.findIndex((s: Shop) => s.id === shopId);
+    if (index === -1) throw new Error("Shop not found");
+    
+    state.shops[index] = { ...state.shops[index], ...updates };
+    this.sync(state);
+    return state.shops[index];
+  }
+
   async fetchAllShops(): Promise<Shop[]> {
     return this.getMasterState().shops;
   }
@@ -76,6 +83,21 @@ class GlobalCloudHub {
   async uploadProduct(product: Product): Promise<void> {
     const state = this.getMasterState();
     state.products.push(product);
+    this.sync(state);
+  }
+
+  async updateProduct(productId: string, updates: Partial<Product>): Promise<void> {
+    const state = this.getMasterState();
+    const index = state.products.findIndex((p: Product) => p.id === productId);
+    if (index !== -1) {
+      state.products[index] = { ...state.products[index], ...updates };
+      this.sync(state);
+    }
+  }
+
+  async deleteProduct(productId: string): Promise<void> {
+    const state = this.getMasterState();
+    state.products = state.products.filter((p: Product) => p.id !== productId);
     this.sync(state);
   }
 

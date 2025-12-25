@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import SellerDashboard from './components/SellerDashboard.tsx';
+import VendorLanding from './components/VendorLanding.tsx';
 import ShopFront from './components/ShopFront.tsx';
 import LandingPage from './components/LandingPage.tsx';
 import { Seller, Product, Order, AdminNotification, Shop } from './types.ts';
@@ -21,7 +22,6 @@ const App: React.FC = () => {
     try {
       const [sh, p, o] = await Promise.all([
         api.fetchAllShops(),
-        // Fix: Changed fetchAllProducts to fetchGlobalProducts
         api.fetchGlobalProducts(),
         api.fetchAllOrders()
       ]);
@@ -29,7 +29,6 @@ const App: React.FC = () => {
       setProducts(p);
       setOrders(o);
       
-      // Map shops to sellers for legacy compatibility
       setSellers(sh.map(s => ({
         id: s.ownerId,
         fullName: s.name,
@@ -56,9 +55,6 @@ const App: React.FC = () => {
     syncData();
   }, [syncData]);
 
-  // Fix: Removed unused handleToggleSellerStatus which was only used for an invalid prop in AdminDashboard.
-  // AdminDashboard manages shop status updates internally.
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white font-sans">
@@ -72,17 +68,16 @@ const App: React.FC = () => {
     <Router>
       <div className="min-h-screen">
         <Routes>
-          {/* Fix: LandingPage does not accept props, it manages its own state and data fetching. */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/sell" element={<VendorLanding />} />
           <Route path="/admin/*" element={
             <AdminDashboard 
               notifications={notifications}
               onRefresh={syncData}
-              /* Fix: Removed onToggleSellerStatus as it is not declared in AdminDashboard props. */
             />
           } />
-          <Route path="/seller/*" element={<SellerDashboard onNotify={addNotification} />} />
-          <Route path="/shop/:slug" element={<ShopFront onNotify={addNotification} />} />
+          <Route path="/seller/*" element={<SellerDashboard />} />
+          <Route path="/shop/:slug" element={<ShopFront />} />
         </Routes>
       </div>
     </Router>
