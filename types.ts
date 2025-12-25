@@ -5,13 +5,25 @@ export enum ShopStatus {
 }
 
 export interface PayoutInfo {
-  method: 'JazzCash' | 'Easypaisa' | 'Bank' | 'Stripe' | 'PayPal';
+  method: 'JazzCash' | 'Easypaisa' | 'Bank';
   accountNumber: string;
   accountTitle: string;
+  // Added optional bankName for bank transfers
   bankName?: string;
 }
 
-// Added Seller interface to fix import errors in App.tsx, services/mockData.ts, services/db.ts, and services/notificationService.ts
+// Added AdminNotification interface for dashboard alerts
+export interface AdminNotification {
+  id: string;
+  type: 'NEW_SELLER' | 'NEW_ORDER';
+  timestamp: string;
+  content: {
+    whatsapp: string;
+    email: string;
+  };
+  sent: boolean;
+}
+
 export interface Seller {
   id: string;
   fullName: string;
@@ -19,8 +31,10 @@ export interface Seller {
   phoneNumber: string;
   shopId: string;
   joinedAt: string;
+  // Made status optional to match mock data
+  status?: 'active' | 'inactive';
+  // Added optional payoutInfo for registration tracking
   payoutInfo?: PayoutInfo;
-  status?: string;
 }
 
 export interface Shop {
@@ -29,15 +43,12 @@ export interface Shop {
   name: string;
   slug: string;
   description: string;
-  logoUrl: string;
   status: ShopStatus;
-  verified: boolean;
   whatsappNumber: string;
   email: string;
-  category: string;
   joinedAt: string;
+  // Added optional payoutInfo for shop configuration
   payoutInfo?: PayoutInfo;
-  country: string;
 }
 
 export interface Product {
@@ -50,12 +61,14 @@ export interface Product {
   currency: string;
   category: string;
   imageUrl: string; 
-  images: string[]; 
-  sizes: string[]; 
-  colors: string[]; 
+  size?: string;
   stock: number;
   published: boolean;
   createdAt: string;
+  // Added optional extended properties for mock data compatibility
+  images?: string[];
+  sizes?: string[];
+  colors?: string[];
 }
 
 export interface OrderItem {
@@ -65,7 +78,6 @@ export interface OrderItem {
   quantity: number;
   price: number;
   size?: string;
-  color?: string;
 }
 
 export interface Order {
@@ -75,24 +87,14 @@ export interface Order {
   sellerWhatsApp: string;
   customerName: string;
   customerPhone: string;
-  customerEmail: string;
   customerAddress: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentStatus: 'unpaid' | 'paid';
-  paymentMethod: 'COD' | 'ONLINE';
-  currency: string;
+  paymentMethod: 'COD';
+  currency: 'PKR';
   createdAt: string;
-  status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
-}
-
-export interface AdminNotification {
-  id: string;
-  type: 'NEW_SELLER' | 'NEW_ORDER';
-  timestamp: string;
-  content: {
-    whatsapp: string;
-    email: string;
-  };
-  sent: boolean;
+  status: 'pending' | 'shipped' | 'delivered';
+  // Added optional customer details and status for order tracking
+  customerEmail?: string;
+  paymentStatus?: 'paid' | 'unpaid';
 }
