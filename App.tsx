@@ -21,7 +21,8 @@ const App: React.FC = () => {
     try {
       const [sh, p, o] = await Promise.all([
         api.fetchAllShops(),
-        api.fetchAllProducts(),
+        // Fix: Changed fetchAllProducts to fetchGlobalProducts
+        api.fetchGlobalProducts(),
         api.fetchAllOrders()
       ]);
       setShops(sh);

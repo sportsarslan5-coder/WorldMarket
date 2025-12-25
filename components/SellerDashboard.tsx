@@ -5,24 +5,22 @@ import { Shop, Product } from '../types.ts';
 import { Link } from 'react-router-dom';
 
 const SellerDashboard: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
   
-  const [regData, setRegData] = useState({ name: '', email: '', whatsapp: '', category: 'Fashion' });
-  const [skuData, setSkuData] = useState({ name: '', price: '', stock: '10', img: '', sizes: 'S,M,L', colors: 'Multi' });
+  const [regForm, setRegForm] = useState({ name: '', whatsapp: '', email: '' });
+  const [prodForm, setProdForm] = useState({ name: '', price: '', img: '', size: '' });
 
   useEffect(() => {
-    const authId = localStorage.getItem('PK_MART_SELLER_ID');
-    if (authId) {
-      api.fetchAllShops().then(all => {
-        const found = all.find(s => s.id === authId);
+    const savedId = localStorage.getItem('PK_ACTIVE_SELLER_ID');
+    if (savedId) {
+      api.fetchAllShops().then(shops => {
+        const found = shops.find(s => s.id === savedId);
         if (found) {
           setShop(found);
-          setIsLoggedIn(true);
-          api.fetchProductsBySeller(found.id).then(setProducts);
+          api.fetchSellerProducts(found.id).then(setProducts);
         }
       });
     }
@@ -31,52 +29,54 @@ const SellerDashboard: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSyncing(true);
-    const created = await api.createShop(regData);
-    setShop(created);
-    localStorage.setItem('PK_MART_SELLER_ID', created.id);
-    setIsLoggedIn(true);
+    const newShop = await api.registerSeller(regForm);
+    setShop(newShop);
+    localStorage.setItem('PK_ACTIVE_SELLER_ID', newShop.id);
     setIsSyncing(false);
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!shop) return;
     setIsSyncing(true);
-    const newProduct: Product = {
-      id: 'PROD-' + Date.now(),
+    
+    const product: Product = {
+      id: 'PRD-' + Date.now(),
       sellerId: shop.id,
       sellerName: shop.name,
-      name: skuData.name,
-      description: 'Official Vendor SKU',
-      price: Number(skuData.price),
-      currency: 'PKR',
-      category: shop.category,
-      imageUrl: skuData.img || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+      name: prodForm.name,
+      description: "Premium SKU",
+      price: Number(prodForm.price),
+      currency: "PKR",
+      category: "General",
+      imageUrl: prodForm.img || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500",
       images: [],
-      sizes: skuData.sizes.split(','),
-      colors: skuData.colors.split(','),
-      stock: Number(skuData.stock),
+      sizes: prodForm.size ? [prodForm.size] : [],
+      colors: [],
+      stock: 99,
       published: true,
       createdAt: new Date().toISOString()
     };
-    await api.saveProduct(newProduct);
-    const refreshed = await api.fetchProductsBySeller(shop.id);
-    setProducts(refreshed);
-    setShowModal(false);
+
+    await api.uploadProduct(product);
+    const updated = await api.fetchSellerProducts(shop.id);
+    setProducts(updated);
+    setShowUpload(false);
     setIsSyncing(false);
   };
 
-  if (!isLoggedIn) {
+  if (!shop) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <div className="bg-white p-12 md:p-16 rounded-[60px] max-w-xl w-full animate-slide-up shadow-2xl">
-          <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 mb-2">Vendor Hub</h2>
-          <p className="text-slate-400 font-bold mb-10 text-xs uppercase tracking-widest">Immediate Global Access</p>
+        <div className="bg-white p-12 rounded-[50px] shadow-2xl max-w-lg w-full">
+          <h2 className="text-3xl font-black uppercase tracking-tighter mb-2">Seller Registration</h2>
+          <p className="text-slate-400 font-bold text-xs uppercase mb-10">Start Selling Globally in 30 Seconds</p>
           <form onSubmit={handleRegister} className="space-y-4">
-            <input required placeholder="Shop Name" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-blue-600 transition" value={regData.name} onChange={e => setRegData({...regData, name: e.target.value})} />
-            <input required placeholder="Email" type="email" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} />
-            <input required placeholder="WhatsApp Number" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={regData.whatsapp} onChange={e => setRegData({...regData, whatsapp: e.target.value})} />
-            <button disabled={isSyncing} className="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-xl hover:bg-blue-600 transition disabled:opacity-50">
-              {isSyncing ? 'CREATING NODE...' : 'START SELLING NOW'}
+            <input required placeholder="Shop Name" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-blue-600 transition" value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})} />
+            <input required placeholder="WhatsApp Number" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={regForm.whatsapp} onChange={e => setRegForm({...regForm, whatsapp: e.target.value})} />
+            <input required placeholder="Email Address" type="email" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} />
+            <button disabled={isSyncing} className="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-xl hover:bg-blue-600 transition">
+              {isSyncing ? 'SYNCING DATA...' : 'REGISTER & OPEN SHOP'}
             </button>
           </form>
         </div>
@@ -86,53 +86,51 @@ const SellerDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
-      <aside className="w-full lg:w-80 bg-slate-900 p-10 text-white flex flex-col h-screen sticky top-0">
-        <div className="text-2xl font-black italic tracking-tighter mb-20">PK_VENDOR</div>
+      <aside className="w-full lg:w-80 bg-slate-900 text-white p-10 flex flex-col h-screen sticky top-0">
+        <div className="text-2xl font-black italic mb-20 tracking-tighter">VENDOR_HUB</div>
         <div className="space-y-4 flex-1">
-          <button className="w-full text-left p-5 bg-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest">Inventory</button>
-          <Link to="/" className="block p-5 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-white transition">Marketplace</Link>
-          <Link to={`/shop/${shop?.slug}`} className="block p-5 text-emerald-400 font-black text-[10px] uppercase tracking-widest border border-emerald-400/20 rounded-2xl hover:bg-emerald-400 hover:text-white transition">View Live Shop</Link>
+          <div className="p-5 bg-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest">Dashboard</div>
+          <Link to={`/shop/${shop.slug}`} className="block p-5 text-emerald-400 font-black text-[10px] uppercase border border-emerald-400/20 rounded-2xl text-center">Visit Live Shop</Link>
+          <Link to="/" className="block p-5 text-slate-500 font-black text-[10px] uppercase">Marketplace</Link>
         </div>
-        <button onClick={() => { localStorage.removeItem('PK_MART_SELLER_ID'); window.location.reload(); }} className="text-slate-600 font-black text-[10px] uppercase">Logout</button>
+        <button onClick={() => { localStorage.removeItem('PK_ACTIVE_SELLER_ID'); window.location.reload(); }} className="text-slate-600 font-black text-[10px] uppercase">Logout</button>
       </aside>
 
-      <main className="flex-1 p-8 lg:p-16">
-        <div className="flex justify-between items-end mb-16">
-          <div>
-            <h1 className="text-5xl font-black uppercase tracking-tighter text-slate-900">{shop?.name}</h1>
-            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">Global Vendor ID: {shop?.id}</p>
-          </div>
-          <button onClick={() => setShowModal(true)} className="bg-slate-900 text-white px-10 py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl">Add Product</button>
+      <main className="flex-1 p-8 lg:p-16 overflow-y-auto">
+        <div className="flex justify-between items-center mb-16">
+          <h1 className="text-5xl font-black uppercase tracking-tighter">{shop.name}</h1>
+          <button onClick={() => setShowUpload(true)} className="bg-slate-900 text-white px-10 py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl">Add Product</button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {products.map(p => (
-            <div key={p.id} className="bg-white p-8 rounded-[40px] border border-slate-100 flex flex-col shadow-sm">
-              <div className="h-48 bg-slate-50 rounded-3xl mb-6 flex items-center justify-center p-6">
-                <img src={p.imageUrl} className="max-h-full object-contain" alt="p" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+          {products.length === 0 ? (
+             <div className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-slate-200 text-slate-400 font-black uppercase">No Products Uploaded Yet</div>
+          ) : products.map(p => (
+            <div key={p.id} className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 group">
+              <div className="h-48 bg-slate-50 rounded-3xl mb-6 flex items-center justify-center p-6 overflow-hidden">
+                <img src={p.imageUrl} className="max-h-full object-contain group-hover:scale-110 transition" alt="p" />
               </div>
-              <h3 className="font-black text-xl text-slate-900 mb-2">{p.name}</h3>
-              <p className="text-2xl font-black text-slate-900 mb-6">Rs. {p.price.toLocaleString()}</p>
-              <div className="mt-auto pt-6 border-t border-slate-50 flex justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase">Stock: {p.stock}</span>
-                <span className="text-[10px] font-black text-blue-600 uppercase">Live</span>
-              </div>
+              <h3 className="font-black text-xl mb-2">{p.name}</h3>
+              <p className="text-3xl font-black text-slate-900 tracking-tighter">Rs. {p.price.toLocaleString()}</p>
             </div>
           ))}
         </div>
       </main>
 
-      {showModal && (
+      {showUpload && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[200] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-xl p-12 rounded-[50px] animate-slide-up relative">
-            <button onClick={() => setShowModal(false)} className="absolute top-10 right-10 font-black">✕</button>
-            <h2 className="text-3xl font-black mb-10 uppercase tracking-tighter">New SKU Upload</h2>
-            <div className="space-y-4">
-              <input placeholder="Product Title" className="w-full p-5 bg-slate-50 rounded-2xl font-bold" value={skuData.name} onChange={e => setSkuData({...skuData, name: e.target.value})} />
-              <input placeholder="Price (PKR)" className="w-full p-5 bg-slate-50 rounded-2xl font-bold" value={skuData.price} onChange={e => setSkuData({...skuData, price: e.target.value})} />
-              <input placeholder="Image URL" className="w-full p-5 bg-slate-50 rounded-2xl font-bold" value={skuData.img} onChange={e => setSkuData({...skuData, img: e.target.value})} />
-              <button onClick={handleUpload} className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xl">PUSH TO GLOBAL GRID</button>
-            </div>
+          <div className="bg-white p-12 rounded-[50px] max-w-xl w-full animate-slide-up relative">
+            <button onClick={() => setShowUpload(false)} className="absolute top-10 right-10 font-black">✕</button>
+            <h2 className="text-3xl font-black mb-8 uppercase tracking-tighter">Upload New SKU</h2>
+            <form onSubmit={handleUpload} className="space-y-4">
+              <input required placeholder="Product Name" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={prodForm.name} onChange={e => setProdForm({...prodForm, name: e.target.value})} />
+              <input required placeholder="Price (PKR)" type="number" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={prodForm.price} onChange={e => setProdForm({...prodForm, price: e.target.value})} />
+              <input required placeholder="Image URL (Direct link)" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={prodForm.img} onChange={e => setProdForm({...prodForm, img: e.target.value})} />
+              <input placeholder="Size (Optional)" className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={prodForm.size} onChange={e => setProdForm({...prodForm, size: e.target.value})} />
+              <button disabled={isSyncing} className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xl shadow-xl">
+                {isSyncing ? 'SYNCING TO GLOBAL GRID...' : 'PUSH TO ALL DEVICES'}
+              </button>
+            </form>
           </div>
         </div>
       )}

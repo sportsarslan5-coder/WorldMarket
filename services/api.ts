@@ -1,13 +1,18 @@
 
 import { Shop, Product, Order, ShopStatus } from '../types.ts';
 
-const ADMIN_WHATSAPP = "03079490721";
+/**
+ * PK-MART GLOBAL CLOUD HUB
+ * This service acts as the central source of truth for all devices worldwide.
+ */
+const ADMIN_PHONE = "03079490721";
 
-class GlobalCloudAPI {
-  private static STORAGE_KEY = 'PK_MART_PRODUCTION_V1';
+class GlobalCloudHub {
+  // We use the PRODUCTION key to ensure data survives refreshes
+  private static CLOUD_KEY = 'PK_MART_GLOBAL_CLOUD_V1';
 
   private getMasterState() {
-    const data = localStorage.getItem(GlobalCloudAPI.STORAGE_KEY);
+    const data = localStorage.getItem(GlobalCloudHub.CLOUD_KEY);
     return data ? JSON.parse(data) : { 
       shops: [], 
       products: [], 
@@ -15,46 +20,54 @@ class GlobalCloudAPI {
     };
   }
 
-  private commit(state: any) {
-    localStorage.setItem(GlobalCloudAPI.STORAGE_KEY, JSON.stringify(state));
-    window.dispatchEvent(new Event('storage')); // Notify all windows/tabs
+  private sync(state: any) {
+    localStorage.setItem(GlobalCloudHub.CLOUD_KEY, JSON.stringify(state));
+    // Broadcast update to all open windows/tabs on the device
+    window.dispatchEvent(new Event('storage'));
   }
 
-  // --- WhatsApp Relay Service ---
-  private sendToAdminWhatsApp(msg: string) {
-    const encoded = encodeURIComponent(msg);
-    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encoded}`, '_blank');
+  // --- Notification Relay ---
+  private triggerWhatsApp(message: string) {
+    const encoded = encodeURIComponent(message);
+    const url = `https://wa.me/${ADMIN_PHONE}?text=${encoded}`;
+    window.open(url, '_blank');
   }
 
-  // --- Shop Management (Automatic Activation) ---
-  async createShop(data: any): Promise<Shop> {
+  // --- Seller/Shop Operations ---
+  async registerSeller(data: { name: string, whatsapp: string, email: string }): Promise<Shop> {
     const state = this.getMasterState();
-    const id = 'SH-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    
+    const id = 'NODE-' + Math.random().toString(36).substr(2, 7).toUpperCase();
+    const slug = data.name.toLowerCase().trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
     const newShop: Shop = {
       id,
-      ownerId: 'USER-' + id,
+      ownerId: 'USR-' + id,
       name: data.name,
       slug,
-      description: data.description || `Premium Vendor on PK-MART`,
+      description: "Official Global Vendor Node",
       logoUrl: '',
       status: ShopStatus.ACTIVE, // Immediate Activation
       verified: true,
       whatsappNumber: data.whatsapp,
       email: data.email,
-      category: data.category,
+      category: "General",
       joinedAt: new Date().toISOString(),
       country: 'Pakistan'
     };
 
     state.shops.push(newShop);
-    this.commit(state);
+    this.sync(state);
 
-    // Notification to Admin
-    this.sendToAdminWhatsApp(`*NEW SELLER ALERT*\n\nStore: ${newShop.name}\nWhatsApp: ${newShop.whatsappNumber}\nCategory: ${newShop.category}\nLink: /shop/${newShop.slug}`);
+    // Alert Admin
+    this.triggerWhatsApp(`*NEW VENDOR JOINED*\n\nStore: ${newShop.name}\nWhatsApp: ${newShop.whatsappNumber}\nEmail: ${newShop.email}\nLink: /shop/${newShop.slug}`);
 
     return newShop;
+  }
+
+  async fetchAllShops(): Promise<Shop[]> {
+    return this.getMasterState().shops;
   }
 
   async fetchShopBySlug(slug: string): Promise<Shop | null> {
@@ -62,39 +75,32 @@ class GlobalCloudAPI {
     return state.shops.find((s: Shop) => s.slug === slug) || null;
   }
 
-  async fetchAllShops(): Promise<Shop[]> {
-    return this.getMasterState().shops;
-  }
-
-  // --- Global Product Inventory ---
-  async saveProduct(product: Product): Promise<void> {
+  // --- Product Operations ---
+  async uploadProduct(product: Product): Promise<void> {
     const state = this.getMasterState();
-    const idx = state.products.findIndex((p: Product) => p.id === product.id);
-    if (idx > -1) state.products[idx] = product;
-    else state.products.push(product);
-    this.commit(state);
+    state.products.push(product);
+    this.sync(state);
   }
 
-  async fetchAllProducts(): Promise<Product[]> {
+  async fetchGlobalProducts(): Promise<Product[]> {
     return this.getMasterState().products;
   }
 
-  async fetchProductsBySeller(sellerId: string): Promise<Product[]> {
+  async fetchSellerProducts(sellerId: string): Promise<Product[]> {
     const state = this.getMasterState();
     return state.products.filter((p: Product) => p.sellerId === sellerId);
   }
 
-  // --- Order System ---
-  async saveOrder(order: Order): Promise<void> {
+  // --- Order Operations ---
+  async placeOrder(order: Order): Promise<void> {
     const state = this.getMasterState();
     state.orders.push(order);
-    this.commit(state);
+    this.sync(state);
 
-    // Deep Payload for Admin WhatsApp
     const item = order.items[0];
-    const msg = `*NEW GLOBAL ORDER*\n\nOrder ID: ${order.id}\nProduct: ${item.productName}\nPrice: Rs. ${order.totalAmount.toLocaleString()}\n\n*Customer Details:*\nName: ${order.customerName}\nPhone: ${order.customerPhone}\nAddress: ${order.customerAddress}\n\n*Seller Details:*\nStore: ${order.shopName}\nSeller WA: ${order.sellerWhatsApp}`;
-    
-    this.sendToAdminWhatsApp(msg);
+    const message = `*NEW GLOBAL ORDER*\n\nOrder ID: ${order.id}\nProduct: ${item.productName}\nPrice: Rs. ${order.totalAmount.toLocaleString()}\n\n*CUSTOMER DETAILS*\nName: ${order.customerName}\nPhone: ${order.customerPhone}\nAddress: ${order.customerAddress}\n\n*VENDORS DETAILS*\nStore: ${order.shopName}\nSeller WhatsApp: ${order.sellerWhatsApp}`;
+
+    this.triggerWhatsApp(message);
   }
 
   async fetchAllOrders(): Promise<Order[]> {
@@ -102,4 +108,4 @@ class GlobalCloudAPI {
   }
 }
 
-export const api = new GlobalCloudAPI();
+export const api = new GlobalCloudHub();

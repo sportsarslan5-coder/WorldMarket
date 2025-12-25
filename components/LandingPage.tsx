@@ -14,7 +14,8 @@ const LandingPage: React.FC = () => {
 
   useEffect(() => {
     const syncNetwork = async () => {
-      const [sh, p] = await Promise.all([api.fetchAllShops(), api.fetchAllProducts()]);
+      // Fix: Changed fetchAllProducts to fetchGlobalProducts
+      const [sh, p] = await Promise.all([api.fetchAllShops(), api.fetchGlobalProducts()]);
       setShops(sh);
       setProducts(p);
       setIsLoading(false);
