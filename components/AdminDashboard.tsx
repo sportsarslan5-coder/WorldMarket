@@ -1,12 +1,18 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Shop, Product, Order } from '../types.ts';
+import { Shop, Product, Order, AdminNotification } from '../types.ts';
 import { api } from '../services/api.ts';
 
-const AdminDashboard: React.FC = () => {
+// Added interface for AdminDashboard props to fix "Property does not exist on type IntrinsicAttributes" error
+interface AdminDashboardProps {
+  notifications: AdminNotification[];
+  onRefresh: () => Promise<void>;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefresh }) => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [pass, setPass] = useState('');
-  const [activeTab, setActiveTab] = useState<'sellers' | 'orders' | 'products'>('orders');
+  const [activeTab, setActiveTab] = useState<'sellers' | 'orders' | 'products' | 'notifications'>('orders');
   
   const [shops, setShops] = useState<Shop[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -27,6 +33,8 @@ const AdminDashboard: React.FC = () => {
     setShops(s);
     setOrders(o);
     setProducts(p);
+    // Call the refresh prop if it exists to keep parent state in sync
+    if (onRefresh) await onRefresh();
   };
 
   useEffect(() => {
@@ -106,6 +114,7 @@ const AdminDashboard: React.FC = () => {
           <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition ${activeTab === 'orders' ? 'bg-blue-600' : 'hover:bg-white/5'}`}>Order Log ({orders.length})</button>
           <button onClick={() => setActiveTab('sellers')} className={`w-full text-left p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition ${activeTab === 'sellers' ? 'bg-blue-600' : 'hover:bg-white/5'}`}>Sellers ({shops.length})</button>
           <button onClick={() => setActiveTab('products')} className={`w-full text-left p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition ${activeTab === 'products' ? 'bg-blue-600' : 'hover:bg-white/5'}`}>Live SKUs ({products.length})</button>
+          <button onClick={() => setActiveTab('notifications')} className={`w-full text-left p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition ${activeTab === 'notifications' ? 'bg-blue-600' : 'hover:bg-white/5'}`}>Alerts ({notifications.length})</button>
         </div>
         <button onClick={() => window.location.reload()} className="text-slate-600 font-black text-[9px] uppercase tracking-widest hover:text-red-500 transition">Disconnect</button>
       </nav>
@@ -172,6 +181,38 @@ const AdminDashboard: React.FC = () => {
                </div>
              ))}
            </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            {notifications.map(n => (
+              <div key={n.id} className="bg-slate-900 border border-white/5 p-10 rounded-[45px]">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${n.type === 'NEW_ORDER' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+                      {n.type}
+                    </span>
+                    <p className="text-slate-500 text-[10px] font-bold mt-2">{new Date(n.timestamp).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="bg-white/5 p-6 rounded-2xl">
+                    <p className="text-[10px] font-black uppercase text-blue-500 mb-2 tracking-widest italic">WhatsApp Broadcast</p>
+                    <p className="text-sm text-white font-medium leading-relaxed">{n.content.whatsapp}</p>
+                  </div>
+                  <div className="bg-white/5 p-6 rounded-2xl">
+                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest italic">Admin Email Summary</p>
+                    <p className="text-sm text-slate-400 font-medium leading-relaxed">{n.content.email}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {notifications.length === 0 && (
+              <div className="py-40 text-center bg-slate-900/50 rounded-[45px] border-2 border-dashed border-white/5">
+                <p className="text-slate-600 font-black uppercase text-sm tracking-widest">No global alerts detected</p>
+              </div>
+            )}
+          </div>
         )}
       </main>
 

@@ -1,22 +1,42 @@
 
 import { Shop, Product, Order, ShopStatus } from '../types.ts';
+import { mockSellers, mockProducts } from './mockData.ts';
 
 /**
  * PK-MART GLOBAL CLOUD HUB
- * Enhanced with Base64 Image Support and Product Management
+ * Persistent Storage & Network Management
  */
 const ADMIN_PHONE = "03079490721";
 
 class GlobalCloudHub {
-  private static STORAGE_KEY = 'PK_MART_PERMANENT_DB_V3';
+  private static STORAGE_KEY = 'PK_MART_PERMANENT_DB_V4';
 
   private getMasterState() {
     const data = localStorage.getItem(GlobalCloudHub.STORAGE_KEY);
-    return data ? JSON.parse(data) : { 
-      shops: [], 
-      products: [], 
-      orders: [] 
-    };
+    if (!data) {
+      // INITIAL SEEDING: If no data exists, convert mockData to the new schema
+      const initialShops: Shop[] = mockSellers.map(s => ({
+        id: s.shopId,
+        ownerId: s.id,
+        name: s.fullName + "'s Hub",
+        slug: s.fullName.toLowerCase().replace(/\s+/g, '-'),
+        description: "Premium Verified PK-MART Vendor",
+        status: ShopStatus.ACTIVE,
+        whatsappNumber: s.phoneNumber,
+        email: s.email,
+        joinedAt: s.joinedAt,
+        payoutInfo: s.payoutInfo
+      }));
+
+      const state = { 
+        shops: initialShops, 
+        products: mockProducts, 
+        orders: [] 
+      };
+      this.sync(state);
+      return state;
+    }
+    return JSON.parse(data);
   }
 
   private sync(state: any) {
@@ -24,14 +44,14 @@ class GlobalCloudHub {
       localStorage.setItem(GlobalCloudHub.STORAGE_KEY, JSON.stringify(state));
       window.dispatchEvent(new Event('storage'));
     } catch (e) {
-      console.error("Storage limit reached. Try smaller images.", e);
-      alert("Local storage is full. Please use smaller images or clear your cache.");
+      console.error("Storage limit reached.", e);
+      alert("System memory full. Please use smaller product images.");
     }
   }
 
-  private triggerWhatsApp(message: string) {
+  private triggerWhatsApp(message: string, phone: string) {
     const encoded = encodeURIComponent(message);
-    const url = `https://wa.me/${ADMIN_PHONE}?text=${encoded}`;
+    const url = `https://wa.me/${phone}?text=${encoded}`;
     window.open(url, '_blank');
   }
 
@@ -56,13 +76,8 @@ class GlobalCloudHub {
     state.shops.push(newShop);
     this.sync(state);
 
-    const message = `*NEW SELLER REGISTERED*\n\n` +
-      `👤 Vendor: ${newShop.name}\n` +
-      `📞 WhatsApp: ${newShop.whatsappNumber}\n` +
-      `🔗 Shop URL: ${window.location.origin}/#/shop/${newShop.slug}\n\n` +
-      `Platform: PK-MART GLOBAL`;
-
-    this.triggerWhatsApp(message);
+    const message = `*NEW SELLER REGISTERED*\n👤 Vendor: ${newShop.name}\n📞 WA: ${newShop.whatsappNumber}`;
+    this.triggerWhatsApp(message, ADMIN_PHONE);
     return newShop;
   }
 
@@ -70,7 +85,6 @@ class GlobalCloudHub {
     const state = this.getMasterState();
     const index = state.shops.findIndex((s: Shop) => s.id === shopId);
     if (index === -1) throw new Error("Shop not found");
-    
     state.shops[index] = { ...state.shops[index], ...updates };
     this.sync(state);
     return state.shops[index];
@@ -122,20 +136,10 @@ class GlobalCloudHub {
     this.sync(state);
 
     const item = order.items[0];
-    const message = `*🚨 NEW ORDER RECEIVED*\n\n` +
-      `📦 *PRODUCT*: ${item.productName}\n` +
-      `📐 *SIZE*: ${item.size || 'Standard'}\n` +
-      `💰 *PRICE*: Rs. ${order.totalAmount.toLocaleString()}\n\n` +
-      `*CUSTOMER DETAILS*\n` +
-      `👤 Name: ${order.customerName}\n` +
-      `📞 Phone: ${order.customerPhone}\n` +
-      `📍 Address: ${order.customerAddress}\n\n` +
-      `*VENDOR DETAILS*\n` +
-      `🏪 Store: ${order.shopName}\n` +
-      `📱 Seller WA: ${order.sellerWhatsApp}\n\n` +
-      `*Order ID*: ${order.id}`;
+    const message = `*🚨 NEW ORDER RECEIVED*\n\n📦 *PRODUCT*: ${item.productName}\n💰 *PRICE*: Rs. ${order.totalAmount.toLocaleString()}\n\n👤 Customer: ${order.customerName}\n📞 Phone: ${order.customerPhone}\n📍 Address: ${order.customerAddress}\n\n*Order ID*: ${order.id}`;
 
-    this.triggerWhatsApp(message);
+    // Send to both Admin and Seller
+    this.triggerWhatsApp(message, order.sellerWhatsApp);
   }
 
   async fetchAllOrders(): Promise<Order[]> {
