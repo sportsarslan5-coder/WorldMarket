@@ -3,6 +3,7 @@ import { Shop, Product, Order, ShopStatus } from '../types.ts';
 
 /**
  * PK-MART GLOBAL CLOUD HUB
+ * Enhanced with Base64 Image Support and Product Management
  */
 const ADMIN_PHONE = "03079490721";
 
@@ -19,8 +20,13 @@ class GlobalCloudHub {
   }
 
   private sync(state: any) {
-    localStorage.setItem(GlobalCloudHub.STORAGE_KEY, JSON.stringify(state));
-    window.dispatchEvent(new Event('storage'));
+    try {
+      localStorage.setItem(GlobalCloudHub.STORAGE_KEY, JSON.stringify(state));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+      console.error("Storage limit reached. Try smaller images.", e);
+      alert("Local storage is full. Please use smaller images or clear your cache.");
+    }
   }
 
   private triggerWhatsApp(message: string) {

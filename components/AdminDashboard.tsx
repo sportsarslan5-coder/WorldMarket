@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Shop, Product, Order } from '../types.ts';
 import { api } from '../services/api.ts';
 
@@ -11,6 +11,12 @@ const AdminDashboard: React.FC = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  
+  // SKU Deployment State
+  const [showDeploy, setShowDeploy] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [deployForm, setDeployForm] = useState({ name: '', price: '', sellerId: '', cat: 'Fashion' });
 
   const loadData = async () => {
     const [s, o, p] = await Promise.all([
@@ -30,6 +36,41 @@ const AdminDashboard: React.FC = () => {
       return () => window.removeEventListener('storage', loadData);
     }
   }, [isAuthorized]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeploy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const selectedShop = shops.find(s => s.id === deployForm.sellerId);
+    if (!selectedShop || !imagePreview) return;
+
+    const newProduct: Product = {
+      id: 'PRD-ADM-' + Date.now(),
+      sellerId: selectedShop.id,
+      sellerName: selectedShop.name,
+      name: deployForm.name,
+      description: "Admin Verified Global SKU",
+      price: Number(deployForm.price),
+      currency: "PKR",
+      category: deployForm.cat,
+      imageUrl: imagePreview,
+      stock: 999,
+      published: true,
+      createdAt: new Date().toISOString()
+    };
+
+    await api.uploadProduct(newProduct);
+    loadData();
+    setShowDeploy(false);
+    setImagePreview(null);
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +111,12 @@ const AdminDashboard: React.FC = () => {
       </nav>
 
       <main className="flex-1 p-8 lg:p-20 overflow-y-auto">
-        <h2 className="text-5xl font-black uppercase tracking-tighter mb-16">{activeTab} Stream</h2>
+        <div className="flex justify-between items-center mb-16">
+          <h2 className="text-5xl font-black uppercase tracking-tighter">{activeTab} Stream</h2>
+          {activeTab === 'products' && (
+            <button onClick={() => setShowDeploy(true)} className="bg-blue-600 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-500/10">Deploy Global SKU</button>
+          )}
+        </div>
 
         {activeTab === 'orders' && (
           <div className="space-y-6">
@@ -83,40 +129,17 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <h3 className="text-2xl font-black mb-2">{o.customerName}</h3>
                   <p className="text-slate-400 font-medium leading-relaxed">{o.customerAddress}</p>
-                  <p className="text-emerald-500 font-bold mt-2">📞 {o.customerPhone}</p>
                 </div>
-                <div className="md:text-right flex flex-col justify-between">
-                  <div>
-                    <p className="text-3xl font-black italic">Rs. {o.totalAmount.toLocaleString()}</p>
-                    <p className="text-[10px] font-black uppercase text-slate-600 mt-1">Vendor: {o.shopName}</p>
-                  </div>
-                  <div className="mt-6 flex gap-2 justify-end">
-                    <span className="bg-white/5 px-4 py-2 rounded-full text-[9px] font-black uppercase border border-white/10">Logistics Pending</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {orders.length === 0 && <div className="text-center py-40 text-slate-700 font-black uppercase tracking-widest">Grid clear. No incoming data.</div>}
-          </div>
-        )}
-
-        {activeTab === 'sellers' && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {shops.map(s => (
-              <div key={s.id} className="bg-slate-900 border border-white/5 p-10 rounded-[45px] flex justify-between items-center">
-                <div>
-                  <h3 className="text-2xl font-black mb-2">{s.name}</h3>
-                  <p className="text-blue-500 font-black text-[11px] uppercase tracking-widest">Slug: /{s.slug}</p>
-                  <p className="text-slate-500 text-[11px] mt-1 font-bold">{s.email}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-[9px] font-black uppercase bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-full border border-emerald-500/20">LIVE_NODE</span>
+                <div className="md:text-right">
+                   <p className="text-3xl font-black italic">Rs. {o.totalAmount.toLocaleString()}</p>
+                   <p className="text-[10px] font-black uppercase text-slate-600 mt-1">Vendor: {o.shopName}</p>
                 </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* Product Grid View */}
         {activeTab === 'products' && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {products.map(p => (
@@ -128,13 +151,57 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-2xl font-black text-blue-500 tracking-tighter">Rs. {p.price.toLocaleString()}</p>
                 <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center">
                   <span className="text-[9px] font-black uppercase text-slate-600">{p.sellerName}</span>
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                  <button onClick={() => api.deleteProduct(p.id).then(loadData)} className="text-red-500 hover:scale-110 transition">✕</button>
                 </div>
               </div>
             ))}
           </div>
         )}
+
+        {activeTab === 'sellers' && (
+           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+             {shops.map(s => (
+               <div key={s.id} className="bg-slate-900 border border-white/5 p-10 rounded-[45px] flex justify-between items-center">
+                 <div>
+                   <h3 className="text-2xl font-black mb-2">{s.name}</h3>
+                   <p className="text-blue-500 font-black text-[11px] uppercase tracking-widest">Slug: /{s.slug}</p>
+                 </div>
+                 <div className="text-right">
+                    <span className="text-[9px] font-black uppercase bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-full border border-emerald-500/20">LIVE_NODE</span>
+                 </div>
+               </div>
+             ))}
+           </div>
+        )}
       </main>
+
+      {/* Deploy SKU Modal */}
+      {showDeploy && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[500] flex items-center justify-center p-6">
+          <div className="bg-slate-900 p-12 rounded-[60px] max-w-2xl w-full relative shadow-2xl border border-white/5">
+            <button onClick={() => setShowDeploy(false)} className="absolute top-10 right-10 text-white font-black">✕</button>
+            <h2 className="text-4xl font-black mb-10 uppercase tracking-tighter italic">Inject Global SKU</h2>
+            <form onSubmit={handleDeploy} className="space-y-6">
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-40 border-2 border-dashed border-white/10 rounded-3xl flex items-center justify-center cursor-pointer hover:border-blue-500 transition bg-white/5 relative overflow-hidden"
+              >
+                {imagePreview ? <img src={imagePreview} className="absolute inset-0 w-full h-full object-cover opacity-50" /> : <p className="text-xs font-black uppercase tracking-widest text-slate-500">Select Gallery Image</p>}
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                 <input required placeholder="Item Name" className="w-full p-5 bg-white/5 rounded-2xl outline-none" value={deployForm.name} onChange={e => setDeployForm({...deployForm, name: e.target.value})} />
+                 <input required placeholder="Price" className="w-full p-5 bg-white/5 rounded-2xl outline-none" value={deployForm.price} onChange={e => setDeployForm({...deployForm, price: e.target.value})} />
+              </div>
+              <select required className="w-full p-5 bg-white/5 rounded-2xl outline-none appearance-none" value={deployForm.sellerId} onChange={e => setDeployForm({...deployForm, sellerId: e.target.value})}>
+                <option value="">Select Target Vendor Node</option>
+                {shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <button className="w-full bg-blue-600 py-6 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-500/20">Authorize Deployment</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
