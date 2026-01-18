@@ -16,19 +16,6 @@ export const mockSellers: Seller[] = [
     }
   },
   {
-    id: 's2',
-    fullName: 'Sarah Johnson',
-    email: 'sarah.j@example.com',
-    phoneNumber: '+15550202020',
-    shopId: 's2',
-    joinedAt: '2024-02-15',
-    payoutInfo: {
-      method: 'Stripe',
-      accountNumber: 'acct_123456789',
-      accountTitle: 'Sarah Johnson'
-    }
-  },
-  {
     id: 's3',
     fullName: 'Mike Miller',
     email: 'mike.sports@example.com',
@@ -41,87 +28,74 @@ export const mockSellers: Seller[] = [
       accountTitle: 'Mike Miller',
       bankName: 'Chase Bank'
     }
+  },
+  {
+    id: 's4',
+    fullName: 'Global Freight Hub',
+    email: 'logistics@usashop.com',
+    phoneNumber: '+15550999999',
+    shopId: 's4',
+    joinedAt: '2024-04-01'
   }
 ];
 
 export const mockProducts: Product[] = [
   {
+    id: 'p-best-beez',
+    sellerId: 's3',
+    sellerName: 'Mike Miller',
+    name: 'New Beez 22 - Grid Jersey',
+    description: 'Authentic New Beez 22 basketball jersey. Featuring custom honeycomb tech-fabric and precision multilingual embroidery.',
+    price: 145.00,
+    currency: 'USD',
+    category: 'Sports',
+    imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800', 
+    stock: 100,
+    published: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'p-best-1',
+    sellerId: 's4',
+    sellerName: 'Global Freight Hub',
+    name: 'Peace Fedex - Global Node',
+    description: 'Exclusive priority shipping node for Peace-certified logistics. Guaranteed global transit for all mobile nodes.',
+    price: 12500.00,
+    currency: 'USD',
+    category: 'Logistics',
+    imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800',
+    stock: 5,
+    published: true,
+    createdAt: '2024-04-01'
+  },
+  {
+    id: 'p-best-beef',
+    sellerId: 's4',
+    sellerName: 'Global Freight Hub',
+    name: 'Beef Protect - Bio-Shield',
+    description: 'Advanced climate-controlled bio-shield for premium meat preservation. Industrial grade security.',
+    price: 5200.00,
+    currency: 'USD',
+    category: 'Food Tech',
+    imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800',
+    stock: 10,
+    published: true,
+    createdAt: '2024-04-05'
+  },
+  {
     id: 'p1',
     sellerId: 's1',
     sellerName: 'Smith Electronics',
     name: 'Wireless Pro Buds',
-    description: 'Noise cancelling Bluetooth 5.3 earbuds with 40h playtime.',
+    description: 'Noise cancelling Bluetooth 5.3 earbuds. USA Shop Exclusive.',
     price: 49.99,
     currency: 'USD',
     category: 'Electronics',
     imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
-    images: [],
-    sizes: [],
-    colors: ['White', 'Black'],
     stock: 50,
     published: true,
     createdAt: '2024-03-01'
-  },
-  {
-    id: 'p2',
-    sellerId: 's2',
-    sellerName: 'Sarah Fashion',
-    name: 'Summer Linen Dress',
-    description: 'Elegant linen dress for the 2024 summer season.',
-    price: 89.00,
-    currency: 'USD',
-    category: 'Fashion',
-    imageUrl: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400',
-    images: [],
-    sizes: ['S', 'M', 'L'],
-    colors: ['Rose', 'Deep Blue'],
-    stock: 35,
-    published: true,
-    createdAt: '2024-03-05'
-  },
-  {
-    id: 'p3',
-    sellerId: 's3',
-    sellerName: 'Miller Sports',
-    name: 'Professional Basketball',
-    description: 'Official size and weight professional indoor/outdoor basketball.',
-    price: 29.95,
-    currency: 'USD',
-    category: 'Sports',
-    imageUrl: 'https://images.unsplash.com/photo-1519861155730-0b5fbd0dd899?w=400',
-    images: [],
-    sizes: [],
-    colors: ['Orange'],
-    stock: 12,
-    published: true,
-    createdAt: '2024-03-08'
   }
 ];
 
-export const mockOrders: Order[] = [
-  {
-    id: 'US-ORD-1001',
-    shopId: 's1',
-    shopName: 'Smith Electronics',
-    sellerWhatsApp: '+15550101010',
-    customerName: 'Alice Cooper',
-    customerPhone: '+15550404040',
-    customerEmail: 'alice@example.com',
-    customerAddress: '123 Maple St, Los Angeles, CA 90001',
-    items: [
-      { 
-        productId: 'p1', 
-        productName: 'Wireless Pro Buds', 
-        productImageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
-        quantity: 1, 
-        price: 49.99 
-      }
-    ],
-    totalAmount: 49.99,
-    paymentMethod: 'CARD',
-    paymentStatus: 'paid',
-    currency: 'USD',
-    createdAt: '2024-03-10T10:00:00Z',
-    status: 'pending'
-  }
-];
+export const mockOrders: Order[] = [];

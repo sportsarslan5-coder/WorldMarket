@@ -45,17 +45,14 @@ const ShopFront: React.FC = () => {
 
   const handleMerchantUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shop || !imagePreview) {
-      alert("Please select a product image first!");
-      return;
-    }
+    if (!shop || !imagePreview) return;
 
     const product: Product = {
       id: 'PRD-QUICK-' + Date.now(),
       sellerId: shop.id,
       sellerName: shop.name,
       name: newProd.name,
-      description: "Quick Merchant SKU Deployment",
+      description: "Premium SKU Deployment",
       price: Number(newProd.price),
       currency: "USD",
       category: newProd.cat,
@@ -69,7 +66,6 @@ const ShopFront: React.FC = () => {
     await loadShopData();
     setShowMerchantAdd(false);
     setImagePreview(null);
-    setNewProd({ name: '', price: '', cat: 'Fashion' });
   };
 
   const handleOrderSubmit = async (e: React.FormEvent) => {
@@ -103,55 +99,56 @@ const ShopFront: React.FC = () => {
     await api.placeOrder(order);
     setSelectedProduct(null);
     setIsOrdering(false);
-    setCustForm({ name: '', phone: '', address: '' });
   };
 
   if (isLoading) return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
-      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
 
   if (!shop) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center bg-slate-50">
-      <h1 className="text-4xl font-black mb-4 tracking-tighter italic">SHOP NOT FOUND</h1>
-      <Link to="/" className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs">Return to Grid</Link>
+    <div className="min-h-screen flex flex-col items-center justify-center p-10 bg-slate-50">
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Brand node not found.</h1>
+      <Link to="/" className="bg-slate-900 text-white px-8 py-3 rounded-full font-bold text-sm">Return Home</Link>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] font-sans pb-20">
-      <nav className="p-8 max-w-[1400px] mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-black italic tracking-tighter">USA<span className="text-blue-600"> SHOP</span></Link>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Merchant: {shop.id}</span>
+    <div className="min-h-screen bg-white font-sans selection:bg-blue-100">
+      <nav className="p-6 h-16 flex items-center justify-between glass border-b border-slate-100 sticky top-0 z-50">
+        <Link to="/" className="text-xl font-extrabold tracking-tight">USA<span className="text-blue-600">SHOP</span></Link>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{shop.id} // Verified Merchant</span>
       </nav>
 
-      <header className="bg-slate-900 text-white py-24 px-6 text-center border-b-[12px] border-blue-600 mb-20">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter italic leading-none mb-6">{shop.name}</h1>
-          <p className="text-slate-400 font-bold max-w-xl mx-auto uppercase text-xs tracking-[0.2em] mb-10">{shop.description}</p>
-          <div className="inline-block bg-white text-slate-900 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">Verified Global Node</div>
+      <header className="bg-[#FBFBFD] py-24 px-6 text-center border-b border-slate-100">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900">{shop.name}</h1>
+          <p className="text-lg text-slate-500 font-medium max-w-xl mx-auto leading-relaxed">{shop.description}</p>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-full border border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600 shadow-sm">
+             <div className="w-2 h-2 bg-emerald-500 rounded-full"></div> Global Partner Node
+          </div>
         </div>
       </header>
 
-      <main className="max-w-[1400px] mx-auto px-6">
+      <main className="max-w-[1440px] mx-auto px-6 py-20">
         {products.length === 0 ? (
-          <div className="text-center py-40 border-4 border-dashed border-slate-200 rounded-[60px] bg-white">
-            <p className="text-slate-400 font-black uppercase tracking-widest text-sm">Node Inventory Empty</p>
-            <p className="text-slate-300 text-[10px] mt-2 font-bold">Use the floating button to deploy SKUs</p>
+          <div className="text-center py-40 border border-slate-200 border-dashed rounded-2xl bg-slate-50/50">
+            <p className="text-slate-400 font-bold text-sm">Inventory currently being synced.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             {products.map(p => (
-              <div key={p.id} className="group bg-white rounded-[50px] p-6 border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-500">
-                <div className="aspect-square bg-slate-50 rounded-[40px] flex items-center justify-center p-8 mb-8 overflow-hidden relative">
-                  <img src={p.imageUrl} className="h-full w-full object-contain group-hover:scale-110 transition duration-700" alt={p.name} />
-                  <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition duration-500"></div>
+              <div key={p.id} className="group animate-fade-in">
+                <div className="aspect-[4/5] bg-[#F5F5F7] rounded-2xl flex items-center justify-center p-12 overflow-hidden transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                  <img src={p.imageUrl} className="h-full w-full object-contain mix-blend-multiply group-hover:scale-110 transition duration-700" alt={p.name} />
                 </div>
-                <h3 className="font-black text-2xl text-slate-900 mb-2 truncate px-2">{p.name}</h3>
-                <div className="flex items-center justify-between mt-8 px-2">
-                  <p className="text-3xl font-black tracking-tighter text-slate-900">${p.price.toLocaleString()}</p>
-                  <button onClick={() => setSelectedProduct(p)} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition">Buy Now</button>
+                <div className="mt-6 space-y-2">
+                  <h3 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-blue-600 transition">{p.name}</h3>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xl font-extrabold text-slate-900">${p.price.toLocaleString()}</p>
+                    <button onClick={() => setSelectedProduct(p)} className="bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs hover:bg-blue-600 transition transform active:scale-95">Shop Now</button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -159,75 +156,49 @@ const ShopFront: React.FC = () => {
         )}
       </main>
 
-      {/* Floating Merchant Action */}
-      <div className="fixed bottom-12 right-12 z-[100]">
-        <button 
-          onClick={() => setShowMerchantAdd(true)}
-          className="bg-slate-900 text-white w-24 h-24 rounded-full flex items-center justify-center shadow-2xl hover:bg-blue-600 transition-all hover:scale-110 active:scale-95 group border-8 border-white"
-        >
-          <svg className="w-10 h-10 group-hover:rotate-90 transition duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
-        </button>
-      </div>
+      {/* Floating Action for Seller UI */}
+      <button 
+        onClick={() => setShowMerchantAdd(true)}
+        className="fixed bottom-10 right-10 w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-slate-900 transition-all z-40 transform active:scale-90"
+      >
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
+      </button>
 
-      {/* Quick Add Modal */}
-      {showMerchantAdd && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[500] flex items-center justify-center p-6" onClick={() => setShowMerchantAdd(false)}>
-           <div className="bg-white p-12 rounded-[60px] max-w-xl w-full relative animate-slide-up shadow-2xl" onClick={e => e.stopPropagation()}>
-              <h2 className="text-4xl font-black mb-10 uppercase italic tracking-tighter">Deploy SKU to Grid</h2>
-              <form onSubmit={handleMerchantUpload} className="space-y-6">
-                 <div 
-                   onClick={() => fileInputRef.current?.click()}
-                   className="w-full h-56 border-4 border-dashed border-slate-100 rounded-[40px] flex items-center justify-center cursor-pointer hover:border-blue-500 transition relative overflow-hidden bg-slate-50 group"
-                 >
-                    {imagePreview ? (
-                      <img src={imagePreview} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-70 transition" />
-                    ) : (
-                      <div className="text-center">
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Select from Gallery</p>
-                        <p className="text-slate-300 text-[8px] font-bold">DEVICE_SYSTEM_ACCESS_OK</p>
-                      </div>
-                    )}
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                 </div>
-                 <input required placeholder="Item Name" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-black text-lg border-2 border-transparent focus:border-blue-600" value={newProd.name} onChange={e => setNewProd({...newProd, name: e.target.value})} />
-                 <input required placeholder="Price (USD)" type="number" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-black text-lg border-2 border-transparent focus:border-blue-600" value={newProd.price} onChange={e => setNewProd({...newProd, price: e.target.value})} />
-                 <button className="w-full bg-slate-900 text-white py-8 rounded-[30px] font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition-all text-xl">Confirm Deployment</button>
-              </form>
-           </div>
-        </div>
-      )}
-
-      {/* Checkout Modal */}
+      {/* Modern Checkout Modal */}
       {selectedProduct && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[500] flex items-center justify-center p-6" onClick={() => setSelectedProduct(null)}>
-           <div className="bg-white p-12 md:p-16 rounded-[60px] max-w-2xl w-full relative animate-slide-up shadow-2xl" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setSelectedProduct(null)} className="absolute top-10 right-10 w-12 h-12 flex items-center justify-center bg-slate-50 rounded-full font-black">✕</button>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedProduct(null)}>
+           <div className="bg-white p-8 md:p-12 rounded-3xl max-w-xl w-full relative shadow-2xl" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 transition"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
               
-              <div className="flex gap-10 mb-12 items-center">
-                <div className="w-32 h-32 bg-slate-50 rounded-[30px] flex items-center justify-center p-6 shrink-0">
-                  <img src={selectedProduct.imageUrl} className="max-h-full" alt="" />
+              <div className="flex gap-8 mb-10 items-center border-b border-slate-50 pb-8">
+                <div className="w-24 h-24 bg-slate-100 rounded-xl flex items-center justify-center p-4 shrink-0">
+                  <img src={selectedProduct.imageUrl} className="max-h-full mix-blend-multiply" alt="" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2">{selectedProduct.name}</h2>
-                  <p className="text-blue-600 font-black text-xl tracking-tighter">${selectedProduct.price.toLocaleString()}</p>
+                  <h2 className="text-2xl font-extrabold text-slate-900 leading-tight mb-1">{selectedProduct.name}</h2>
+                  <p className="text-blue-600 font-bold text-xl">${selectedProduct.price.toLocaleString()}</p>
                 </div>
               </div>
 
-              <form onSubmit={handleOrderSubmit} className="space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <input required placeholder="Full Name" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-bold border-2 border-transparent focus:border-blue-600" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
-                   <input required placeholder="Phone Number" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-bold border-2 border-transparent focus:border-blue-600" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
+              <form onSubmit={handleOrderSubmit} className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <input required placeholder="Full Name" className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-600/20 font-medium" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+                   <input required placeholder="Phone" className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-600/20 font-medium" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
                  </div>
-                 <textarea required placeholder="Delivery Address (Full Details)" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-bold h-32 border-2 border-transparent focus:border-blue-600" value={custForm.address} onChange={e => setCustForm({...custForm, address: e.target.value})} />
+                 <textarea required placeholder="Delivery Address" className="w-full h-24 px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-600/20 font-medium resize-none" value={custForm.address} onChange={e => setCustForm({...custForm, address: e.target.value})} />
                  
-                 <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 mb-6">
-                    <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Payment Method</p>
-                    <p className="text-sm font-black text-slate-900">Credit Card / Global Pay (COD simulated)</p>
+                 <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/30 flex justify-between items-center mb-6">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-blue-600 tracking-wider">Checkout Total</p>
+                      <p className="text-sm font-bold text-slate-900">${selectedProduct.price.toLocaleString()} USD</p>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Payment on Delivery</span>
                  </div>
 
-                 <button disabled={isOrdering} className="w-full bg-slate-900 text-white py-8 rounded-[30px] font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition-all text-xl">
-                   {isOrdering ? 'PROCESSING NODE...' : 'Place Secure Order'}
+                 <button disabled={isOrdering} className="w-full bg-slate-900 text-white h-14 rounded-full font-bold text-sm shadow-xl hover:bg-blue-600 transition-all disabled:opacity-50">
+                   {isOrdering ? 'Confirming...' : 'Place Secure Order'}
                  </button>
+                 <p className="text-center text-[10px] text-slate-400 font-medium">Your order will be shared with the merchant for fulfillment.</p>
               </form>
            </div>
         </div>
