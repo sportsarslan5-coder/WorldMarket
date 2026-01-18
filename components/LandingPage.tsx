@@ -48,12 +48,12 @@ const LandingPage: React.FC = () => {
       <nav className="sticky top-0 z-[100] bg-white/90 backdrop-blur-2xl border-b border-slate-200 px-6 py-6">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-12">
           <Link to="/" className="text-3xl font-black italic tracking-tighter text-slate-900 group">
-             PK<span className="text-blue-600 transition group-hover:text-slate-900">MART</span>
+             USA<span className="text-blue-600 transition group-hover:text-slate-900"> SHOP</span>
           </Link>
           
           <div className="hidden lg:flex flex-1 max-w-2xl bg-slate-100 border border-slate-200 rounded-[25px] overflow-hidden focus-within:ring-4 ring-blue-500/10 transition-all">
             <input 
-              type="text" placeholder="Search 500+ verified Pakistani vendors..." 
+              type="text" placeholder="Search 500+ verified American vendors..." 
               className="flex-1 px-8 py-4 bg-transparent outline-none font-bold text-slate-900 text-sm"
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             />
@@ -71,9 +71,9 @@ const LandingPage: React.FC = () => {
             <GlobeAltIcon className="w-full h-full text-blue-500" />
          </div>
          <div className="max-w-[1400px] mx-auto relative z-10 text-center">
-            <div className="inline-block bg-blue-600 text-white px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 shadow-xl">PK-MART GLOBAL GRID</div>
+            <div className="inline-block bg-blue-600 text-white px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 shadow-xl">USA SHOP GLOBAL GRID</div>
             <h1 className="text-7xl md:text-9xl font-black text-white uppercase tracking-tighter italic leading-[0.8] mb-12">THE SMART <br/> <span className="text-blue-500">BAZAAR.</span></h1>
-            <p className="text-slate-400 font-bold text-xl max-w-2xl mx-auto leading-relaxed">Direct-to-WhatsApp delivery from Pakistan's most trusted manufacturers. Keep 100% control, we handle the grid.</p>
+            <p className="text-slate-400 font-bold text-xl max-w-2xl mx-auto leading-relaxed">Direct-to-customer delivery from America's most trusted brands. Keep 100% control, we handle the grid.</p>
          </div>
       </section>
 
@@ -115,8 +115,8 @@ const LandingPage: React.FC = () => {
                    <h3 className="font-bold text-3xl mb-10 text-slate-900 group-hover:text-blue-600 transition line-clamp-1">{p.name}</h3>
                    <div className="flex justify-between items-end pt-10 border-t border-slate-50">
                       <div>
-                         <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">MSRP Grid Price</p>
-                         <p className="text-4xl font-black text-slate-900 tracking-tighter italic">Rs. {p.price.toLocaleString()}</p>
+                         <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Grid Price</p>
+                         <p className="text-4xl font-black text-slate-900 tracking-tighter italic">${p.price.toLocaleString()}</p>
                       </div>
                       <div className="w-16 h-16 bg-slate-900 text-white rounded-3xl flex items-center justify-center group-hover:bg-blue-600 group-hover:rotate-12 transition duration-500 shadow-xl">
                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -131,22 +131,22 @@ const LandingPage: React.FC = () => {
 
       <footer className="bg-slate-950 text-white py-32 px-6 text-center">
          <div className="max-w-[1400px] mx-auto space-y-16">
-            <h2 className="text-5xl font-black italic tracking-tighter">PK<span className="text-blue-600">MART</span>_GRID</h2>
+            <h2 className="text-5xl font-black italic tracking-tighter">USA<span className="text-blue-600"> SHOP</span>_GRID</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-4xl mx-auto border-y border-white/5 py-16">
                <div>
                   <h4 className="text-blue-500 font-black text-4xl mb-2 tracking-tighter">10k+</h4>
                   <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active SKU Nodes</p>
                </div>
                <div>
-                  <h4 className="text-white font-black text-4xl mb-2 tracking-tighter">14</h4>
-                  <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Cities Served</p>
+                  <h4 className="text-white font-black text-4xl mb-2 tracking-tighter">50</h4>
+                  <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">States Served</p>
                </div>
                <div>
                   <h4 className="text-emerald-500 font-black text-4xl mb-2 tracking-tighter">5%</h4>
                   <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Fixed Fee Protocol</p>
                </div>
             </div>
-            <p className="opacity-10 text-[9px] font-black uppercase tracking-[0.8em] pt-10">© 2025 PK-MART GLOBAL ENTERPRISE SYSTEM. ALL SYSTEMS SECURED.</p>
+            <p className="opacity-10 text-[9px] font-black uppercase tracking-[0.8em] pt-10">© 2025 USA SHOP GLOBAL ENTERPRISE SYSTEM. ALL SYSTEMS SECURED.</p>
          </div>
       </footer>
     </div>

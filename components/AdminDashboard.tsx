@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Shop, Product, Order, AdminNotification } from '../types.ts';
 import { api } from '../services/api.ts';
 
-// Added interface for AdminDashboard props to fix "Property does not exist on type IntrinsicAttributes" error
 interface AdminDashboardProps {
   notifications: AdminNotification[];
   onRefresh: () => Promise<void>;
@@ -18,7 +17,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   
-  // SKU Deployment State
   const [showDeploy, setShowDeploy] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +31,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
     setShops(s);
     setOrders(o);
     setProducts(p);
-    // Call the refresh prop if it exists to keep parent state in sync
     if (onRefresh) await onRefresh();
   };
 
@@ -66,7 +63,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
       name: deployForm.name,
       description: "Admin Verified Global SKU",
       price: Number(deployForm.price),
-      currency: "PKR",
+      currency: "USD",
       category: deployForm.cat,
       imageUrl: imagePreview,
       stock: 999,
@@ -82,7 +79,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pass === 'PKMART2025') setIsAuthorized(true);
+    if (pass === 'PKMART2025' || pass === 'USASHOP2025') setIsAuthorized(true);
     else alert('Unauthorized Access Attempt Logged.');
   };
 
@@ -90,7 +87,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
         <div className="bg-slate-900 p-12 rounded-[50px] border border-white/5 w-full max-w-md text-center">
-          <h1 className="text-3xl font-black text-white italic mb-8 tracking-tighter">MASTER_NODE</h1>
+          <h1 className="text-3xl font-black text-white italic mb-8 tracking-tighter">USA SHOP MASTER_NODE</h1>
           <form onSubmit={handleLogin} className="space-y-4">
             <input 
               type="password" 
@@ -109,7 +106,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col lg:flex-row text-white font-sans">
       <nav className="w-full lg:w-80 bg-slate-900 p-10 flex flex-col h-screen sticky top-0 border-r border-white/5">
-        <div className="text-2xl font-black italic mb-20 tracking-tighter">COMMAND_CENTER</div>
+        <div className="text-2xl font-black italic mb-20 tracking-tighter uppercase">USA SHOP COMMAND</div>
         <div className="space-y-4 flex-1">
           <button onClick={() => setActiveTab('orders')} className={`w-full text-left p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition ${activeTab === 'orders' ? 'bg-blue-600' : 'hover:bg-white/5'}`}>Order Log ({orders.length})</button>
           <button onClick={() => setActiveTab('sellers')} className={`w-full text-left p-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition ${activeTab === 'sellers' ? 'bg-blue-600' : 'hover:bg-white/5'}`}>Sellers ({shops.length})</button>
@@ -140,7 +137,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
                   <p className="text-slate-400 font-medium leading-relaxed">{o.customerAddress}</p>
                 </div>
                 <div className="md:text-right">
-                   <p className="text-3xl font-black italic">Rs. {o.totalAmount.toLocaleString()}</p>
+                   <p className="text-3xl font-black italic">${o.totalAmount.toLocaleString()}</p>
                    <p className="text-[10px] font-black uppercase text-slate-600 mt-1">Vendor: {o.shopName}</p>
                 </div>
               </div>
@@ -148,7 +145,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
           </div>
         )}
 
-        {/* Product Grid View */}
         {activeTab === 'products' && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {products.map(p => (
@@ -157,7 +153,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
                   <img src={p.imageUrl} className="max-h-full object-contain" />
                 </div>
                 <h4 className="font-black text-xl mb-1 truncate">{p.name}</h4>
-                <p className="text-2xl font-black text-blue-500 tracking-tighter">Rs. {p.price.toLocaleString()}</p>
+                <p className="text-2xl font-black text-blue-500 tracking-tighter">${p.price.toLocaleString()}</p>
                 <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center">
                   <span className="text-[9px] font-black uppercase text-slate-600">{p.sellerName}</span>
                   <button onClick={() => api.deleteProduct(p.id).then(loadData)} className="text-red-500 hover:scale-110 transition">✕</button>
@@ -197,26 +193,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
                 </div>
                 <div className="space-y-4">
                   <div className="bg-white/5 p-6 rounded-2xl">
-                    <p className="text-[10px] font-black uppercase text-blue-500 mb-2 tracking-widest italic">WhatsApp Broadcast</p>
+                    <p className="text-[10px] font-black uppercase text-blue-500 mb-2 tracking-widest italic">Grid Broadcast</p>
                     <p className="text-sm text-white font-medium leading-relaxed">{n.content.whatsapp}</p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-2xl">
-                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest italic">Admin Email Summary</p>
+                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest italic">Admin Log Summary</p>
                     <p className="text-sm text-slate-400 font-medium leading-relaxed">{n.content.email}</p>
                   </div>
                 </div>
               </div>
             ))}
-            {notifications.length === 0 && (
-              <div className="py-40 text-center bg-slate-900/50 rounded-[45px] border-2 border-dashed border-white/5">
-                <p className="text-slate-600 font-black uppercase text-sm tracking-widest">No global alerts detected</p>
-              </div>
-            )}
           </div>
         )}
       </main>
-
-      {/* Deploy SKU Modal */}
+      
       {showDeploy && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[500] flex items-center justify-center p-6">
           <div className="bg-slate-900 p-12 rounded-[60px] max-w-2xl w-full relative shadow-2xl border border-white/5">
@@ -232,7 +222,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
               </div>
               <div className="grid grid-cols-2 gap-6">
                  <input required placeholder="Item Name" className="w-full p-5 bg-white/5 rounded-2xl outline-none" value={deployForm.name} onChange={e => setDeployForm({...deployForm, name: e.target.value})} />
-                 <input required placeholder="Price" className="w-full p-5 bg-white/5 rounded-2xl outline-none" value={deployForm.price} onChange={e => setDeployForm({...deployForm, price: e.target.value})} />
+                 <input required placeholder="Price (USD)" className="w-full p-5 bg-white/5 rounded-2xl outline-none" value={deployForm.price} onChange={e => setDeployForm({...deployForm, price: e.target.value})} />
               </div>
               <select required className="w-full p-5 bg-white/5 rounded-2xl outline-none appearance-none" value={deployForm.sellerId} onChange={e => setDeployForm({...deployForm, sellerId: e.target.value})}>
                 <option value="">Select Target Vendor Node</option>

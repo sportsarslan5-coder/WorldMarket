@@ -5,14 +5,12 @@ export enum ShopStatus {
 }
 
 export interface PayoutInfo {
-  method: 'JazzCash' | 'Easypaisa' | 'Bank';
+  method: 'PayPal' | 'Stripe' | 'Bank' | 'Venmo';
   accountNumber: string;
   accountTitle: string;
-  // Added optional bankName for bank transfers
   bankName?: string;
 }
 
-// Added AdminNotification interface for dashboard alerts
 export interface AdminNotification {
   id: string;
   type: 'NEW_SELLER' | 'NEW_ORDER';
@@ -31,9 +29,7 @@ export interface Seller {
   phoneNumber: string;
   shopId: string;
   joinedAt: string;
-  // Made status optional to match mock data
   status?: 'active' | 'inactive';
-  // Added optional payoutInfo for registration tracking
   payoutInfo?: PayoutInfo;
 }
 
@@ -47,7 +43,6 @@ export interface Shop {
   whatsappNumber: string;
   email: string;
   joinedAt: string;
-  // Added optional payoutInfo for shop configuration
   payoutInfo?: PayoutInfo;
 }
 
@@ -65,7 +60,6 @@ export interface Product {
   stock: number;
   published: boolean;
   createdAt: string;
-  // Added optional extended properties for mock data compatibility
   images?: string[];
   sizes?: string[];
   colors?: string[];
@@ -90,11 +84,10 @@ export interface Order {
   customerAddress: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentMethod: 'COD';
-  currency: 'PKR';
+  paymentMethod: 'COD' | 'CARD';
+  currency: 'USD';
   createdAt: string;
   status: 'pending' | 'shipped' | 'delivered';
-  // Added optional customer details and status for order tracking
   customerEmail?: string;
   paymentStatus?: 'paid' | 'unpaid';
 }

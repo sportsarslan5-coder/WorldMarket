@@ -7,14 +7,14 @@ const VendorLanding: React.FC = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
       <nav className="p-8 flex justify-between items-center max-w-7xl mx-auto">
-        <Link to="/" className="text-2xl font-black italic tracking-tighter">PK<span className="text-blue-600">MART</span></Link>
+        <Link to="/" className="text-2xl font-black italic tracking-tighter">USA<span className="text-blue-600"> SHOP</span></Link>
         <Link to="/seller" className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition">Enter Dashboard</Link>
       </nav>
 
       <section className="py-24 px-6 text-center">
         <div className="max-w-4xl mx-auto">
           <span className="bg-blue-50 text-blue-600 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 inline-block border border-blue-100">Now Open for 2025</span>
-          <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter italic leading-none mb-10">SELL TO PAKISTAN <br/> <span className="text-blue-600">FROM ANYWHERE.</span></h1>
+          <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter italic leading-none mb-10">SELL ACROSS AMERICA <br/> <span className="text-blue-600">FROM ANYWHERE.</span></h1>
           <p className="text-xl text-slate-500 font-medium mb-12 max-w-2xl mx-auto">Join 500+ verified vendors. We handle the traffic, you handle the inventory. Only 5% flat commission.</p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link to="/seller" className="bg-blue-600 text-white px-12 py-6 rounded-3xl font-black text-xl shadow-2xl shadow-blue-500/20 hover:scale-105 transition">Start Selling Now</Link>
@@ -43,8 +43,8 @@ const VendorLanding: React.FC = () => {
             <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
             </div>
-            <h3 className="text-2xl font-black uppercase tracking-tighter">WhatsApp Direct</h3>
-            <p className="text-slate-500 font-medium">Orders go directly to your WhatsApp. Chat with your customers and close the deal personally.</p>
+            <h3 className="text-2xl font-black uppercase tracking-tighter">Direct Communication</h3>
+            <p className="text-slate-500 font-medium">Orders can trigger notifications directly to your preferred channels. Personalize the shopping experience.</p>
           </div>
         </div>
       </section>

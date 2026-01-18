@@ -57,7 +57,7 @@ const ShopFront: React.FC = () => {
       name: newProd.name,
       description: "Quick Merchant SKU Deployment",
       price: Number(newProd.price),
-      currency: "PKR",
+      currency: "USD",
       category: newProd.cat,
       imageUrl: imagePreview,
       stock: 100,
@@ -78,7 +78,7 @@ const ShopFront: React.FC = () => {
     setIsOrdering(true);
 
     const order: Order = {
-      id: 'PK-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+      id: 'USA-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
       shopId: shop.id,
       shopName: shop.name,
       sellerWhatsApp: shop.whatsappNumber,
@@ -95,7 +95,7 @@ const ShopFront: React.FC = () => {
       }],
       totalAmount: selectedProduct.price,
       paymentMethod: 'COD',
-      currency: 'PKR',
+      currency: 'USD',
       createdAt: new Date().toISOString(),
       status: 'pending'
     };
@@ -122,7 +122,7 @@ const ShopFront: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#fcfcfc] font-sans pb-20">
       <nav className="p-8 max-w-[1400px] mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-black italic tracking-tighter">PK<span className="text-blue-600">MART</span></Link>
+        <Link to="/" className="text-2xl font-black italic tracking-tighter">USA<span className="text-blue-600"> SHOP</span></Link>
         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Merchant: {shop.id}</span>
       </nav>
 
@@ -150,7 +150,7 @@ const ShopFront: React.FC = () => {
                 </div>
                 <h3 className="font-black text-2xl text-slate-900 mb-2 truncate px-2">{p.name}</h3>
                 <div className="flex items-center justify-between mt-8 px-2">
-                  <p className="text-3xl font-black tracking-tighter text-slate-900">Rs. {p.price.toLocaleString()}</p>
+                  <p className="text-3xl font-black tracking-tighter text-slate-900">${p.price.toLocaleString()}</p>
                   <button onClick={() => setSelectedProduct(p)} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition">Buy Now</button>
                 </div>
               </div>
@@ -190,7 +190,7 @@ const ShopFront: React.FC = () => {
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                  </div>
                  <input required placeholder="Item Name" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-black text-lg border-2 border-transparent focus:border-blue-600" value={newProd.name} onChange={e => setNewProd({...newProd, name: e.target.value})} />
-                 <input required placeholder="Price (PKR)" type="number" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-black text-lg border-2 border-transparent focus:border-blue-600" value={newProd.price} onChange={e => setNewProd({...newProd, price: e.target.value})} />
+                 <input required placeholder="Price (USD)" type="number" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-black text-lg border-2 border-transparent focus:border-blue-600" value={newProd.price} onChange={e => setNewProd({...newProd, price: e.target.value})} />
                  <button className="w-full bg-slate-900 text-white py-8 rounded-[30px] font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition-all text-xl">Confirm Deployment</button>
               </form>
            </div>
@@ -209,24 +209,24 @@ const ShopFront: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2">{selectedProduct.name}</h2>
-                  <p className="text-blue-600 font-black text-xl tracking-tighter">Rs. {selectedProduct.price.toLocaleString()}</p>
+                  <p className="text-blue-600 font-black text-xl tracking-tighter">${selectedProduct.price.toLocaleString()}</p>
                 </div>
               </div>
 
               <form onSubmit={handleOrderSubmit} className="space-y-6">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <input required placeholder="Full Name" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-bold border-2 border-transparent focus:border-blue-600" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
-                   <input required placeholder="Phone (Active)" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-bold border-2 border-transparent focus:border-blue-600" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
+                   <input required placeholder="Phone Number" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-bold border-2 border-transparent focus:border-blue-600" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
                  </div>
                  <textarea required placeholder="Delivery Address (Full Details)" className="w-full p-6 bg-slate-50 rounded-3xl outline-none font-bold h-32 border-2 border-transparent focus:border-blue-600" value={custForm.address} onChange={e => setCustForm({...custForm, address: e.target.value})} />
                  
                  <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 mb-6">
                     <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Payment Method</p>
-                    <p className="text-sm font-black text-slate-900">Cash on Delivery (Standard)</p>
+                    <p className="text-sm font-black text-slate-900">Credit Card / Global Pay (COD simulated)</p>
                  </div>
 
                  <button disabled={isOrdering} className="w-full bg-slate-900 text-white py-8 rounded-[30px] font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition-all text-xl">
-                   {isOrdering ? 'PROCESSING NODE...' : 'Place Order via WhatsApp'}
+                   {isOrdering ? 'PROCESSING NODE...' : 'Place Secure Order'}
                  </button>
               </form>
            </div>

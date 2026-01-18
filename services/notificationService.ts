@@ -6,29 +6,28 @@ export const generateAdminNotification = async (
   type: 'NEW_SELLER' | 'NEW_ORDER',
   data: Seller | Order
 ): Promise<AdminNotification> => {
-  // Named parameter initialization
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   let prompt = "";
   if (type === 'NEW_SELLER') {
     const seller = data as Seller;
-    prompt = `GLOBAL ADMIN ALERT: A new international vendor has registered.
+    prompt = `GLOBAL ADMIN ALERT: A new American vendor has registered for the USA Shop platform.
        VENDOR DETAILS:
        Name: ${seller.fullName}
        Email: ${seller.email}
        Phone: ${seller.phoneNumber}
        Payout Method: ${seller.payoutInfo?.method || 'Not Set'}
        
-       Draft a professional English notification for the Global Admin Console. Use a sophisticated tone.`;
+       Draft a professional English notification for the USA Shop Admin Console. Use a sophisticated American business tone.`;
   } else {
     const order = data as Order;
-    prompt = `URGENT ORDER ALERT: A global customer placed a new order.
+    prompt = `URGENT ORDER ALERT: A customer placed a new order on USA Shop.
        ORDER DETAILS:
        Order ID: ${order.id}
        Store: ${order.shopName}
-       Total: Rs. ${order.totalAmount.toLocaleString()}
+       Total: $${order.totalAmount.toLocaleString()}
        
-       Draft a notification message for logistics dispatch. Mention the platform fee calculation.`;
+       Draft a notification message for logistics dispatch. Mention the 5% platform fee calculation in USD.`;
   }
 
   try {
@@ -54,7 +53,6 @@ export const generateAdminNotification = async (
       }
     });
 
-    // Correct property access
     const responseText = response.text;
     if (!responseText) throw new Error("No response text from AI");
     
@@ -65,7 +63,7 @@ export const generateAdminNotification = async (
       type,
       timestamp: new Date().toISOString(),
       content: {
-        whatsapp: content.whatsapp || "New global activity detected.",
+        whatsapp: content.whatsapp || "New USA activity detected.",
         email: content.email || "Platform event logged in Master Node."
       },
       sent: true

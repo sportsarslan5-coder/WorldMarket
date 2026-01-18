@@ -3,13 +3,13 @@ import { Shop, Product, Order, ShopStatus } from '../types.ts';
 import { mockSellers, mockProducts } from './mockData.ts';
 
 /**
- * PK-MART GLOBAL CLOUD HUB
+ * USA SHOP GLOBAL CLOUD HUB
  * Persistent Storage & Network Management
  */
-const ADMIN_PHONE = "03079490721";
+const ADMIN_PHONE = "+1234567890"; // Admin phone for global system alerts
 
 class GlobalCloudHub {
-  private static STORAGE_KEY = 'PK_MART_PERMANENT_DB_V4';
+  private static STORAGE_KEY = 'USA_SHOP_PERMANENT_DB_V2';
 
   private getMasterState() {
     const data = localStorage.getItem(GlobalCloudHub.STORAGE_KEY);
@@ -20,7 +20,7 @@ class GlobalCloudHub {
         ownerId: s.id,
         name: s.fullName + "'s Hub",
         slug: s.fullName.toLowerCase().replace(/\s+/g, '-'),
-        description: "Premium Verified PK-MART Vendor",
+        description: "Official USA Shop Partner",
         status: ShopStatus.ACTIVE,
         whatsappNumber: s.phoneNumber,
         email: s.email,
@@ -66,7 +66,7 @@ class GlobalCloudHub {
       ownerId: 'USR-' + id,
       name: data.name,
       slug,
-      description: "Official Verified PK-MART Hub",
+      description: "Official Verified USA Shop Hub",
       status: ShopStatus.ACTIVE,
       whatsappNumber: data.whatsapp,
       email: data.email,
@@ -136,7 +136,7 @@ class GlobalCloudHub {
     this.sync(state);
 
     const item = order.items[0];
-    const message = `*🚨 NEW ORDER RECEIVED*\n\n📦 *PRODUCT*: ${item.productName}\n💰 *PRICE*: Rs. ${order.totalAmount.toLocaleString()}\n\n👤 Customer: ${order.customerName}\n📞 Phone: ${order.customerPhone}\n📍 Address: ${order.customerAddress}\n\n*Order ID*: ${order.id}`;
+    const message = `*🚨 NEW ORDER RECEIVED*\n\n📦 *PRODUCT*: ${item.productName}\n💰 *PRICE*: $${order.totalAmount.toLocaleString()}\n\n👤 Customer: ${order.customerName}\n📞 Phone: ${order.customerPhone}\n📍 Address: ${order.customerAddress}\n\n*Order ID*: ${order.id}`;
 
     // Send to both Admin and Seller
     this.triggerWhatsApp(message, order.sellerWhatsApp);
