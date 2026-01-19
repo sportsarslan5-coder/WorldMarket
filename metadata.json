@@ -1,6 +1,6 @@
 {
-  "name": "USA Shop - America's Premier Multi-Vendor Platform",
-  "description": "A high-performance multi-vendor platform for the USA market, featuring localized payments, advanced logistics, and a competitive 5% vendor commission model.",
+  "name": "PK MART - Pakistan's Premier Multi-Vendor Platform",
+  "description": "A high-performance multi-vendor marketplace tailored for the Pakistani market, featuring localized payments (Easypaisa, JazzCash), Sialkot exports, and a 5% vendor commission model.",
   "requestFramePermissions": [
     "camera"
   ]

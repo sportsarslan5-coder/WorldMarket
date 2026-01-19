@@ -11,23 +11,23 @@ export const generateAdminNotification = async (
   let prompt = "";
   if (type === 'NEW_SELLER') {
     const seller = data as Seller;
-    prompt = `GLOBAL ADMIN ALERT: A new American vendor has registered for the USA Shop platform.
-       VENDOR DETAILS:
+    prompt = `LOCAL ADMIN ALERT: A new Pakistani merchant has registered for PK MART.
+       MERCHANT DETAILS:
        Name: ${seller.fullName}
        Email: ${seller.email}
-       Phone: ${seller.phoneNumber}
-       Payout Method: ${seller.payoutInfo?.method || 'Not Set'}
+       WhatsApp: ${seller.phoneNumber}
+       Payout Method: ${seller.payoutInfo?.method || 'Easypaisa'}
        
-       Draft a professional English notification for the USA Shop Admin Console. Use a sophisticated American business tone.`;
+       Draft a professional notification for the PK MART Admin Console. Use a polite and formal Pakistani business tone.`;
   } else {
     const order = data as Order;
-    prompt = `URGENT ORDER ALERT: A customer placed a new order on USA Shop.
+    prompt = `URGENT ORDER ALERT: A customer placed a new order on PK MART.
        ORDER DETAILS:
        Order ID: ${order.id}
        Store: ${order.shopName}
-       Total: $${order.totalAmount.toLocaleString()}
+       Total: Rs. ${order.totalAmount.toLocaleString()}
        
-       Draft a notification message for logistics dispatch. Mention the 5% platform fee calculation in USD.`;
+       Draft a notification for the dispatch team. Mention the local COD logistics and the 5% platform fee in PKR.`;
   }
 
   try {
@@ -63,8 +63,8 @@ export const generateAdminNotification = async (
       type,
       timestamp: new Date().toISOString(),
       content: {
-        whatsapp: content.whatsapp || "New USA activity detected.",
-        email: content.email || "Platform event logged in Master Node."
+        whatsapp: content.whatsapp || "New PK MART activity detected.",
+        email: content.email || "System alert logged in local hub."
       },
       sent: true
     };
@@ -75,8 +75,8 @@ export const generateAdminNotification = async (
       type,
       timestamp: new Date().toISOString(),
       content: {
-        whatsapp: `ADMIN ALERT: ${type} registered. ID: ${data.id}.`,
-        email: `System alert for ${type}.`
+        whatsapp: `ADMIN ALERT: ${type} registered on PK MART. ID: ${data.id}.`,
+        email: `Local system alert for ${type}.`
       },
       sent: false
     };

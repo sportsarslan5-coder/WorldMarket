@@ -5,23 +5,13 @@ export enum ShopStatus {
 }
 
 export interface PayoutInfo {
-  method: 'PayPal' | 'Stripe' | 'Bank' | 'Venmo';
+  method: 'Easypaisa' | 'JazzCash' | 'Bank' | 'Sadapay';
   accountNumber: string;
   accountTitle: string;
   bankName?: string;
 }
 
-export interface AdminNotification {
-  id: string;
-  type: 'NEW_SELLER' | 'NEW_ORDER';
-  timestamp: string;
-  content: {
-    whatsapp: string;
-    email: string;
-  };
-  sent: boolean;
-}
-
+// Added Seller interface used throughout the application
 export interface Seller {
   id: string;
   fullName: string;
@@ -29,8 +19,7 @@ export interface Seller {
   phoneNumber: string;
   shopId: string;
   joinedAt: string;
-  status?: 'active' | 'inactive';
-  payoutInfo?: PayoutInfo;
+  payoutInfo: PayoutInfo;
 }
 
 export interface Shop {
@@ -43,6 +32,7 @@ export interface Shop {
   whatsappNumber: string;
   email: string;
   joinedAt: string;
+  // Added missing payoutInfo property
   payoutInfo?: PayoutInfo;
 }
 
@@ -53,25 +43,19 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  currency: string;
+  currency: 'PKR';
   category: string;
   imageUrl: string; 
-  size?: string;
   stock: number;
   published: boolean;
   createdAt: string;
-  images?: string[];
-  sizes?: string[];
-  colors?: string[];
 }
 
 export interface OrderItem {
   productId: string;
   productName: string;
-  productImageUrl: string;
   quantity: number;
   price: number;
-  size?: string;
 }
 
 export interface Order {
@@ -84,10 +68,20 @@ export interface Order {
   customerAddress: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentMethod: 'COD' | 'CARD';
-  currency: 'USD';
+  paymentMethod: 'COD';
+  currency: 'PKR';
   createdAt: string;
   status: 'pending' | 'shipped' | 'delivered';
-  customerEmail?: string;
-  paymentStatus?: 'paid' | 'unpaid';
+}
+
+export interface AdminNotification {
+  id: string;
+  type: 'NEW_SELLER' | 'NEW_ORDER';
+  timestamp: string;
+  content: {
+    whatsapp: string;
+    email: string;
+  };
+  // Added missing sent property
+  sent: boolean;
 }
