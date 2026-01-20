@@ -16,28 +16,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
   const [shops, setShops] = useState<Shop[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const loadData = async () => {
+    const [s, o, p] = await Promise.all([
+      api.fetchAllShops(),
+      api.fetchAllOrders(),
+      api.fetchGlobalProducts()
+    ]);
+    setShops(s);
+    setOrders(o.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    setProducts(p);
+  };
 
   useEffect(() => {
-    if (isAuth) {
-      const load = async () => {
-        const [s, o, p] = await Promise.all([
-          api.fetchAllShops(),
-          api.fetchAllOrders(),
-          api.fetchGlobalProducts()
-        ]);
-        setShops(s);
-        setOrders(o.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-        setProducts(p);
-      };
-      load();
-    }
+    if (isAuth) loadData();
   }, [isAuth]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (pass === 'PKMART2025_SECURE') setIsAuth(true);
     else alert('Invalid Admin Protocol');
+  };
+
+  const handleCompleteOrder = async (orderId: string) => {
+    if (!window.confirm("Confirm: Have you received payment on JazzCash?")) return;
+    setIsUpdating(true);
+    await api.updateOrderStatus(orderId, 'completed');
+    await loadData();
+    setIsUpdating(false);
+    alert("Order marked as COMPLETED.");
   };
 
   if (!isAuth) {
@@ -73,21 +81,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
             </button>
           ))}
         </nav>
-        {notifications.length > 0 && (
-          <div className="mt-8 p-4 bg-red-50 rounded-2xl">
-             <p className="text-[10px] font-black uppercase text-red-600 tracking-widest">Active Alerts: {notifications.length}</p>
-          </div>
-        )}
       </aside>
 
       <main className="flex-1 p-8 lg:p-16">
         <header className="mb-16 flex justify-between items-center">
            <h2 className="text-4xl font-black tracking-tighter uppercase italic leading-none">{activeTab} <span className="text-slate-400 text-2xl not-italic">Log</span></h2>
            <button 
-             onClick={() => onRefresh()}
+             onClick={onRefresh}
              className="text-[10px] font-black uppercase tracking-widest bg-slate-100 px-6 py-3 rounded-xl hover:bg-slate-200 transition"
            >
-             Refresh Data
+             Refresh Grid
            </button>
         </header>
 
@@ -95,19 +98,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
           <div className="space-y-6">
             {orders.length === 0 ? (
               <div className="bg-white p-20 rounded-[40px] text-center border border-slate-100">
-                <p className="text-slate-300 font-black uppercase text-xs tracking-widest italic">No orders detected on grid.</p>
+                <p className="text-slate-300 font-black uppercase text-xs tracking-widest italic">No orders in queue.</p>
               </div>
             ) : orders.map(o => (
               <div key={o.id} className={`bg-white p-8 rounded-[30px] border flex flex-col md:flex-row gap-8 hover:shadow-xl transition shadow-sm animate-fade-in ${o.status === 'completed' ? 'border-green-100 bg-green-50/10' : 'border-slate-100'}`}>
                 <div className="space-y-4 flex-1">
                    <div className="flex gap-3">
                       <span className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">{o.id}</span>
-                      <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${o.status === 'completed' ? 'bg-green-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                      <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${o.status === 'completed' ? 'bg-green-600 text-white' : 'bg-orange-50 text-orange-600'}`}>
                         {o.paymentMethod} • {o.status.toUpperCase()}
                       </span>
-                      {o.status === 'completed' && (
-                        <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-green-100 text-green-700 animate-pulse">
-                          ✓ Payment Received (03079490721)
+                      {o.paymentMethod === 'JazzCash' && o.status !== 'completed' && (
+                        <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-600 animate-pulse">
+                          Pending Verification (03079490721)
                         </span>
                       )}
                    </div>
@@ -115,10 +118,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
                      <h3 className="text-xl font-black uppercase tracking-tight leading-none mb-1">{o.customerName}</h3>
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{o.shopName}</p>
                    </div>
-                   <div className="text-xs font-bold text-slate-500 space-y-1 bg-white/50 p-4 rounded-xl border border-slate-100">
-                      <p className="flex items-center gap-2">📞 {o.customerPhone}</p>
-                      <p className="flex items-center gap-2">📍 {o.customerAddress}</p>
-                      {o.transactionId && <p className="text-blue-600 font-black uppercase tracking-widest text-[9px]">TID: {o.transactionId}</p>}
+                   <div className="text-xs font-bold text-slate-600 space-y-2 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                      <p className="flex items-center gap-2">📱 {o.customerPhone}</p>
+                      <p className="flex items-center gap-2">📦 {o.items[0]?.productName} x {o.items[0]?.quantity}</p>
+                      <p className="flex items-start gap-2">📍 {o.customerAddress}</p>
                    </div>
                 </div>
                 
@@ -129,16 +132,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
                    </div>
                    
                    <div className="flex gap-2">
-                     {o.paymentScreenshot && (
+                     {o.status === 'pending' && o.paymentMethod === 'JazzCash' && (
                        <button 
-                         onClick={() => setSelectedScreenshot(o.paymentScreenshot!)}
-                         className="h-10 px-4 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition"
+                         disabled={isUpdating}
+                         onClick={() => handleCompleteOrder(o.id)}
+                         className="h-12 px-8 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition shadow-lg shadow-green-500/20 active:scale-95"
                        >
-                         View Receipt
+                         Mark as Paid & Complete
                        </button>
                      )}
-                     {o.status !== 'completed' && (
-                       <button className="h-10 px-6 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-green-600 transition shadow-lg">Mark Shipped</button>
+                     {o.status === 'completed' && (
+                       <div className="h-12 px-6 flex items-center gap-2 bg-green-50 text-green-600 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                         Settled
+                       </div>
                      )}
                    </div>
                 </div>
@@ -147,15 +154,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
           </div>
         )}
       </main>
-
-      {selectedScreenshot && (
-        <div className="fixed inset-0 bg-slate-900/90 z-[500] flex items-center justify-center p-8" onClick={() => setSelectedScreenshot(null)}>
-           <div className="max-w-4xl max-h-full overflow-hidden bg-white p-2 rounded-3xl animate-fade-in shadow-2xl relative">
-              <img src={selectedScreenshot} className="max-h-[80vh] object-contain rounded-2xl" alt="Proof of Payment" />
-              <button className="absolute -top-4 -right-4 bg-white w-10 h-10 rounded-full font-black text-slate-900 shadow-xl">✕</button>
-           </div>
-        </div>
-      )}
     </div>
   );
 };
