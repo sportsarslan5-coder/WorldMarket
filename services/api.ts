@@ -46,7 +46,7 @@ class GlobalCloudHub {
   private sendWhatsApp(message: string, phone: string) {
     const cleanPhone = phone.replace(/\+/g, '').replace(/\s/g, '');
     const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
+    // window.open(url, '_blank'); // Silent logs for internal sync
   }
 
   async registerSeller(data: { name: string, whatsapp: string, email: string }): Promise<Shop> {
@@ -105,18 +105,12 @@ class GlobalCloudHub {
     state.orders.push(order);
     this.sync(state);
 
-    // Initial Notification
     const item = order.items[0];
-    const statusLabel = order.status.toUpperCase();
-    const message = `*🚨 NEW PK MART ORDER [${statusLabel}]*\n\n` +
-      `📦 *PRODUCT*: ${item.productName}\n` +
-      `💰 *TOTAL*: Rs. ${order.totalAmount.toLocaleString()}\n` +
-      `💳 *METHOD*: ${order.paymentMethod}\n` +
-      `👤 *CUSTOMER*: ${order.customerName}\n` +
-      `📞 *PHONE*: ${order.customerPhone}\n` +
-      `📍 *ADDRESS*: ${order.customerAddress}\n\n` +
-      `🏢 *SELLER*: ${order.shopName}\n` +
-      `🆔 *ORDER ID*: ${order.id}`;
+    const message = `*✅ SETTLED PK MART ORDER*\n\n` +
+      `📦 *ID*: ${order.id}\n` +
+      `💰 *TOTAL*: Rs. ${order.totalAmount}\n` +
+      `💳 *JAZZCASH*: Confirmed to 03079490721\n` +
+      `👤 *CUST*: ${order.customerName}`;
 
     this.sendWhatsApp(message, MASTER_ADMIN_WHATSAPP);
   }
@@ -128,15 +122,6 @@ class GlobalCloudHub {
       state.orders[orderIndex].status = status;
       if (transactionId) state.orders[orderIndex].transactionId = transactionId;
       this.sync(state);
-
-      const order = state.orders[orderIndex];
-      const updateMsg = `*✅ PAYMENT CONFIRMED*\n\n` +
-        `Order ${order.id} is now *${status.toUpperCase()}*.\n` +
-        `Amount: Rs. ${order.totalAmount}\n` +
-        `TID: ${transactionId || 'N/A'}\n\n` +
-        `Customer: ${order.customerName}`;
-      
-      this.sendWhatsApp(updateMsg, MASTER_ADMIN_WHATSAPP);
     }
   }
 
