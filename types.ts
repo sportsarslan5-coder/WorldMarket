@@ -41,7 +41,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  views: number; // Views in millions
+  views: number; 
   currency: 'PKR';
   category: string;
   imageUrl: string; 
@@ -67,7 +67,7 @@ export interface Order {
   customerAddress: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentMethod: 'COD' | 'JazzCash' | 'Bank';
+  paymentMethod: 'COD' | 'JazzCash' | 'EasyPaisa' | 'Bank';
   paymentScreenshot?: string;
   transactionId?: string;
   paymentReference?: string;

@@ -15,18 +15,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
   
   const [shops, setShops] = useState<Shop[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [viewingProof, setViewingProof] = useState<string | null>(null);
 
   const loadData = async () => {
-    const [s, o, p] = await Promise.all([
+    const [s, o] = await Promise.all([
       api.fetchAllShops(),
-      api.fetchAllOrders(),
-      api.fetchGlobalProducts()
+      api.fetchAllOrders()
     ]);
     setShops(s);
     setOrders(o.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-    setProducts(p);
   };
 
   useEffect(() => {
@@ -39,28 +37,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
     else alert('Invalid Admin Protocol');
   };
 
-  const handleCompleteOrder = async (orderId: string) => {
-    if (!window.confirm("Confirm: Have you received payment on JazzCash?")) return;
+  const handleApproveOrder = async (orderId: string) => {
+    if (!window.confirm("Verify: Have you confirmed this payment in your JazzCash/EasyPaisa account?")) return;
     setIsUpdating(true);
     await api.updateOrderStatus(orderId, 'completed');
     await loadData();
     setIsUpdating(false);
-    alert("Order marked as COMPLETED.");
   };
 
   if (!isAuth) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 font-sans">
         <form onSubmit={handleLogin} className="bg-slate-900 p-12 rounded-[40px] shadow-2xl w-full max-w-sm border border-slate-800 text-center space-y-8 animate-fade-in">
-          <h1 className="text-2xl font-black italic tracking-tighter text-white uppercase leading-none">PK MART <br/><span className="text-green-500">Master Control</span></h1>
+          <h1 className="text-2xl font-black italic tracking-tighter text-white uppercase leading-none">PK MART <br/><span className="text-green-500">Node Controller</span></h1>
           <input 
             type="password" 
-            placeholder="System Passphrase" 
+            placeholder="Security Key" 
             className="w-full h-14 px-6 bg-slate-800 border border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-green-500/30 font-bold text-white text-center"
             value={pass}
             onChange={e => setPass(e.target.value)}
           />
-          <button className="w-full h-14 bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-500 transition">Authorize Access</button>
+          <button className="w-full h-14 bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-500 transition">Authorize Node</button>
         </form>
       </div>
     );
@@ -69,7 +66,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
   return (
     <div className="min-h-screen bg-[#FBFBFD] flex flex-col lg:flex-row font-sans text-slate-900">
       <aside className="w-full lg:w-80 bg-white border-r border-slate-100 p-8 flex flex-col h-screen sticky top-0 z-50">
-        <div className="text-xl font-black italic mb-12 tracking-tighter uppercase leading-none">Admin<br/><span className="text-green-600">Control Hub</span></div>
+        <div className="text-xl font-black italic mb-12 tracking-tighter uppercase leading-none">Master<br/><span className="text-green-600">Admin</span></div>
         <nav className="space-y-2 flex-1">
           {['orders', 'sellers', 'products'].map(tab => (
             <button 
@@ -85,75 +82,97 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
 
       <main className="flex-1 p-8 lg:p-16">
         <header className="mb-16 flex justify-between items-center">
-           <h2 className="text-4xl font-black tracking-tighter uppercase italic leading-none">{activeTab} <span className="text-slate-400 text-2xl not-italic">Log</span></h2>
+           <h2 className="text-4xl font-black tracking-tighter uppercase italic leading-none">{activeTab} <span className="text-slate-400 text-2xl not-italic">Grid</span></h2>
            <button 
              onClick={onRefresh}
              className="text-[10px] font-black uppercase tracking-widest bg-slate-100 px-6 py-3 rounded-xl hover:bg-slate-200 transition"
            >
-             Refresh Grid
+             Sync Grid
            </button>
         </header>
 
         {activeTab === 'orders' && (
           <div className="space-y-6">
-            {orders.length === 0 ? (
-              <div className="bg-white p-20 rounded-[40px] text-center border border-slate-100">
-                <p className="text-slate-300 font-black uppercase text-xs tracking-widest italic">No orders in queue.</p>
-              </div>
-            ) : orders.map(o => (
-              <div key={o.id} className={`bg-white p-8 rounded-[30px] border flex flex-col md:flex-row gap-8 hover:shadow-xl transition shadow-sm animate-fade-in ${o.status === 'completed' ? 'border-green-100 bg-green-50/10' : 'border-slate-100'}`}>
+            {orders.map(o => (
+              <div key={o.id} className={`bg-white p-8 rounded-[30px] border flex flex-col md:flex-row gap-8 hover:shadow-xl transition shadow-sm animate-fade-in ${o.status === 'completed' ? 'border-green-100' : 'border-slate-100'}`}>
                 <div className="space-y-4 flex-1">
                    <div className="flex gap-3">
                       <span className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">{o.id}</span>
                       <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${o.status === 'completed' ? 'bg-green-600 text-white' : 'bg-orange-50 text-orange-600'}`}>
                         {o.paymentMethod} • {o.status.toUpperCase()}
                       </span>
-                      {o.paymentMethod === 'JazzCash' && o.status !== 'completed' && (
-                        <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-600 animate-pulse">
-                          Pending Verification (03079490721)
-                        </span>
-                      )}
                    </div>
+                   
                    <div>
                      <h3 className="text-xl font-black uppercase tracking-tight leading-none mb-1">{o.customerName}</h3>
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{o.shopName}</p>
                    </div>
-                   <div className="text-xs font-bold text-slate-600 space-y-2 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                      <p className="flex items-center gap-2">📱 {o.customerPhone}</p>
-                      <p className="flex items-center gap-2">📦 {o.items[0]?.productName} x {o.items[0]?.quantity}</p>
-                      <p className="flex items-start gap-2">📍 {o.customerAddress}</p>
+
+                   <div className="bg-slate-50 p-6 rounded-2xl space-y-3">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Verification Assets</p>
+                      {o.transactionId && (
+                        <div className="flex justify-between items-center">
+                           <span className="text-xs font-bold">TID:</span>
+                           <span className="font-mono text-xs font-black bg-white px-2 py-1 rounded border border-slate-200">{o.transactionId}</span>
+                        </div>
+                      )}
+                      {o.paymentScreenshot && (
+                        <button 
+                          onClick={() => setViewingProof(o.paymentScreenshot!)}
+                          className="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition"
+                        >
+                          Show Payment Asset
+                        </button>
+                      )}
+                   </div>
+
+                   <div className="text-xs font-bold text-slate-600 space-y-1">
+                      <p>📱 {o.customerPhone}</p>
+                      <p>📍 {o.customerAddress}</p>
                    </div>
                 </div>
                 
                 <div className="md:text-right space-y-4 flex flex-col justify-center items-end">
-                   <div className="text-right">
+                   <div>
                      <p className="text-2xl font-black italic leading-none text-slate-900">Rs. {o.totalAmount.toLocaleString()}</p>
                      <p className="text-[9px] font-black text-slate-300 mt-1 uppercase tracking-widest">{new Date(o.createdAt).toLocaleString()}</p>
                    </div>
                    
-                   <div className="flex gap-2">
-                     {o.status === 'pending' && o.paymentMethod === 'JazzCash' && (
-                       <button 
-                         disabled={isUpdating}
-                         onClick={() => handleCompleteOrder(o.id)}
-                         className="h-12 px-8 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition shadow-lg shadow-green-500/20 active:scale-95"
-                       >
-                         Mark as Paid & Complete
-                       </button>
-                     )}
-                     {o.status === 'completed' && (
-                       <div className="h-12 px-6 flex items-center gap-2 bg-green-50 text-green-600 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                         Settled
-                       </div>
-                     )}
-                   </div>
+                   {o.status === 'pending' && (
+                     <button 
+                       disabled={isUpdating}
+                       onClick={() => handleApproveOrder(o.id)}
+                       className="h-12 px-8 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition shadow-lg shadow-green-500/20 active:scale-95"
+                     >
+                       Confirm & Verify
+                     </button>
+                   )}
+                   {o.status === 'completed' && (
+                     <div className="h-12 px-6 flex items-center gap-2 bg-green-50 text-green-600 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                       Settled ✓
+                     </div>
+                   )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
+
+      {viewingProof && (
+        <div className="fixed inset-0 z-[300] bg-slate-950/90 backdrop-blur flex items-center justify-center p-8" onClick={() => setViewingProof(null)}>
+           <div className="max-w-xl w-full bg-white rounded-[40px] overflow-hidden shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+              <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                 <h3 className="font-black text-xs uppercase tracking-widest">Verification Image</h3>
+                 <button onClick={() => setViewingProof(null)} className="text-slate-300 hover:text-slate-900">✕</button>
+              </div>
+              <img src={viewingProof} className="w-full h-auto max-h-[70vh] object-contain" alt="Payment Proof" />
+              <div className="p-8 bg-slate-50 text-center">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Check against JazzCash statement before confirming.</p>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
