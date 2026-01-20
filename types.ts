@@ -11,7 +11,6 @@ export interface PayoutInfo {
   bankName?: string;
 }
 
-// Added Seller interface used throughout the application
 export interface Seller {
   id: string;
   fullName: string;
@@ -32,7 +31,6 @@ export interface Shop {
   whatsappNumber: string;
   email: string;
   joinedAt: string;
-  // Added missing payoutInfo property
   payoutInfo?: PayoutInfo;
 }
 
@@ -68,10 +66,13 @@ export interface Order {
   customerAddress: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentMethod: 'COD';
+  paymentMethod: 'COD' | 'JazzCash' | 'Bank';
+  paymentScreenshot?: string;
+  transactionId?: string;
+  paymentReference?: string; // For gateway tracking
   currency: 'PKR';
   createdAt: string;
-  status: 'pending' | 'shipped' | 'delivered';
+  status: 'pending' | 'paid' | 'completed' | 'shipped' | 'delivered' | 'cancelled';
 }
 
 export interface AdminNotification {
@@ -82,6 +83,5 @@ export interface AdminNotification {
     whatsapp: string;
     email: string;
   };
-  // Added missing sent property
   sent: boolean;
 }

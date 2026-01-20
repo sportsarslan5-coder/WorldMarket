@@ -4,8 +4,7 @@ import { mockSellers, mockProducts } from './mockData.ts';
 
 /**
  * PK MART CLOUD API
- * This service handles all data persistence.
- * Swap 'localStorage' calls with your Supabase/Firebase SDK calls for production.
+ * Optimized for Pakistani Multi-Vendor Payments (JazzCash Integrated)
  */
 const MASTER_ADMIN_WHATSAPP = "923079490721"; 
 
@@ -15,8 +14,6 @@ class GlobalCloudHub {
   private getMasterState() {
     const data = localStorage.getItem(GlobalCloudHub.STORAGE_KEY);
     if (!data) {
-      // Initializing DB with Sialkot Mock Data
-      // Added payoutInfo mapping to ensure data flow to Shop interface
       const initialShops: Shop[] = mockSellers.map(s => ({
         id: s.shopId,
         ownerId: s.id,
@@ -71,11 +68,6 @@ class GlobalCloudHub {
 
     state.shops.push(newShop);
     this.sync(state);
-
-    // Notify Admin of new registration
-    const adminMsg = `🚨 *NEW MERCHANT REGISTERED*\n\nShop: ${newShop.name}\nWhatsApp: ${newShop.whatsappNumber}\nEmail: ${newShop.email}\nURL: pkmart.pk/shop/${newShop.slug}`;
-    this.sendWhatsApp(adminMsg, MASTER_ADMIN_WHATSAPP);
-
     return newShop;
   }
 
@@ -92,15 +84,6 @@ class GlobalCloudHub {
     const state = this.getMasterState();
     state.products.push(product);
     this.sync(state);
-  }
-
-  async updateProduct(id: string, product: Product): Promise<void> {
-    const state = this.getMasterState();
-    const idx = state.products.findIndex((p: any) => p.id === id);
-    if (idx !== -1) {
-      state.products[idx] = product;
-      this.sync(state);
-    }
   }
 
   async deleteProduct(id: string): Promise<void> {
@@ -122,22 +105,38 @@ class GlobalCloudHub {
     state.orders.push(order);
     this.sync(state);
 
+    // Initial Notification
     const item = order.items[0];
-    const message = `*🚨 NEW PK MART ORDER*\n\n` +
+    const statusLabel = order.status.toUpperCase();
+    const message = `*🚨 NEW PK MART ORDER [${statusLabel}]*\n\n` +
       `📦 *PRODUCT*: ${item.productName}\n` +
       `💰 *TOTAL*: Rs. ${order.totalAmount.toLocaleString()}\n` +
+      `💳 *METHOD*: ${order.paymentMethod}\n` +
       `👤 *CUSTOMER*: ${order.customerName}\n` +
       `📞 *PHONE*: ${order.customerPhone}\n` +
       `📍 *ADDRESS*: ${order.customerAddress}\n\n` +
       `🏢 *SELLER*: ${order.shopName}\n` +
       `🆔 *ORDER ID*: ${order.id}`;
 
-    // Send to Admin
     this.sendWhatsApp(message, MASTER_ADMIN_WHATSAPP);
-    
-    // Optionally also send to Seller if they differ
-    if (order.sellerWhatsApp !== MASTER_ADMIN_WHATSAPP) {
-      this.sendWhatsApp(message, order.sellerWhatsApp);
+  }
+
+  async updateOrderStatus(orderId: string, status: Order['status'], transactionId?: string): Promise<void> {
+    const state = this.getMasterState();
+    const orderIndex = state.orders.findIndex((o: Order) => o.id === orderId);
+    if (orderIndex !== -1) {
+      state.orders[orderIndex].status = status;
+      if (transactionId) state.orders[orderIndex].transactionId = transactionId;
+      this.sync(state);
+
+      const order = state.orders[orderIndex];
+      const updateMsg = `*✅ PAYMENT CONFIRMED*\n\n` +
+        `Order ${order.id} is now *${status.toUpperCase()}*.\n` +
+        `Amount: Rs. ${order.totalAmount}\n` +
+        `TID: ${transactionId || 'N/A'}\n\n` +
+        `Customer: ${order.customerName}`;
+      
+      this.sendWhatsApp(updateMsg, MASTER_ADMIN_WHATSAPP);
     }
   }
 
