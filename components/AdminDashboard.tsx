@@ -3,13 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Shop, Product, Order, AdminNotification } from '../types.ts';
 import { api } from '../services/api.ts';
 
-// Added props interface to match usage in App.tsx
 interface AdminDashboardProps {
   notifications: AdminNotification[];
   onRefresh: () => Promise<void>;
 }
 
-// Updated component to accept props
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefresh }) => {
   const [isAuth, setIsAuth] = useState(false);
   const [pass, setPass] = useState('');
@@ -29,7 +27,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
           api.fetchGlobalProducts()
         ]);
         setShops(s);
-        setOrders(o);
+        setOrders(o.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         setProducts(p);
       };
       load();
@@ -75,7 +73,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
             </button>
           ))}
         </nav>
-        {/* Optional: Render notification count */}
         {notifications.length > 0 && (
           <div className="mt-8 p-4 bg-red-50 rounded-2xl">
              <p className="text-[10px] font-black uppercase text-red-600 tracking-widest">Active Alerts: {notifications.length}</p>
@@ -101,28 +98,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
                 <p className="text-slate-300 font-black uppercase text-xs tracking-widest italic">No orders detected on grid.</p>
               </div>
             ) : orders.map(o => (
-              <div key={o.id} className="bg-white p-8 rounded-[30px] border border-slate-100 flex flex-col md:flex-row gap-8 hover:shadow-xl transition shadow-sm animate-fade-in">
+              <div key={o.id} className={`bg-white p-8 rounded-[30px] border flex flex-col md:flex-row gap-8 hover:shadow-xl transition shadow-sm animate-fade-in ${o.status === 'completed' ? 'border-green-100 bg-green-50/10' : 'border-slate-100'}`}>
                 <div className="space-y-4 flex-1">
                    <div className="flex gap-3">
-                      <span className="bg-green-50 text-green-700 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">{o.id}</span>
-                      <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${o.paymentMethod === 'COD' ? 'bg-slate-50 text-slate-500' : 'bg-blue-50 text-blue-600'}`}>
-                        {o.paymentMethod}
+                      <span className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">{o.id}</span>
+                      <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${o.status === 'completed' ? 'bg-green-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                        {o.paymentMethod} • {o.status.toUpperCase()}
                       </span>
+                      {o.status === 'completed' && (
+                        <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-green-100 text-green-700 animate-pulse">
+                          ✓ Payment Received (03079490721)
+                        </span>
+                      )}
                    </div>
                    <div>
                      <h3 className="text-xl font-black uppercase tracking-tight leading-none mb-1">{o.customerName}</h3>
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{o.shopName}</p>
                    </div>
-                   <div className="text-xs font-bold text-slate-500 space-y-1 bg-slate-50 p-4 rounded-xl">
+                   <div className="text-xs font-bold text-slate-500 space-y-1 bg-white/50 p-4 rounded-xl border border-slate-100">
                       <p className="flex items-center gap-2">📞 {o.customerPhone}</p>
                       <p className="flex items-center gap-2">📍 {o.customerAddress}</p>
-                      {o.transactionId && <p className="text-blue-600">ID: {o.transactionId}</p>}
+                      {o.transactionId && <p className="text-blue-600 font-black uppercase tracking-widest text-[9px]">TID: {o.transactionId}</p>}
                    </div>
                 </div>
                 
                 <div className="md:text-right space-y-4 flex flex-col justify-center items-end">
                    <div className="text-right">
-                     <p className="text-2xl font-black italic leading-none">Rs. {o.totalAmount.toLocaleString()}</p>
+                     <p className="text-2xl font-black italic leading-none text-slate-900">Rs. {o.totalAmount.toLocaleString()}</p>
                      <p className="text-[9px] font-black text-slate-300 mt-1 uppercase tracking-widest">{new Date(o.createdAt).toLocaleString()}</p>
                    </div>
                    
@@ -135,15 +137,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notifications, onRefres
                          View Receipt
                        </button>
                      )}
-                     <button className="h-10 px-6 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-green-600 transition">Complete</button>
+                     {o.status !== 'completed' && (
+                       <button className="h-10 px-6 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-green-600 transition shadow-lg">Mark Shipped</button>
+                     )}
                    </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-
-        {/* ... (Other tabs Sellers/Products) */}
       </main>
 
       {selectedScreenshot && (
