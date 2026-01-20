@@ -67,6 +67,7 @@ const SellerDashboard: React.FC = () => {
       name: prodForm.name,
       description: prodForm.desc,
       price: Number(prodForm.price),
+      views: 0,
       currency: "PKR",
       category: prodForm.cat,
       imageUrl: imagePreview,

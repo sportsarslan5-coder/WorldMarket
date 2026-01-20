@@ -41,6 +41,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  views: number; // Views in millions
   currency: 'PKR';
   category: string;
   imageUrl: string; 
@@ -69,7 +70,7 @@ export interface Order {
   paymentMethod: 'COD' | 'JazzCash' | 'Bank';
   paymentScreenshot?: string;
   transactionId?: string;
-  paymentReference?: string; // For gateway tracking
+  paymentReference?: string;
   currency: 'PKR';
   createdAt: string;
   status: 'pending' | 'paid' | 'completed' | 'shipped' | 'delivered' | 'cancelled';
