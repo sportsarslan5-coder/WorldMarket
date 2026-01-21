@@ -3,8 +3,8 @@ import { Shop, Product, Order, ShopStatus } from '../types.ts';
 import { mockSellers, mockProducts } from './mockData.ts';
 
 /**
- * PK MART CLOUD API
- * Optimized for Pakistani Multi-Vendor Payments (JazzCash Integrated)
+ * PK MART CLOUD API - Worldwide Edition
+ * Integrated with 2Checkout (Verifone) for Secure Global Payments
  */
 const MASTER_ADMIN_WHATSAPP = "923079490721"; 
 
@@ -46,7 +46,7 @@ class GlobalCloudHub {
   private sendWhatsApp(message: string, phone: string) {
     const cleanPhone = phone.replace(/\+/g, '').replace(/\s/g, '');
     const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    // window.open(url, '_blank'); // Silent logs for internal sync
+    // window.open(url, '_blank'); 
   }
 
   async registerSeller(data: { name: string, whatsapp: string, email: string }): Promise<Shop> {
@@ -100,19 +100,30 @@ class GlobalCloudHub {
     return this.getMasterState().products.filter((p: Product) => p.sellerId === sellerId);
   }
 
-  async placeOrder(order: Order): Promise<void> {
+  async initOrder(order: Order): Promise<void> {
     const state = this.getMasterState();
     state.orders.push(order);
     this.sync(state);
+  }
 
-    const item = order.items[0];
-    const message = `*✅ SETTLED PK MART ORDER*\n\n` +
-      `📦 *ID*: ${order.id}\n` +
-      `💰 *TOTAL*: Rs. ${order.totalAmount}\n` +
-      `💳 *JAZZCASH*: Confirmed to 03079490721\n` +
-      `👤 *CUST*: ${order.customerName}`;
+  async finalizeOrder(orderId: string, status: 'completed' | 'failed', transactionId?: string): Promise<void> {
+    const state = this.getMasterState();
+    const orderIndex = state.orders.findIndex((o: Order) => o.id === orderId);
+    if (orderIndex !== -1) {
+      state.orders[orderIndex].status = status;
+      if (transactionId) state.orders[orderIndex].transactionId = transactionId;
+      this.sync(state);
 
-    this.sendWhatsApp(message, MASTER_ADMIN_WHATSAPP);
+      if (status === 'completed') {
+        const order = state.orders[orderIndex];
+        const message = `*🌟 GLOBAL SETTLED PK MART ORDER*\n\n` +
+          `📦 *ID*: ${order.id}\n` +
+          `💰 *TOTAL*: Rs. ${order.totalAmount}\n` +
+          `💳 *GATEWAY*: 2Checkout Verified\n` +
+          `👤 *CUST*: ${order.customerName}`;
+        this.sendWhatsApp(message, MASTER_ADMIN_WHATSAPP);
+      }
+    }
   }
 
   async updateOrderStatus(orderId: string, status: Order['status'], transactionId?: string): Promise<void> {

@@ -6,6 +6,9 @@ import SellerDashboard from './components/SellerDashboard.tsx';
 import VendorLanding from './components/VendorLanding.tsx';
 import ShopFront from './components/ShopFront.tsx';
 import LandingPage from './components/LandingPage.tsx';
+import CheckoutGateway from './components/CheckoutGateway.tsx';
+import PaymentSuccess from './components/PaymentSuccess.tsx';
+import PaymentFailed from './components/PaymentFailed.tsx';
 import { Seller, Product, Order, AdminNotification, Shop } from './types.ts';
 import { api } from './services/api.ts';
 import { generateAdminNotification } from './services/notificationService.ts';
@@ -45,12 +48,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const addNotification = useCallback(async (type: 'NEW_SELLER' | 'NEW_ORDER', data: any) => {
-    const newNotif = await generateAdminNotification(type, data);
-    setNotifications(prev => [newNotif, ...prev]);
-    await syncData();
-  }, [syncData]);
-
   useEffect(() => {
     syncData();
   }, [syncData]);
@@ -78,6 +75,9 @@ const App: React.FC = () => {
           } />
           <Route path="/seller/*" element={<SellerDashboard />} />
           <Route path="/shop/:slug" element={<ShopFront />} />
+          <Route path="/checkout-gateway/:orderId" element={<CheckoutGateway />} />
+          <Route path="/payment-success/:orderId" element={<PaymentSuccess />} />
+          <Route path="/payment-failed" element={<PaymentFailed />} />
         </Routes>
       </div>
     </Router>

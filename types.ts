@@ -5,7 +5,7 @@ export enum ShopStatus {
 }
 
 export interface PayoutInfo {
-  method: 'Easypaisa' | 'JazzCash' | 'Bank' | 'Sadapay';
+  method: 'Easypaisa' | 'JazzCash' | 'Bank' | 'Sadapay' | '2Checkout';
   accountNumber: string;
   accountTitle: string;
   bankName?: string;
@@ -42,7 +42,7 @@ export interface Product {
   description: string;
   price: number;
   views: number; 
-  currency: 'PKR';
+  currency: 'PKR' | 'USD';
   category: string;
   imageUrl: string; 
   stock: number;
@@ -63,17 +63,17 @@ export interface Order {
   shopName: string;
   sellerWhatsApp: string;
   customerName: string;
+  customerEmail: string;
   customerPhone: string;
   customerAddress: string;
   items: OrderItem[];
   totalAmount: number;
-  paymentMethod: 'COD' | 'JazzCash' | 'EasyPaisa' | 'Bank';
-  paymentScreenshot?: string;
+  paymentMethod: '2Checkout' | 'COD' | 'JazzCash' | 'EasyPaisa';
   transactionId?: string;
   paymentReference?: string;
-  currency: 'PKR';
+  currency: 'PKR' | 'USD';
   createdAt: string;
-  status: 'pending' | 'paid' | 'completed' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'completed' | 'failed' | 'shipped' | 'delivered' | 'cancelled';
 }
 
 export interface AdminNotification {
