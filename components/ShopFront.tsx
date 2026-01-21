@@ -75,38 +75,40 @@ const ShopFront: React.FC = () => {
   const isFormValid = custForm.name && custForm.email && custForm.phone && custForm.address;
 
   if (isLoading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+      <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading Store Catalog...</p>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-green-100">
-      <nav className="p-6 h-16 flex items-center justify-between glass border-b border-slate-100 sticky top-0 z-50">
+      <nav className="p-6 h-16 flex items-center justify-between glass border-b border-slate-100 sticky top-0 z-[100]">
         <Link to="/" className="text-xl font-black italic tracking-tighter uppercase">PK<span className="text-green-600">MART</span></Link>
         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full">Secure Global Payments</span>
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-20">
-        <div className="mb-12">
-           <h1 className="text-6xl font-black tracking-tighter uppercase italic leading-none">{shop?.name}</h1>
-           <p className="text-slate-400 font-bold uppercase tracking-widest mt-2">Verified PK MART Global Vendor</p>
-        </div>
+        <header className="mb-20 space-y-4">
+           <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.85]">{shop?.name}</h1>
+           <div className="flex items-center gap-4">
+              <span className="bg-slate-900 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">Verified Merchant</span>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs italic">{products.length} Products Active</p>
+           </div>
+        </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {products.map(p => (
-            <div key={p.id} className="group animate-fade-in flex flex-col bg-slate-50 rounded-[40px] p-8 hover:bg-white border border-transparent hover:border-slate-100 transition-all duration-500 hover:shadow-2xl">
-              <div className="aspect-square flex items-center justify-center mb-6">
-                <img src={p.imageUrl} className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition duration-700" alt="" />
+            <div key={p.id} className="group animate-fade-in flex flex-col bg-slate-50 rounded-[32px] p-6 hover:bg-white border border-transparent hover:border-slate-100 transition-all duration-500 hover:shadow-2xl">
+              <div className="aspect-square flex items-center justify-center mb-4 bg-white rounded-2xl p-4 overflow-hidden relative">
+                <img src={p.imageUrl} loading="lazy" className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition duration-700" alt={p.name} />
+                <div className="absolute top-2 right-2 bg-green-100 text-green-700 text-[7px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">{p.views}M Views</div>
               </div>
-              <div className="flex-1">
-                 <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg uppercase tracking-tight">{p.name}</h3>
-                    <span className="bg-green-100 text-green-700 text-[8px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">{p.views}M Views</span>
-                 </div>
-                 <p className="text-2xl font-black text-slate-900 italic">Rs. {p.price.toLocaleString()}</p>
+              <div className="flex-1 space-y-1 mb-6 px-1">
+                 <h3 className="font-bold text-sm uppercase tracking-tight text-slate-900 leading-snug">{p.name}</h3>
+                 <p className="text-xl font-black text-slate-900 italic">Rs. {p.price.toLocaleString()}</p>
               </div>
-              <button onClick={() => setSelectedProduct(p)} className="mt-6 w-full h-12 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-600 transition shadow-lg active:scale-95">Checkout Now</button>
+              <button onClick={() => setSelectedProduct(p)} className="w-full h-12 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-600 transition shadow-lg active:scale-95">Checkout</button>
             </div>
           ))}
         </div>
@@ -122,7 +124,7 @@ const ShopFront: React.FC = () => {
                   <img src={selectedProduct.imageUrl} className="max-h-full mix-blend-multiply" alt="" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black uppercase tracking-tight italic">{selectedProduct.name}</h2>
+                  <h2 className="text-2xl font-black uppercase tracking-tight italic leading-tight">{selectedProduct.name}</h2>
                   <p className="text-green-600 font-black text-2xl italic">Rs. {selectedProduct.price.toLocaleString()}</p>
                 </div>
               </div>
@@ -181,10 +183,6 @@ const ShopFront: React.FC = () => {
                      </>
                    ) : 'Secure Worldwide Payment'}
                  </button>
-                 
-                 <p className="text-[9px] text-center font-bold text-slate-400 uppercase tracking-widest italic leading-tight">
-                   You will be redirected to 2Checkout (Verifone) for secure card payment. <br/>PK MART does not store your card details.
-                 </p>
               </form>
            </div>
         </div>
