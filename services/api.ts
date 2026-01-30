@@ -2,21 +2,21 @@
 import { Product, Seller, Order } from '../types.ts';
 
 /**
- * AMZ PRIME CLOUD CONTROLLER (PRODUCTION)
- * This service implements the REAL BACKEND architecture.
- * It uses a REST-based Cloud Persistence layer (targeting Supabase/Firebase REST).
+ * PRODUCTION CLOUD CONTROLLER
+ * Uses standardized REST architecture for permanent data persistence.
  */
-const CLOUD_DB_URL = "https://your-project-id.supabase.co/rest/v1"; 
-const CLOUD_DB_KEY = process.env.API_KEY || "PERMANENT_RECOVERY_KEY"; 
+const CLOUD_DB_URL = "https://vshpgjexuqmrtxvytmzv.supabase.co/rest/v1"; // Production Node
+const ADMIN_WA = "923079490721";
 
 class ApiService {
-  private ADMIN_WHATSAPP = "923079490721";
-  private HEADERS = {
-    'Content-Type': 'application/json',
-    'apikey': CLOUD_DB_KEY,
-    'Authorization': `Bearer ${CLOUD_DB_KEY}`,
-    'Prefer': 'return=representation'
-  };
+  private get headers() {
+    return {
+      'Content-Type': 'application/json',
+      'apikey': process.env.API_KEY || "",
+      'Authorization': `Bearer ${process.env.API_KEY || ""}`,
+      'Prefer': 'return=representation'
+    };
+  }
 
   // --- SELLER PERSISTENCE ---
 
@@ -29,37 +29,51 @@ class ApiService {
       registeredAt: new Date().toISOString()
     };
 
-    // REAL CLOUD POST: 
-    // This sends data to the 'sellers' table in the permanent cloud database
-    await this.cloudPost('/sellers', newSeller);
+    const res = await fetch(`${CLOUD_DB_URL}/sellers`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(newSeller)
+    });
 
-    // AUTO-NOTIFY ADMIN
-    this.notifyAdminOfNewSeller(newSeller);
+    if (!res.ok) throw new Error("Cloud Registration Failed");
+
+    // AUTOMATIC WHATSAPP DISPATCH TO ADMIN
+    this.sendWhatsApp(`*NEW SELLER ALERT*%0A
+Name: ${newSeller.name}%0A
+Store: ${newSeller.storeName}%0A
+Location: ${newSeller.location}%0A
+WA: ${newSeller.whatsapp}%0A
+Email: ${newSeller.email}%0A
+Bank: ${newSeller.bankAccount}`);
+
     return newSeller;
   }
 
-  async getAllSellers(): Promise<Seller[]> {
-    return this.cloudGet<Seller>('/sellers');
+  async fetchAllSellers(): Promise<Seller[]> {
+    const res = await fetch(`${CLOUD_DB_URL}/sellers?select=*`, { headers: this.headers });
+    return res.json();
   }
 
-  // Fix: Added fetchAllShops alias for LandingPage
+  // Alias for fetchAllSellers
   async fetchAllShops(): Promise<Seller[]> {
-    return this.getAllSellers();
+    return this.fetchAllSellers();
   }
 
   async findSellerBySlug(slug: string): Promise<Seller | null> {
-    const results = await this.cloudGet<Seller>(`/sellers?slug=eq.${slug}`);
-    return results[0] || null;
+    const res = await fetch(`${CLOUD_DB_URL}/sellers?slug=eq.${slug}&select=*`, { headers: this.headers });
+    const data = await res.json();
+    return data[0] || null;
   }
 
-  // Fix: Added fetchShopBySlug alias for ShopFront
+  // Alias for findSellerBySlug
   async fetchShopBySlug(slug: string): Promise<Seller | null> {
     return this.findSellerBySlug(slug);
   }
 
   async getSellerById(id: string): Promise<Seller | null> {
-    const results = await this.cloudGet<Seller>(`/sellers?id=eq.${id}`);
-    return results[0] || null;
+    const res = await fetch(`${CLOUD_DB_URL}/sellers?id=eq.${id}&select=*`, { headers: this.headers });
+    const data = await res.json();
+    return data[0] || null;
   }
 
   // --- PRODUCT PERSISTENCE ---
@@ -71,34 +85,57 @@ class ApiService {
       createdAt: new Date().toISOString()
     };
 
-    await this.cloudPost('/products', newProduct);
+    const res = await fetch(`${CLOUD_DB_URL}/products`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(newProduct)
+    });
+
+    if (!res.ok) throw new Error("Cloud Product Sync Failed");
     return newProduct;
   }
 
-  // Fix: Added saveAdminProduct alias for AdminPanel
-  async saveAdminProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
+  // Used by AdminPanel
+  async saveAdminProduct(product: any): Promise<Product> {
     return this.uploadProduct(product);
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {
-    return this.cloudGet<Product>(`/products?sellerId=eq.${sellerId}`);
+    const res = await fetch(`${CLOUD_DB_URL}/products?sellerId=eq.${sellerId}&select=*`, { headers: this.headers });
+    return res.json();
   }
 
-  // Fix: Added fetchSellerProducts alias for ShopFront
+  // Alias for getProductsBySeller
   async fetchSellerProducts(sellerId: string): Promise<Product[]> {
     return this.getProductsBySeller(sellerId);
   }
 
-  async getAdminProducts(): Promise<Product[]> {
-    return this.cloudGet<Product>('/products');
+  async getAllProducts(): Promise<Product[]> {
+    const res = await fetch(`${CLOUD_DB_URL}/products?select=*`, { headers: this.headers });
+    return res.json();
   }
 
-  // Fix: Added fetchGlobalProducts alias for LandingPage
+  // Alias for getAllProducts
   async fetchGlobalProducts(): Promise<Product[]> {
-    return this.getAdminProducts();
+    return this.getAllProducts();
+  }
+
+  // Alias for getAllProducts
+  async getAdminProducts(): Promise<Product[]> {
+    return this.getAllProducts();
   }
 
   // --- ORDER & COMMISSION ENGINE ---
+
+  // Initialize a pending order for checkout gateway
+  async initOrder(orderData: any): Promise<void> {
+    const mappedOrder = {
+      ...orderData,
+      customerWhatsapp: orderData.customerWhatsapp || orderData.customerPhone || "",
+      customerLocation: orderData.customerLocation || orderData.customerAddress || ""
+    };
+    await this.placeOrder(mappedOrder);
+  }
 
   async placeOrder(orderData: Omit<Order, 'id' | 'commission' | 'createdAt'>): Promise<void> {
     const adminAmt = orderData.productPrice * 0.95;
@@ -106,7 +143,7 @@ class ApiService {
 
     const fullOrder: Order = {
       ...orderData,
-      id: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      id: orderData.id || `ORD-${Date.now()}`,
       commission: {
         adminAmount: adminAmt,
         sellerAmount: sellerAmt
@@ -114,107 +151,42 @@ class ApiService {
       createdAt: new Date().toISOString()
     };
 
-    await this.cloudPost('/orders', fullOrder);
-    this.notifyAdminOfOrder(fullOrder);
+    const res = await fetch(`${CLOUD_DB_URL}/orders`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(fullOrder)
+    });
+
+    if (!res.ok) throw new Error("Order Persistence Failed");
+
+    // AUTOMATIC WHATSAPP NOTIFICATION TO ADMIN
+    this.sendWhatsApp(`*NEW ORDER RECEIVED*%0A
+Seller: ${fullOrder.sellerName}%0A
+Store: ${window.location.origin}/#/${fullOrder.sellerSlug}%0A
+Product: ${fullOrder.productName}%0A
+Price: Rs. ${fullOrder.productPrice}%0A
+Customer: ${fullOrder.customerName}%0A
+Address: ${fullOrder.customerLocation}%0A
+WA: ${fullOrder.customerWhatsapp}`);
   }
 
-  // Fix: Added initOrder for ShopFront gateway integration
-  async initOrder(orderData: Order): Promise<void> {
-    await this.cloudPost('/orders', orderData);
+  async fetchAllOrders(): Promise<Order[]> {
+    const res = await fetch(`${CLOUD_DB_URL}/orders?select=*`, { headers: this.headers });
+    return res.json();
   }
 
-  // Fix: Added finalizeOrder for PaymentSuccess gateway response
+  // Finalize order status and record transaction ID
   async finalizeOrder(orderId: string, status: string, tid: string): Promise<void> {
-    const key = 'CLOUD_DB_orders';
-    const orders = JSON.parse(localStorage.getItem(key) || '[]');
-    const index = orders.findIndex((o: any) => o.id === orderId);
-    if (index !== -1) {
-      orders[index].status = status;
-      orders[index].tid = tid;
-      localStorage.setItem(key, JSON.stringify(orders));
-    }
+    const res = await fetch(`${CLOUD_DB_URL}/orders?id=eq.${orderId}`, {
+      method: 'PATCH',
+      headers: this.headers,
+      body: JSON.stringify({ status, transactionId: tid })
+    });
+    if (!res.ok) throw new Error("Order Finalization Failed");
   }
 
-  async getAllOrders(): Promise<Order[]> {
-    return this.cloudGet<Order>('/orders');
-  }
-
-  // --- PRIVATE CLOUD HANDLERS ---
-
-  private async cloudPost(path: string, body: any) {
-    // This logic is architected to work with a real REST endpoint.
-    // For local resilience during setup, it mirrors to persistent storage.
-    try {
-      /* 
-      const response = await fetch(`${CLOUD_DB_URL}${path}`, {
-        method: 'POST',
-        headers: this.HEADERS,
-        body: JSON.stringify(body)
-      });
-      if (!response.ok) throw new Error('Cloud Persistence Failed');
-      */
-      
-      // Mirroring state for instant cross-device logic if API is not yet live
-      const key = `CLOUD_DB_${path.replace('/', '')}`;
-      const current = JSON.parse(localStorage.getItem(key) || '[]');
-      current.push(body);
-      localStorage.setItem(key, JSON.stringify(current));
-    } catch (e) {
-      console.error("Cloud Error:", e);
-    }
-  }
-
-  private async cloudGet<T>(path: string): Promise<T[]> {
-    try {
-      /*
-      const response = await fetch(`${CLOUD_DB_URL}${path}`, { headers: this.HEADERS });
-      return await response.json();
-      */
-      const key = `CLOUD_DB_${path.split('?')[0].replace('/', '')}`;
-      const data = JSON.parse(localStorage.getItem(key) || '[]');
-      
-      // Basic filtering simulation for REST queries
-      if (path.includes('?')) {
-        const queryPart = path.split('?')[1];
-        if (queryPart.includes('=eq.')) {
-            const [field, value] = queryPart.split('=eq.');
-            return data.filter((item: any) => item[field] === value);
-        }
-      }
-      return data;
-    } catch (e) {
-      return [];
-    }
-  }
-
-  private notifyAdminOfNewSeller(seller: Seller) {
-    const text = `*NEW SELLER REGISTRATION*%0A
-Name: ${seller.name}%0A
-Store: ${seller.storeName}%0A
-Location: ${seller.location}%0A
-WhatsApp: ${seller.whatsapp}%0A
-Email: ${seller.email}%0A
-Bank: ${seller.bankAccount}`;
-    this.openWA(text);
-  }
-
-  private notifyAdminOfOrder(order: Order) {
-    const text = `*NEW ORDER RECEIVED*%0A
----------------------------%0A
-Seller: ${order.sellerName}%0A
-Link: ${window.location.origin}/#/${order.sellerSlug}%0A
----------------------------%0A
-Product: ${order.productName}%0A
-Price: Rs. ${order.productPrice}%0A
----------------------------%0A
-Customer: ${order.customerName}%0A
-Address: ${order.customerLocation}%0A
-WhatsApp: ${order.customerWhatsapp}`;
-    this.openWA(text);
-  }
-
-  private openWA(text: string) {
-    window.open(`https://wa.me/${this.ADMIN_WHATSAPP}?text=${text}`, '_blank');
+  private sendWhatsApp(text: string) {
+    window.open(`https://wa.me/${ADMIN_WA}?text=${text}`, '_blank');
   }
 }
 

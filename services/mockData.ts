@@ -59,7 +59,8 @@ export const mockProducts: Product[] = rawData.map((item, index) => {
     name,
     description: `The ${name} represents the pinnacle of modern design. Engineered for the US market with premium materials and unmatched attention to detail.`,
     price,
-    size: "Universal", // Added missing size property
+    size: "Universal",
+    color: "Multi", // Added missing color property to satisfy Product interface
     views: Math.floor(Math.random() * 50) / 10 + 1.2,
     category,
     imageUrl: `${categoryImages[category] || categoryImages["Accessories"]}&sig=${index}`,
