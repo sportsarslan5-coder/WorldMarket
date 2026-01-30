@@ -20,10 +20,12 @@ const SellerRegistration: React.FC = () => {
     setLoading(true);
     try {
       const seller = await api.registerSeller(form);
-      alert(`Success! Your Store is LIVE at: ${window.location.origin}/#/${seller.slug}`);
-      navigate(`/dashboard/${seller.id}`);
+      // Removed alert to prevent blocking the WhatsApp redirect
+      setTimeout(() => {
+        navigate(`/dashboard/${seller.id}`);
+      }, 2000);
     } catch (err) {
-      alert("Error: Cloud Connection failure.");
+      alert("Error: Registration failed. Check your connection.");
     } finally {
       setLoading(false);
     }

@@ -13,7 +13,8 @@ const AdminPanel: React.FC = () => {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    await api.saveAdminProduct({
+    // Renamed saveAdminProduct to uploadProduct
+    await api.uploadProduct({
       id: `PRD-${Date.now()}`,
       name: form.name,
       price: Number(form.price),

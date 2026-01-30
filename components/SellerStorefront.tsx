@@ -25,7 +25,8 @@ const SellerStorefront: React.FC = () => {
       const foundSeller = await api.findSellerBySlug(slug);
       if (foundSeller) {
         setSeller(foundSeller);
-        const allProducts = await api.getAdminProducts();
+        // Renamed getAdminProducts to getAllProducts
+        const allProducts = await api.getAllProducts();
         setProducts(allProducts);
       }
       setLoading(false);

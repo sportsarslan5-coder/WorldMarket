@@ -18,10 +18,12 @@ const ShopFront: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       if (!slug) return;
-      const found = await api.fetchShopBySlug(slug);
+      // Renamed fetchShopBySlug to findSellerBySlug
+      const found = await api.findSellerBySlug(slug);
       if (found) {
         setShop(found);
-        const p = await api.fetchSellerProducts(found.id);
+        // Renamed fetchSellerProducts to getProductsBySeller
+        const p = await api.getProductsBySeller(found.id);
         setProducts(p);
       }
       setIsLoading(false);
@@ -31,6 +33,7 @@ const ShopFront: React.FC = () => {
 
   const initiateCheckout = async (product: Product) => {
     const orderId = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    // Using the newly added initOrder method in ApiService
     await api.initOrder({
       id: orderId,
       shopId: shop?.id || '',

@@ -36,17 +36,19 @@ export interface Seller {
 
 export interface Order {
   id: string;
-  productId: string;
-  productName: string;
-  productPrice: number;
-  sellerId: string;
-  sellerName: string;
-  sellerSlug: string;
+  productId?: string;
+  productName?: string;
+  productPrice?: number;
+  sellerId?: string;
+  sellerName?: string;
+  sellerSlug?: string;
   customerName: string;
-  customerLocation: string;
-  customerWhatsapp: string;
+  customerLocation?: string;
+  customerWhatsapp?: string;
   customerEmail: string;
-  commission: {
+  customerPhone?: string;
+  customerAddress?: string;
+  commission?: {
     adminAmount: number; // 95%
     sellerAmount: number; // 5%
   };
@@ -57,6 +59,9 @@ export interface Order {
   paymentMethod?: string;
   status?: string;
   transactionId?: string;
+  sellerWhatsApp?: string;
+  currency?: string;
+  items?: any[];
 }
 
 export interface AdminNotification {

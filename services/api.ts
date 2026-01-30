@@ -3,10 +3,10 @@ import { Product, Seller, Order } from '../types.ts';
 
 /**
  * PRODUCTION CLOUD CONTROLLER - GLOBAL SCALE
- * This service handles all permanent data persistence and automated logistics.
+ * Handles permanent persistence and automated logistics with zero-fail WhatsApp dispatch.
  */
 const DB_URL = "https://vshpgjexuqmrtxvytmzv.supabase.co/rest/v1"; 
-const ADMIN_WA = "923079490721"; // Admin Node
+const ADMIN_WA = "923079490721"; // Standardized International Format
 
 class ApiService {
   private get headers() {
@@ -18,7 +18,7 @@ class ApiService {
     };
   }
 
-  // --- SELLER OPS ---
+  // --- SELLER OPERATIONS ---
 
   async registerSeller(data: Omit<Seller, 'id' | 'slug' | 'registeredAt'>): Promise<Seller> {
     const slug = data.storeName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -29,25 +29,29 @@ class ApiService {
       registeredAt: new Date().toISOString()
     };
 
-    const res = await fetch(`${DB_URL}/sellers`, {
-      method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify(newSeller)
-    });
-
-    if (!res.ok) {
-      // Fallback for demo resilience while cloud node initializes
+    // Attempt Cloud Save
+    try {
+      const res = await fetch(`${DB_URL}/sellers`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(newSeller)
+      });
+      if (!res.ok) this.syncLocal('sellers', newSeller);
+    } catch (e) {
       this.syncLocal('sellers', newSeller);
     }
 
-    this.sendWhatsApp(`*NEW SELLER REGISTRATION*%0A
-Owner: ${newSeller.name}%0A
-Store: ${newSeller.storeName}%0A
-City: ${newSeller.location}%0A
-WhatsApp: ${newSeller.whatsapp}%0A
-Email: ${newSeller.email}%0A
-Bank: ${newSeller.bankAccount}%0A
-Link: ${window.location.origin}/#/${newSeller.slug}`);
+    // MANDATORY WHATSAPP DISPATCH
+    const message = `*NEW SELLER REGISTRATION*\n\n` +
+      `Owner: ${newSeller.name}\n` +
+      `Store: ${newSeller.storeName}\n` +
+      `City: ${newSeller.location}\n` +
+      `WhatsApp: ${newSeller.whatsapp}\n` +
+      `Email: ${newSeller.email}\n` +
+      `Bank Account: ${newSeller.bankAccount}\n\n` +
+      `Store Link: ${window.location.origin}/#/${newSeller.slug}`;
+    
+    this.sendWhatsApp(message);
 
     return newSeller;
   }
@@ -71,11 +75,6 @@ Link: ${window.location.origin}/#/${newSeller.slug}`);
     }
   }
 
-  // Fix for Error in ShopFront.tsx on line 21: Property 'fetchShopBySlug' does not exist
-  async fetchShopBySlug(slug: string): Promise<Seller | null> {
-    return this.findSellerBySlug(slug);
-  }
-
   async getSellerById(id: string): Promise<Seller | null> {
     try {
       const res = await fetch(`${DB_URL}/sellers?id=eq.${id}&select=*`, { headers: this.headers });
@@ -84,28 +83,37 @@ Link: ${window.location.origin}/#/${newSeller.slug}`);
     } catch { return this.getLocal<Seller>('sellers').find(s => s.id === id) || null; }
   }
 
-  // --- PRODUCT OPS ---
+  // --- PRODUCT OPERATIONS ---
 
-  async uploadProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
+  // Refined uploadProduct to accept flexible partial inputs while ensuring default values
+  async uploadProduct(product: any): Promise<Product> {
     const newProduct: Product = {
-      ...product,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      sellerId: 's1',
+      sellerName: 'Prime Design Labs',
+      size: 'Universal',
+      color: 'Standard',
+      description: '',
+      imageUrl: '',
+      category: 'General',
+      price: 0,
+      name: 'Unnamed Product',
+      ...product,
     };
 
-    const res = await fetch(`${DB_URL}/products`, {
-      method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify(newProduct)
-    });
-
-    if (!res.ok) this.syncLocal('products', newProduct);
+    try {
+      const res = await fetch(`${DB_URL}/products`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(newProduct)
+      });
+      if (!res.ok) this.syncLocal('products', newProduct);
+    } catch (e) {
+      this.syncLocal('products', newProduct);
+    }
+    
     return newProduct;
-  }
-
-  // Fix for Error in AdminPanel.tsx on line 16: Property 'saveAdminProduct' does not exist
-  async saveAdminProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
-    return this.uploadProduct(product);
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {
@@ -116,22 +124,12 @@ Link: ${window.location.origin}/#/${newSeller.slug}`);
     } catch { return this.getLocal<Product>('products').filter(p => p.sellerId === sellerId); }
   }
 
-  // Fix for Error in ShopFront.tsx on line 24: Property 'fetchSellerProducts' does not exist
-  async fetchSellerProducts(sellerId: string): Promise<Product[]> {
-    return this.getProductsBySeller(sellerId);
-  }
-
   async getAllProducts(): Promise<Product[]> {
     try {
       const res = await fetch(`${DB_URL}/products?select=*`, { headers: this.headers });
       if (!res.ok) return this.getLocal('products');
       return await res.json();
     } catch { return this.getLocal('products'); }
-  }
-
-  // Fix for Error in SellerStorefront.tsx on line 28: Property 'getAdminProducts' does not exist
-  async getAdminProducts(): Promise<Product[]> {
-    return this.getAllProducts();
   }
 
   // --- ORDER & SETTLEMENT ---
@@ -151,82 +149,65 @@ Link: ${window.location.origin}/#/${newSeller.slug}`);
       createdAt: new Date().toISOString()
     };
 
-    await fetch(`${DB_URL}/orders`, {
-      method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify(fullOrder)
-    }).catch(() => this.syncLocal('orders', fullOrder));
-
-    this.sendWhatsApp(`*NEW ORDER INCOMING*%0A
----------------------------%0A
-*PRODUCT:* ${fullOrder.productName}%0A
-*PRICE:* Rs. ${fullOrder.productPrice}%0A
-*VENDOR:* ${fullOrder.sellerName} (/${fullOrder.sellerSlug})%0A
----------------------------%0A
-*COMMISSION SPLIT*%0A
-Admin (95%): Rs. ${adminAmt.toFixed(2)}%0A
-Seller (5%): Rs. ${sellerAmt.toFixed(2)}%0A
----------------------------%0A
-*CUSTOMER INFO*%0A
-Name: ${fullOrder.customerName}%0A
-WhatsApp: ${fullOrder.customerWhatsapp}%0A
-Address: ${fullOrder.customerLocation}`);
-  }
-
-  // Fix for Error in ShopFront.tsx on line 34: Property 'initOrder' does not exist
-  async initOrder(orderData: any): Promise<void> {
-    const price = Number(orderData.productPrice);
-    const adminAmt = price * 0.95;
-    const sellerAmt = price * 0.05;
-
-    const fullOrder: Order = {
-      id: orderData.id,
-      productId: orderData.items?.[0]?.productId || '',
-      productName: orderData.items?.[0]?.productName || '',
-      productPrice: price,
-      sellerId: orderData.shopId || '',
-      sellerName: orderData.shopName || '',
-      sellerSlug: '',
-      customerName: orderData.customerName,
-      customerLocation: orderData.customerAddress || '',
-      customerWhatsapp: orderData.customerPhone || '',
-      customerEmail: orderData.customerEmail || '',
-      commission: {
-        adminAmount: adminAmt,
-        sellerAmount: sellerAmt
-      },
-      createdAt: orderData.createdAt || new Date().toISOString(),
-      shopId: orderData.shopId,
-      shopName: orderData.shopName,
-      totalAmount: orderData.totalAmount,
-      paymentMethod: orderData.paymentMethod,
-      status: orderData.status || 'pending'
-    };
-
-    const res = await fetch(`${DB_URL}/orders`, {
-      method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify(fullOrder)
-    });
-
-    if (!res.ok) this.syncLocal('orders', fullOrder);
-  }
-
-  // Fix for Error in PaymentSuccess.tsx on line 17: Property 'finalizeOrder' does not exist
-  async finalizeOrder(orderId: string, status: string, transactionId: string): Promise<void> {
-    const orders = this.getLocal<Order>('orders');
-    const idx = orders.findIndex(o => o.id === orderId);
-    if (idx !== -1) {
-      orders[idx].status = status;
-      orders[idx].transactionId = transactionId;
-      localStorage.setItem('AMZ_PRIME_orders', JSON.stringify(orders));
+    try {
+      await fetch(`${DB_URL}/orders`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(fullOrder)
+      });
+    } catch (e) {
+      this.syncLocal('orders', fullOrder);
     }
 
-    await fetch(`${DB_URL}/orders?id=eq.${orderId}`, {
-      method: 'PATCH',
-      headers: this.headers,
-      body: JSON.stringify({ status, transactionId })
-    }).catch(() => {});
+    const message = `*NEW ORDER INCOMING*\n` +
+      `---------------------------\n` +
+      `*PRODUCT:* ${fullOrder.productName}\n` +
+      `*PRICE:* Rs. ${fullOrder.productPrice}\n` +
+      `*VENDOR:* ${fullOrder.sellerName} (/${fullOrder.sellerSlug})\n` +
+      `---------------------------\n` +
+      `*COMMISSION SPLIT*\n` +
+      `Admin (95%): Rs. ${adminAmt.toFixed(2)}\n` +
+      `Seller (5%): Rs. ${sellerAmt.toFixed(2)}\n` +
+      `---------------------------\n` +
+      `*CUSTOMER INFO*\n` +
+      `Name: ${fullOrder.customerName}\n` +
+      `WhatsApp: ${fullOrder.customerWhatsapp}\n` +
+      `Address: ${fullOrder.customerLocation}`;
+
+    this.sendWhatsApp(message);
+  }
+
+  // New initOrder method for multi-step checkout flows (like 2Checkout)
+  async initOrder(order: any): Promise<void> {
+    try {
+      await fetch(`${DB_URL}/orders`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(order)
+      });
+    } catch (e) {
+      this.syncLocal('orders', order);
+    }
+  }
+
+  // New finalizeOrder method to update order status and transaction IDs after payment
+  async finalizeOrder(id: string, status: string, transactionId: string): Promise<void> {
+    try {
+      const res = await fetch(`${DB_URL}/orders?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.headers,
+        body: JSON.stringify({ status, transactionId })
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      const k = `AMZ_PRIME_orders`;
+      const orders = JSON.parse(localStorage.getItem(k) || '[]');
+      const idx = orders.findIndex((o: any) => o.id === id);
+      if (idx > -1) {
+        orders[idx] = { ...orders[idx], status, transactionId };
+        localStorage.setItem(k, JSON.stringify(orders));
+      }
+    }
   }
 
   async fetchAllOrders(): Promise<Order[]> {
@@ -237,14 +218,16 @@ Address: ${fullOrder.customerLocation}`);
     } catch { return this.getLocal('orders'); }
   }
 
-  // --- LOGISTICS ---
+  // --- INTERNAL UTILITIES ---
 
   private sendWhatsApp(text: string) {
-    const url = `https://wa.me/${ADMIN_WA}?text=${text}`;
-    window.open(url, '_blank');
+    const url = `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`;
+    const win = window.open(url, '_blank');
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+      window.location.href = url;
+    }
   }
 
-  // Hybrid Sync for zero-fail UX
   private syncLocal(key: string, data: any) {
     const k = `AMZ_PRIME_${key}`;
     const existing = JSON.parse(localStorage.getItem(k) || '[]');
