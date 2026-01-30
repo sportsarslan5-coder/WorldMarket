@@ -14,9 +14,11 @@ const LandingPage: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [p, s] = await Promise.all([api.fetchGlobalProducts(), api.fetchAllShops()]);
-      setProducts(p);
-      setShops(s);
+      try {
+        const [p, s] = await Promise.all([api.getAllProducts(), api.fetchAllSellers()]);
+        setProducts(p);
+        setShops(s);
+      } catch (e) { console.error(e); }
       setLoading(false);
     };
     load();
@@ -33,56 +35,55 @@ const LandingPage: React.FC = () => {
   }, [products, activeCategory]);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-10 h-10 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div>
+      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-300 animate-pulse">Syncing Global Grid...</p>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100">
-      <nav className="h-20 glass sticky top-0 z-[100] border-b border-slate-100 flex items-center px-8">
-        <div className="max-w-[1400px] mx-auto w-full flex justify-between items-center">
-          <Link to="/" className="text-2xl font-black tracking-tighter uppercase flex items-center gap-1">
+      <nav className="h-24 sticky top-0 z-[100] border-b border-slate-50 bg-white/80 backdrop-blur-2xl flex items-center px-8 md:px-12">
+        <div className="max-w-[1600px] mx-auto w-full flex justify-between items-center">
+          <Link to="/" className="text-3xl font-black tracking-tighter uppercase flex items-center gap-1 italic">
             AMZ<span className="text-blue-600">PRIME</span>
           </Link>
-          <div className="hidden lg:flex gap-10 items-center">
-             {['ODM Catalog', 'Manufacturers', 'Volume Pricing', 'Logistics'].map(link => (
-               <button key={link} className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-blue-600 transition">{link}</button>
+          <div className="hidden lg:flex gap-12 items-center">
+             {['Marketplace', 'Manufacturers', 'ODM Service', 'Logistics'].map(link => (
+               <button key={link} className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-blue-600 transition">{link}</button>
              ))}
           </div>
-          <div className="flex gap-4 items-center">
-            <Link to="/sell" className="hidden sm:block text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition">For Manufacturers</Link>
-            <Link to="/seller" className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 transition shadow-xl">Portal</Link>
+          <div className="flex gap-6 items-center">
+            <Link to="/sell" className="hidden sm:block text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition">Become a Vendor</Link>
+            <Link to="/admin" className="bg-slate-900 text-white px-10 py-4 rounded-[20px] text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 transition shadow-2xl">HQ Portal</Link>
           </div>
         </div>
       </nav>
 
       {/* Hero Header */}
-      <header className="py-32 px-8 text-center bg-[#f8fafc] border-b border-slate-50 relative overflow-hidden">
+      <header className="py-40 px-8 text-center bg-[#fafafa] relative overflow-hidden">
         <div className="max-w-6xl mx-auto space-y-12 animate-fade-in-up relative z-10">
-          <span className="bg-blue-50 text-blue-600 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em]">Exclusive USA ODM Marketplace</span>
-          <h1 className="text-6xl md:text-9xl font-black tracking-tighter leading-[0.85] uppercase italic">
-            Direct Source. <br/>
-            <span className="text-blue-600">Prime Quality.</span>
+          <span className="bg-white border border-slate-100 text-blue-600 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.4em] shadow-sm">Pakistan's #1 ODM Global Marketplace</span>
+          <h1 className="text-7xl md:text-[160px] font-black tracking-tighter leading-[0.8] uppercase italic">
+            SOURCE <span className="text-blue-600">PRIME.</span>
           </h1>
-          <p className="text-xl md:text-2xl text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed italic">
-             The premium distribution channel for US-based designers and original manufacturers.
+          <p className="text-xl md:text-3xl text-slate-400 font-medium max-w-3xl mx-auto leading-tight italic">
+             Connecting authorized manufacturers directly to the world. High-performance distribution at scale.
           </p>
-          <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center">
-             <button onClick={() => document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})} className="bg-slate-900 text-white px-12 py-5 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-blue-600 transition shadow-2xl">View Catalog</button>
-             <Link to="/sell" className="bg-white border border-slate-200 text-slate-900 px-12 py-5 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-slate-50 transition">Register ODM</Link>
+          <div className="pt-12 flex flex-col sm:row gap-6 justify-center">
+             <button onClick={() => document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})} className="bg-slate-900 text-white px-16 py-6 rounded-[32px] font-black text-xs uppercase tracking-[0.4em] hover:bg-blue-600 transition shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)]">Explore Grid</button>
           </div>
         </div>
       </header>
 
-      {/* Categories Grid */}
-      <div className="sticky top-20 z-[90] bg-white/90 backdrop-blur-2xl border-b border-slate-100 py-6">
-        <div className="max-w-[1400px] mx-auto px-8 flex gap-4 overflow-x-auto no-scrollbar">
+      {/* Filter Matrix */}
+      <div className="sticky top-24 z-[90] bg-white border-b border-slate-50 py-8">
+        <div className="max-w-[1600px] mx-auto px-8 md:px-12 flex gap-6 overflow-x-auto no-scrollbar">
           {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`whitespace-nowrap px-8 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeCategory === cat ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+              className={`whitespace-nowrap px-10 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all border ${activeCategory === cat ? 'bg-blue-600 text-white border-blue-600 shadow-2xl shadow-blue-500/30' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'}`}
             >
               {cat}
             </button>
@@ -90,49 +91,46 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      <main id="catalog" className="max-w-[1400px] mx-auto px-8 py-24">
-        <div className="flex justify-between items-end mb-16">
-           <div className="space-y-2">
-             <h2 className="text-4xl font-black uppercase tracking-tighter italic">Live <span className="text-blue-600">Distribution</span></h2>
-             <div className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                <p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.2em] italic">PCI-DSS Secure • {filteredProducts.length} Verified Listings</p>
+      <main id="catalog" className="max-w-[1600px] mx-auto px-8 md:px-12 py-32">
+        <div className="flex justify-between items-end mb-24">
+           <div className="space-y-4">
+             <h2 className="text-5xl font-black uppercase tracking-tighter italic">Live <span className="text-blue-600">Distribution</span></h2>
+             <div className="flex items-center gap-4">
+                <span className="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></span>
+                <p className="text-slate-300 font-bold uppercase text-[10px] tracking-[0.4em] italic">Real-time Persistence Node • {filteredProducts.length} Verified SKUs</p>
              </div>
-           </div>
-           <div className="flex gap-2">
-              <span className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">USD Market</span>
            </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-16">
           {filteredProducts.map(p => {
             const shop = shops.find(s => s.id === p.sellerId);
             return (
               <Link 
                 key={p.id} 
-                to={shop ? `/shop/${shop.slug}` : '#'}
-                className="group product-card bg-white border border-slate-100 rounded-[48px] p-8 flex flex-col overflow-hidden"
+                to={shop ? `/${shop.slug}` : '#'}
+                className="group flex flex-col animate-fade-in-up"
               >
-                <div className="aspect-[4/5] bg-[#fdfdfd] rounded-[36px] flex items-center justify-center p-8 mb-8 relative group-hover:bg-slate-50 transition duration-500">
+                <div className="aspect-[4/5] bg-[#fcfcfc] rounded-[64px] flex items-center justify-center p-12 mb-10 overflow-hidden relative border border-slate-50 group-hover:bg-slate-50 transition duration-1000">
                    <img 
-                     src={p.imageUrl} 
+                     src={p.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'} 
                      alt={p.name} 
-                     className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition duration-700 ease-out" 
+                     className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition duration-1000 ease-out" 
                    />
-                   <div className="absolute top-5 right-5 bg-white shadow-md px-4 py-2 rounded-2xl text-[8px] font-black text-slate-400 uppercase tracking-widest border border-slate-50">
-                     {p.views}M Interested
+                   <div className="absolute top-8 right-8 bg-white/80 backdrop-blur shadow-xl px-5 py-2.5 rounded-3xl text-[9px] font-black text-slate-400 uppercase tracking-widest border border-white">
+                     Rs. {p.price.toLocaleString()}
                    </div>
                 </div>
-                <div className="flex-1 space-y-2">
-                   <p className="text-[9px] font-black text-blue-600 uppercase tracking-[0.3em]">{p.category}</p>
-                   <h3 className="font-black text-xl mb-4 italic tracking-tighter uppercase text-slate-900 leading-[1.1]">{p.name}</h3>
-                   <div className="flex justify-between items-center pt-6 border-t border-slate-50">
+                <div className="px-4">
+                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mb-2">{p.category}</p>
+                   <h3 className="font-black text-3xl mb-6 italic tracking-tighter uppercase text-slate-900 leading-none group-hover:text-blue-600 transition">{p.name}</h3>
+                   <div className="flex justify-between items-center pt-8 border-t border-slate-100">
                       <div>
-                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">MSRP</p>
-                        <p className="text-2xl font-black italic text-slate-900 leading-none">${p.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] mb-1">VENDOR</p>
+                        <p className="text-xs font-black italic text-slate-900 uppercase">{p.sellerName}</p>
                       </div>
-                      <div className="w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center group-hover:bg-blue-600 transition-all shadow-xl hover:rotate-12">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                      <div className="w-16 h-16 rounded-[24px] bg-slate-900 text-white flex items-center justify-center group-hover:bg-blue-600 transition-all shadow-2xl">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                       </div>
                    </div>
                 </div>
@@ -140,33 +138,39 @@ const LandingPage: React.FC = () => {
             )
           })}
         </div>
+
+        {filteredProducts.length === 0 && (
+          <div className="py-60 text-center">
+             <p className="text-slate-200 font-black uppercase text-xl tracking-[0.8em] animate-pulse">Inventory Not Found</p>
+          </div>
+        )}
       </main>
 
-      <footer className="bg-slate-950 text-white pt-32 pb-16 px-8">
-         <div className="max-w-[1400px] mx-auto space-y-24">
-            <div className="flex flex-col md:flex-row justify-between items-start gap-16">
-               <div className="space-y-6">
-                  <h2 className="text-4xl font-black italic tracking-tighter uppercase">AMZ<span className="text-blue-600">PRIME</span></h2>
-                  <p className="text-slate-500 max-w-sm text-sm font-medium leading-relaxed uppercase tracking-wider">Defining the standard for US-based manufacturing and original design distribution.</p>
+      <footer className="bg-slate-950 text-white pt-40 pb-20 px-8">
+         <div className="max-w-[1600px] mx-auto space-y-32">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-24">
+               <div className="space-y-8">
+                  <h2 className="text-5xl font-black italic tracking-tighter uppercase">AMZ<span className="text-blue-600">PRIME</span></h2>
+                  <p className="text-slate-500 max-w-md text-sm font-medium leading-relaxed uppercase tracking-widest">Architecting the future of Pakistan's digital manufacturing and global trade infrastructure.</p>
                </div>
-               <div className="grid grid-cols-2 sm:grid-cols-3 gap-16">
-                  {['Inventory', 'Compliance', 'About'].map(col => (
-                    <div key={col} className="space-y-6">
-                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500">{col}</h4>
-                       <ul className="text-xs font-bold space-y-4 uppercase tracking-[0.1em] text-slate-400">
-                          <li className="hover:text-white cursor-pointer transition">Quick Access</li>
-                          <li className="hover:text-white cursor-pointer transition">PCI-DSS</li>
-                          <li className="hover:text-white cursor-pointer transition">Partner Portal</li>
+               <div className="grid grid-cols-2 lg:grid-cols-3 gap-24">
+                  {['Inventory', 'Nodes', 'Legal'].map(col => (
+                    <div key={col} className="space-y-8">
+                       <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500">{col}</h4>
+                       <ul className="text-xs font-bold space-y-6 uppercase tracking-[0.2em] text-slate-400">
+                          <li className="hover:text-white cursor-pointer transition">Browse All</li>
+                          <li className="hover:text-white cursor-pointer transition">PCI Compliance</li>
+                          <li className="hover:text-white cursor-pointer transition">Terms of Node</li>
                        </ul>
                     </div>
                   ))}
                </div>
             </div>
-            <div className="pt-16 border-t border-slate-900 flex justify-between items-center">
-               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-600">© 2025 AMZ PRIME GLOBAL INC.</p>
-               <div className="flex gap-6 opacity-40">
-                  <span className="text-[10px] font-black uppercase tracking-widest">Privacy Policy</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Terms of Service</span>
+            <div className="pt-20 border-t border-slate-900 flex flex-col md:row justify-between items-center gap-8">
+               <p className="text-[10px] font-black uppercase tracking-[0.8em] text-slate-700">© 2025 AMZ PRIME • GLOBAL PERSISTENCE ENABLED</p>
+               <div className="flex gap-12 opacity-30">
+                  <span className="text-[10px] font-black uppercase tracking-widest">Secure Payments</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Global Payouts</span>
                </div>
             </div>
          </div>
