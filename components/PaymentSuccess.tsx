@@ -1,7 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+// Fixing "no exported member" errors by using namespace import for react-router-dom
+import * as ReactRouterDOM from 'react-router-dom';
 import { api } from '../services/api.ts';
+
+const { useParams, Link } = ReactRouterDOM as any;
 
 const PaymentSuccess: React.FC = () => {
   const { orderId } = useParams();

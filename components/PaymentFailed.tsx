@@ -1,6 +1,9 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+// Fixing "no exported member" error for Link by using namespace import
+import * as ReactRouterDOM from 'react-router-dom';
+
+const { Link } = ReactRouterDOM as any;
 
 const PaymentFailed: React.FC = () => {
   return (

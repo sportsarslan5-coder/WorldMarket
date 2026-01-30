@@ -1,81 +1,65 @@
 
-export enum ShopStatus {
-  ACTIVE = 'ACTIVE',
-  SUSPENDED = 'SUSPENDED'
-}
-
-export interface PayoutInfo {
-  method: 'Easypaisa' | 'JazzCash' | 'Bank' | 'Sadapay' | '2Checkout';
-  accountNumber: string;
-  accountTitle: string;
-  bankName?: string;
+export interface Product {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  name: string;
+  price: number;
+  size: string;
+  description: string;
+  imageUrl: string;
+  category: string;
+  createdAt: string;
+  // Added views to fix LandingPage error
+  views?: number;
 }
 
 export interface Seller {
   id: string;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  shopId: string;
-  joinedAt: string;
-  payoutInfo: PayoutInfo;
-}
-
-export interface Shop {
-  id: string;
-  ownerId: string;
   name: string;
+  storeName: string;
   slug: string;
-  description: string;
-  status: ShopStatus;
-  whatsappNumber: string;
+  location: string;
+  whatsapp: string;
   email: string;
-  joinedAt: string;
-  payoutInfo?: PayoutInfo;
-}
-
-export interface Product {
-  id: string;
-  sellerId: string; 
-  sellerName: string;
-  name: string;
-  description: string;
-  price: number;
-  views: number; 
-  currency: 'PKR' | 'USD';
-  category: string;
-  imageUrl: string; 
-  stock: number;
-  published: boolean;
-  createdAt: string;
-}
-
-export interface OrderItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  price: number;
+  bankAccount: string;
+  registeredAt: string;
+  // properties used by notification service and mock data
+  fullName?: string;
+  phoneNumber?: string;
+  phone?: string;
+  payoutInfo?: {
+    method: string;
+    accountNumber: string;
+    accountTitle: string;
+  };
 }
 
 export interface Order {
   id: string;
-  shopId: string;
-  shopName: string;
-  sellerWhatsApp: string;
+  productId: string;
+  productName: string;
+  productPrice: number;
+  sellerId: string;
+  sellerName: string;
+  sellerSlug: string;
   customerName: string;
+  customerLocation: string;
+  customerWhatsapp: string;
   customerEmail: string;
-  customerPhone: string;
-  customerAddress: string;
-  items: OrderItem[];
-  totalAmount: number;
-  paymentMethod: '2Checkout' | 'COD' | 'JazzCash' | 'EasyPaisa';
-  transactionId?: string;
-  paymentReference?: string;
-  currency: 'PKR' | 'USD';
+  commission: {
+    adminAmount: number;  // 95%
+    sellerAmount: number; // 5%
+  };
   createdAt: string;
-  status: 'pending' | 'completed' | 'failed' | 'shipped' | 'delivered' | 'cancelled';
+  // properties used by checkout/notification
+  shopName?: string;
+  totalAmount?: number;
+  paymentMethod?: string;
+  status?: string;
 }
 
+// Added missing AdminNotification interface
 export interface AdminNotification {
   id: string;
   type: 'NEW_SELLER' | 'NEW_ORDER';

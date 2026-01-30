@@ -11,23 +11,24 @@ export const generateAdminNotification = async (
   let prompt = "";
   if (type === 'NEW_SELLER') {
     const seller = data as Seller;
-    prompt = `LOCAL ADMIN ALERT: A new Pakistani merchant has registered for PK MART.
+    prompt = `CORPORATE ADMIN ALERT: A new Original Design Manufacturer (ODM) has registered for the AMZ PRIME platform.
        MERCHANT DETAILS:
-       Name: ${seller.fullName}
+       Name: ${seller.fullName || seller.name}
        Email: ${seller.email}
-       WhatsApp: ${seller.phoneNumber}
-       Payout Method: ${seller.payoutInfo?.method || 'Easypaisa'}
+       Phone: ${seller.phoneNumber || seller.phone}
+       Bank/Gateway: ${seller.payoutInfo?.method || '2Checkout'}
        
-       Draft a professional notification for the PK MART Admin Console. Use a polite and formal Pakistani business tone.`;
+       Draft a high-level corporate notification for the Dashboard. Use a sophisticated US business tone.`;
   } else {
     const order = data as Order;
-    prompt = `URGENT ORDER ALERT: A customer placed a new order on PK MART.
+    prompt = `TRANSACTION ALERT: A new order was processed on AMZ PRIME.
        ORDER DETAILS:
        Order ID: ${order.id}
-       Store: ${order.shopName}
-       Total: Rs. ${order.totalAmount.toLocaleString()}
+       Merchant: ${order.shopName || order.sellerName}
+       Total: $${(order.totalAmount || order.productPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+       Gateway: ${order.paymentMethod || 'Credit Card'}
        
-       Draft a notification for the dispatch team. Mention the local COD logistics and the 5% platform fee in PKR.`;
+       Draft a technical notification for the fulfillment department. Focus on PCI-DSS compliance and priority shipping logistics.`;
   }
 
   try {
@@ -41,11 +42,11 @@ export const generateAdminNotification = async (
           properties: {
             whatsapp: {
               type: Type.STRING,
-              description: 'Notification message.'
+              description: 'Dashboard short alert text.'
             },
             email: {
               type: Type.STRING,
-              description: 'Email summary.'
+              description: 'Executive internal email summary.'
             }
           },
           required: ["whatsapp", "email"]
@@ -63,8 +64,8 @@ export const generateAdminNotification = async (
       type,
       timestamp: new Date().toISOString(),
       content: {
-        whatsapp: content.whatsapp || "New PK MART activity detected.",
-        email: content.email || "System alert logged in local hub."
+        whatsapp: content.whatsapp || "New platform activity detected.",
+        email: content.email || "System log generated in secure node."
       },
       sent: true
     };
@@ -75,8 +76,8 @@ export const generateAdminNotification = async (
       type,
       timestamp: new Date().toISOString(),
       content: {
-        whatsapp: `ADMIN ALERT: ${type} registered on PK MART. ID: ${data.id}.`,
-        email: `Local system alert for ${type}.`
+        whatsapp: `SECURE ALERT: ${type} identified in system. ID: ${data.id}.`,
+        email: `Prime Node system alert for ${type}.`
       },
       sent: false
     };
