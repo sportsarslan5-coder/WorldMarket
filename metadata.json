@@ -1,7 +1,5 @@
 {
-  "name": "AMZ PRIME - USA Multi-Vendor ODM Platform",
-  "description": "A premium, high-performance marketplace for US Original Design Manufacturers, featuring secure global payments and high-end tech/apparel inventory.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "name": "Admin Patch Shop - Manufacturer Direct",
+  "description": "Custom patches and apparel manufacturing direct from the factory floor.",
+  "requestFramePermissions": []
 }

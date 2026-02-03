@@ -8,7 +8,6 @@ const VendorLanding: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Fixed: registerSeller expects a single object argument
     const seller = await api.registerSeller({
       name: form.name,
       storeName: form.name,
@@ -17,7 +16,7 @@ const VendorLanding: React.FC = () => {
       location: 'Online',
       bankAccount: 'N/A'
     });
-    setGeneratedLink(`${window.location.origin}/#/${seller.slug}`);
+    setGeneratedLink(`${window.location.origin}/${seller.slug}`);
   };
 
   return (

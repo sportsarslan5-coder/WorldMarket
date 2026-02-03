@@ -2,152 +2,81 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/api.ts';
-import { Product, Seller } from '../types.ts';
+import { Seller } from '../types.ts';
 
 const SellerDashboard: React.FC = () => {
   const { sellerId } = useParams();
   const [seller, setSeller] = useState<Seller | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  
-  const [form, setForm] = useState({
-    name: '', price: 0, size: '', color: '', description: '', imageUrl: '', category: 'Apparel'
-  });
 
-  const loadData = async () => {
-    if (sellerId) {
-      const [s, p] = await Promise.all([api.getSellerById(sellerId), api.getProductsBySeller(sellerId)]);
-      setSeller(s);
-      setProducts(p.reverse());
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      if (sellerId) {
+        const s = await api.getSellerById(sellerId);
+        setSeller(s);
+      }
+      setLoading(false);
+    };
+    loadData();
+  }, [sellerId]);
 
-  useEffect(() => { loadData(); }, [sellerId]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm(prev => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sellerId || !seller) return;
-    setLoading(true);
-    await api.uploadProduct({ ...form, sellerId, sellerName: seller.storeName });
-    setShowModal(false);
-    await loadData();
-    setForm({ name: '', price: 0, size: '', color: '', description: '', imageUrl: '', category: 'Apparel' });
-  };
-
-  if (loading && !seller) return (
-    <div className="h-screen flex items-center justify-center font-black animate-pulse text-slate-400 uppercase tracking-widest">Establishing Secure Session...</div>
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center font-black animate-pulse text-[#25D366] uppercase tracking-widest italic text-2xl">
+      Syncing Merchant HQ...
+    </div>
   );
 
+  const shareLink = `${window.location.origin}/#/${seller?.slug}`;
+
   return (
-    <div className="min-h-screen bg-white font-sans p-8 md:p-12">
-      <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-20 gap-8 border-b border-slate-100 pb-12">
+    <div className="min-h-screen bg-white font-sans p-6 md:p-12">
+      <div className="max-w-5xl mx-auto">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6 border-b pb-12">
           <div>
-            <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none mb-4">{seller?.storeName} <span className="text-blue-600">Merchant HQ</span></h1>
-            <div className="flex gap-6 items-center">
-               <Link to={`/${seller?.slug}`} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:underline">View Live Public Storefront →</Link>
-               <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest border border-emerald-100 px-3 py-1 rounded-full">Status: Cloud Verified</span>
-            </div>
+            <h1 className="text-4xl font-black uppercase italic tracking-tighter leading-none mb-2">
+              {seller?.storeName} <span className="text-[#25D366]">Merchant HQ</span>
+            </h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Authorized Distribution Node • Admin Patch Shop</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="w-full md:w-auto bg-slate-900 text-white px-12 py-5 rounded-[24px] font-black uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition active:scale-95">
-            Add New Product
-          </button>
+          <div className="flex gap-4">
+             <Link to={`/${seller?.slug}`} target="_blank" className="bg-slate-900 text-white px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366] transition shadow-lg">View Storefront</Link>
+          </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-          {products.map(p => (
-            <div key={p.id} className="group cursor-pointer">
-              <div className="aspect-[4/5] bg-slate-50 rounded-[48px] mb-8 overflow-hidden relative border border-slate-50 p-10">
-                <img src={p.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=400'} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition duration-700" alt="" />
-                <div className="absolute top-6 right-6 bg-white px-4 py-2 rounded-2xl text-[10px] font-black shadow-lg">Rs. {p.price.toLocaleString()}</div>
-              </div>
-              <h3 className="font-black text-xl mb-1 uppercase italic tracking-tighter leading-none">{p.name}</h3>
-              <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">{p.category} • {p.size}</p>
-            </div>
-          ))}
-          {products.length === 0 && (
-            <div className="col-span-full py-40 text-center border-4 border-dashed border-slate-100 rounded-[64px]">
-               <p className="text-slate-300 font-black uppercase text-xs tracking-[0.4em]">Node Storage Empty. Deploy your first product.</p>
-            </div>
-          )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="bg-slate-50 p-10 rounded-[40px] border border-slate-100">
+             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Commission Earned</p>
+             <p className="text-4xl font-black italic tracking-tighter text-slate-950">Rs. 0.00</p>
+             <p className="text-[9px] font-bold text-blue-600 mt-4 uppercase tracking-widest">Payout Threshold: Rs. 5000</p>
+          </div>
+          <div className="bg-slate-50 p-10 rounded-[40px] border border-slate-100">
+             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Commission Rate</p>
+             <p className="text-4xl font-black italic tracking-tighter text-slate-950">5%</p>
+             <p className="text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-widest">Fixed Merchant Split</p>
+          </div>
+          <div className="bg-slate-50 p-10 rounded-[40px] border border-slate-100">
+             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Store Status</p>
+             <p className="text-4xl font-black italic tracking-tighter text-emerald-500 uppercase">Live</p>
+             <p className="text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-widest">Verified Distribution Node</p>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 text-white p-12 rounded-[56px] shadow-2xl relative overflow-hidden group">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-[#25D366]/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+           <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-4">Share Your Link</h3>
+           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-10 leading-relaxed">Customers ordering through this link automatically attribute commission to your merchant account.</p>
+           
+           <div className="flex bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10 items-center justify-between">
+              <code className="text-lg font-mono font-bold text-[#25D366] break-all">{shareLink}</code>
+              <button 
+                onClick={() => { navigator.clipboard.writeText(shareLink); alert("Link Copied!"); }}
+                className="bg-white text-slate-950 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#25D366] hover:text-white transition"
+              >
+                Copy URL
+              </button>
+           </div>
         </div>
       </div>
-
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 overflow-y-auto">
-          <form onSubmit={handleUpload} className="bg-white p-12 rounded-[56px] w-full max-w-2xl shadow-2xl relative animate-scale-in my-auto">
-            <button type="button" onClick={() => setShowModal(false)} className="absolute top-10 right-10 font-black text-3xl hover:rotate-90 transition-transform">✕</button>
-            <h3 className="text-4xl font-black mb-12 uppercase italic tracking-tighter leading-none">Inventory Deployment</h3>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Product Title</label>
-                  <input required className="w-full h-16 px-6 bg-slate-50 rounded-2xl font-bold border-none outline-none focus:ring-2 focus:ring-blue-600/20" 
-                    onChange={e => setForm({...form, name: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Price (PKR)</label>
-                  <input required type="number" className="w-full h-16 px-6 bg-slate-50 rounded-2xl font-bold border-none outline-none focus:ring-2 focus:ring-blue-600/20" 
-                    onChange={e => setForm({...form, price: Number(e.target.value)})} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Product Category</label>
-                  <select className="w-full h-16 px-6 bg-slate-50 rounded-2xl font-bold border-none outline-none appearance-none"
-                    onChange={e => setForm({...form, category: e.target.value})}>
-                    <option>Apparel</option>
-                    <option>Electronics</option>
-                    <option>Footwear</option>
-                    <option>Health & Beauty</option>
-                    <option>Home Decor</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Variants (Size/Color)</label>
-                  <input required placeholder="S, M, L / Black, Red" className="w-full h-16 px-6 bg-slate-50 rounded-2xl font-bold border-none outline-none focus:ring-2 focus:ring-blue-600/20" 
-                    onChange={e => setForm({...form, size: e.target.value, color: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Product Image</label>
-                <div className="relative group">
-                   <input type="file" accept="image/*" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleFileChange} />
-                   <div className="w-full h-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center font-bold text-slate-400 group-hover:bg-slate-100 transition">
-                      {form.imageUrl ? 'Image Selected (Click to change)' : 'Select Image from Gallery'}
-                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Description</label>
-                <textarea required className="w-full h-32 p-6 bg-slate-50 rounded-2xl font-bold border-none outline-none resize-none" 
-                  onChange={e => setForm({...form, description: e.target.value})} />
-              </div>
-
-              <button disabled={loading} className="w-full h-20 bg-blue-600 text-white rounded-[28px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-blue-600/30 active:scale-95 transition mt-8 disabled:opacity-50">
-                {loading ? 'SYNCHRONIZING CLOUD...' : 'Confirm Global Deployment'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 };

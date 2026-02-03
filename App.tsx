@@ -7,12 +7,13 @@ import Storefront from './components/Storefront.tsx';
 import AdminDashboard from './components/AdminDashboard.tsx';
 import LandingPage from './components/LandingPage.tsx';
 
+// Using HashRouter for 100% reliability in static/preview environments
 const { HashRouter: Router, Routes, Route } = ReactRouterDOM as any;
 
 const App: React.FC = () => {
   return (
     <Router>
-      <div className="min-h-screen bg-white font-sans selection:bg-blue-100">
+      <div className="min-h-screen bg-white">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/sell" element={<SellerRegistration />} />
