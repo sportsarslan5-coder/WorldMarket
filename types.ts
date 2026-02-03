@@ -1,67 +1,66 @@
 
 export interface Product {
   id: string;
-  sellerId: string;
-  sellerName: string;
   name: string;
-  price: number;
-  size: string;
-  color: string;
-  description: string;
+  price: number; // Fixed at 35
   imageUrl: string;
   category: string;
+  description: string;
+  createdAt?: string;
+}
+
+export interface Show {
+  id: string;
+  name: string;
+  slug: string;
+  sellerName: string;
+  whatsapp: string;
   createdAt: string;
-  views?: number;
 }
 
 export interface Seller {
   id: string;
   name: string;
-  fullName?: string;
-  storeName: string;
+  storeName?: string;
   slug: string;
-  location: string;
-  whatsapp: string;
-  phone?: string;
-  phoneNumber?: string;
   email: string;
-  bankAccount: string;
-  registeredAt: string;
+  phone: string;
+  whatsapp: string;
+  phoneNumber?: string;
+  fullName?: string;
   payoutInfo?: {
     method: string;
-    accountNumber: string;
-    accountTitle: string;
   };
+  location?: string;
+  bankAccount?: string;
+  status?: 'active' | 'inactive';
 }
 
 export interface Order {
   id: string;
-  productId?: string;
-  productName?: string;
-  productPrice?: number;
-  sellerId?: string;
-  sellerName?: string;
-  sellerSlug?: string;
+  showSlug: string;
+  productName: string;
   customerName: string;
-  customerLocation?: string;
-  customerWhatsapp?: string;
-  customerEmail: string;
-  customerPhone?: string;
-  customerAddress?: string;
-  commission?: {
-    adminAmount: number; // 95%
-    sellerAmount: number; // 5%
-  };
+  customerWhatsapp: string;
+  customerAddress: string;
+  status: 'pending' | 'completed';
   createdAt: string;
-  shopId?: string;
+  // Extended properties for various storefronts and notification service
+  productId?: string;
+  productPrice?: number;
+  customerLocation?: string;
+  customerEmail?: string;
   shopName?: string;
+  sellerName?: string;
+  sellerId?: string;
+  sellerSlug?: string;
   totalAmount?: number;
   paymentMethod?: string;
-  status?: string;
   transactionId?: string;
+  shopId?: string;
   sellerWhatsApp?: string;
-  currency?: string;
   items?: any[];
+  currency?: string;
 }
 
 export interface AdminNotification {

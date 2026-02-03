@@ -1,108 +1,133 @@
 
-import { Product, Seller, Order } from '../types.ts';
-import { db } from './db.ts';
+import { Product, Show, Order, Seller } from '../types.ts';
+import { globalProducts } from './mockData.ts';
 
 const ADMIN_WA = "923079490721";
 
 class ApiService {
-  private syncLocal(type: 'sellers' | 'products' | 'orders', data: any) {
-    if (type === 'sellers') db.saveSeller(data);
-    if (type === 'products') db.saveProduct(data);
-    if (type === 'orders') db.saveOrder(data);
+  private getStore<T>(key: string): T[] {
+    const data = localStorage.getItem(`APS_V2_${key}`);
+    return data ? JSON.parse(data) : [];
   }
 
-  async registerSeller(data: Omit<Seller, 'id' | 'slug' | 'registeredAt'>): Promise<Seller> {
-    const slug = data.storeName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const newSeller: Seller = {
+  private setStore(key: string, data: any) {
+    localStorage.setItem(`APS_V2_${key}`, JSON.stringify(data));
+  }
+
+  // --- SHOW OPERATIONS ---
+  async registerShow(data: { name: string, sellerName: string, whatsapp: string }): Promise<Show> {
+    const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const newShow: Show = {
       ...data,
       id: crypto.randomUUID(),
       slug,
-      registeredAt: new Date().toISOString()
+      createdAt: new Date().toISOString()
     };
-    this.syncLocal('sellers', newSeller);
+    
+    const shows = this.getStore<Show>('shows');
+    shows.push(newShow);
+    this.setStore('shows', shows);
+    return newShow;
+  }
+
+  async findShowBySlug(slug: string): Promise<Show | undefined> {
+    return this.getStore<Show>('shows').find(s => s.slug === slug);
+  }
+
+  // --- SELLER OPERATIONS (AMZ PRIME Compatible) ---
+  async registerSeller(data: Omit<Seller, 'id' | 'slug' | 'status'>): Promise<Seller> {
+    const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const newSeller: Seller = {
+      ...data,
+      id: `SEL-${Date.now()}`,
+      slug,
+      status: 'active'
+    };
+    const sellers = this.getStore<Seller>('sellers');
+    sellers.push(newSeller);
+    this.setStore('sellers', sellers);
     return newSeller;
   }
 
-  async fetchAllSellers(): Promise<Seller[]> {
-    return db.getSellers();
+  async findSellerBySlug(slug: string): Promise<Seller | undefined> {
+    return this.getStore<Seller>('sellers').find(s => s.slug === slug);
   }
 
   async getSellerById(id: string): Promise<Seller | null> {
-    return db.getSellers().find(s => s.id === id) || null;
+    return this.getStore<Seller>('sellers').find(s => s.id === id) || null;
   }
 
-  async findSellerBySlug(slug: string): Promise<Seller | undefined> {
-    return db.getSellers().find(s => s.slug === slug);
+  // --- PRODUCT OPERATIONS (Admin Only) ---
+  async getGlobalProducts(): Promise<Product[]> {
+    const custom = this.getStore<Product>('custom_products');
+    return [...globalProducts, ...custom];
   }
 
   async getAllProducts(): Promise<Product[]> {
-    return db.getProducts();
+    return this.getGlobalProducts();
+  }
+
+  async addAdminProduct(p: Omit<Product, 'id'>): Promise<void> {
+    const products = this.getStore<Product>('custom_products');
+    products.push({ ...p, id: `ADM-${Date.now()}` });
+    this.setStore('custom_products', products);
+  }
+
+  async uploadProduct(p: Product): Promise<void> {
+    const products = this.getStore<Product>('custom_products');
+    products.push(p);
+    this.setStore('custom_products', products);
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {
-    return db.getProducts();
+    // In this unified model, all products are available globally
+    return this.getGlobalProducts();
   }
 
-  async uploadProduct(data: any): Promise<void> {
-    const newProduct: Product = {
-      ...data,
-      id: `PRD-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      sellerId: 'ADMIN',
-      sellerName: 'Admin Patch Shop'
-    };
-    this.syncLocal('products', newProduct);
-  }
-
-  async deleteProduct(id: string): Promise<void> {
-    const products = db.getProducts().filter(p => p.id !== id);
-    localStorage.setItem('pkmart_products_v1', JSON.stringify(products));
-  }
-
-  async fetchAllOrders(): Promise<Order[]> {
-    return db.getOrders();
-  }
-
-  async initOrder(orderData: any): Promise<void> {
-    const order: Order = {
-      ...orderData,
-      status: orderData.status || 'pending'
-    };
-    this.syncLocal('orders', order);
-  }
-
-  async finalizeOrder(orderId: string, status: string, transactionId: string): Promise<void> {
-    const orders = db.getOrders();
-    const updated = orders.map(o => o.id === orderId ? { ...o, status, transactionId } : o);
-    localStorage.setItem('pkmart_orders_v1', JSON.stringify(updated));
-  }
-
-  async placeOrder(orderData: any): Promise<void> {
-    const order: Order = {
-      ...orderData,
-      id: `APS-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      commission: {
-        adminAmount: Number(orderData.productPrice) * 0.95,
-        sellerAmount: Number(orderData.productPrice) * 0.05
-      }
+  // --- ORDER OPERATIONS ---
+  async placeOrder(order: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<void> {
+    const newOrder: Order = {
+      ...order,
+      id: `ORD-${Date.now()}`,
+      status: 'pending',
+      createdAt: new Date().toISOString()
     };
     
-    this.syncLocal('orders', order);
+    const orders = this.getStore<Order>('orders');
+    orders.push(newOrder);
+    this.setStore('orders', orders);
 
-    const messageText = `*New Order – Admin Patch Shop*\n` +
+    const message = `*NEW SHOW ORDER*\n` +
       `--------------------------\n` +
-      `*Name:* ${order.customerName}\n` +
-      `*WhatsApp:* ${order.customerWhatsapp}\n` +
-      `*Email:* ${order.customerEmail}\n` +
-      `*Address:* ${order.customerLocation}\n` +
-      `*Product:* ${order.productName}\n` +
-      `*Price:* Rs. ${order.productPrice}\n` +
-      `*Referred By:* /#/${order.sellerSlug}\n` +
+      `Show: /show/${newOrder.showSlug}\n` +
+      `Product: ${newOrder.productName}\n` +
+      `Price: $35 USD\n` +
       `--------------------------\n` +
-      `*Status:* Awaiting Fulfillment`;
+      `Customer: ${newOrder.customerName}\n` +
+      `WA: ${newOrder.customerWhatsapp}\n` +
+      `Address: ${newOrder.customerAddress || newOrder.customerLocation}`;
 
-    window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(messageText)}`, '_blank');
+    window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, '_blank');
+  }
+
+  async initOrder(order: Order): Promise<void> {
+    const orders = this.getStore<Order>('orders');
+    orders.push(order);
+    this.setStore('orders', orders);
+  }
+
+  async finalizeOrder(orderId: string, status: 'completed', tid: string): Promise<void> {
+    const orders = this.getStore<Order>('orders');
+    const index = orders.findIndex(o => o.id === orderId);
+    if (index > -1) {
+      orders[index].status = status;
+      orders[index].transactionId = tid;
+      this.setStore('orders', orders);
+    }
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return this.getStore<Order>('orders');
   }
 }
 
