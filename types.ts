@@ -16,23 +16,34 @@ export interface Show {
   sellerName: string;
   whatsapp: string;
   createdAt: string;
+  sellerData?: {
+    email: string;
+    country: string;
+    city: string;
+    contactNumber: string;
+    paymentMethod: string;
+    paymentDetails: string;
+  };
 }
 
 export interface Seller {
   id: string;
   name: string;
+  fullName?: string;
   storeName?: string;
   slug: string;
   email: string;
   phone: string;
-  whatsapp: string;
   phoneNumber?: string;
-  fullName?: string;
+  whatsapp: string;
+  country?: string;
+  city?: string;
+  contactNumber?: string;
+  paymentMethod?: string;
+  paymentDetails?: string;
   payoutInfo?: {
     method: string;
   };
-  location?: string;
-  bankAccount?: string;
   status?: 'active' | 'inactive';
 }
 
@@ -40,27 +51,27 @@ export interface Order {
   id: string;
   showSlug: string;
   productName: string;
-  customerName: string;
-  customerWhatsapp: string;
-  customerAddress: string;
-  status: 'pending' | 'completed';
-  createdAt: string;
-  // Extended properties for various storefronts and notification service
+  productPrice: number;
   productId?: string;
-  productPrice?: number;
-  customerLocation?: string;
-  customerEmail?: string;
   shopName?: string;
-  sellerName?: string;
   sellerId?: string;
+  sellerName?: string;
   sellerSlug?: string;
+  sellerWhatsApp?: string;
+  shopId?: string;
   totalAmount?: number;
   paymentMethod?: string;
-  transactionId?: string;
-  shopId?: string;
-  sellerWhatsApp?: string;
-  items?: any[];
   currency?: string;
+  items?: any[];
+  customerName: string;
+  customerWhatsapp: string;
+  customerEmail: string;
+  customerPhone?: string;
+  customerAddress: string;
+  customerLocation: string; // Country, City
+  status: 'pending' | 'completed';
+  createdAt: string;
+  transactionId?: string;
 }
 
 export interface AdminNotification {

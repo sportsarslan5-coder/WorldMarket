@@ -2,14 +2,8 @@
 import { Product, Show, Order, Seller } from '../types.ts';
 import { globalProducts } from './mockData.ts';
 
-/**
- * GLOBAL PRODUCTION CONTROLLER
- * Ensures links are permanent, publicly accessible, and device-independent.
- */
 const DB_URL = "https://vshpgjexuqmrtxvytmzv.supabase.co/rest/v1";
 const ADMIN_WA = "923079490721";
-
-// SET YOUR PRODUCTION DOMAIN HERE FOR ENV PICKER SYNC
 const PRODUCTION_DOMAIN = "world-market-one.vercel.app";
 
 class ApiService {
@@ -22,24 +16,151 @@ class ApiService {
     };
   }
 
-  // --- ENVIRONMENT PICKER LOGIC ---
-  public getBaseUrl(): string {
-    const current = window.location.hostname;
-    // If in preview/local, still return production for shared links if possible
-    if (current.includes('localhost') || current.includes('aistudio')) {
-      return `https://${PRODUCTION_DOMAIN}`;
-    }
-    return `${window.location.origin}`;
+  public getProductionUrl(slug: string): string {
+    // Standardized clean link format
+    return `https://${PRODUCTION_DOMAIN}/#/show/${slug}`;
   }
 
-  // --- PERSISTENCE LAYER (CLOUD-FIRST) ---
-  async registerShow(data: { name: string, sellerName: string, whatsapp: string }): Promise<Show> {
+  // Implementation for getSellerById used in SellerDashboard
+  async getSellerById(id: string): Promise<Seller | null> {
+    try {
+      const res = await fetch(`${DB_URL}/sellers?id=eq.${id}&select=*`, { headers: this.headers });
+      const data = await res.json();
+      if (data && data[0]) return data[0];
+      
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+      return local.find((s: Seller) => s.id === id) || null;
+    } catch {
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+      return local.find((s: Seller) => s.id === id) || null;
+    }
+  }
+
+  // Implementation for findSellerBySlug used in ShopFront and SellerStorefront
+  async findSellerBySlug(slug: string): Promise<Seller | undefined> {
+    try {
+      const res = await fetch(`${DB_URL}/sellers?slug=eq.${slug}&select=*`, { headers: this.headers });
+      const data = await res.json();
+      if (data && data[0]) return data[0];
+      
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+      return local.find((s: Seller) => s.slug === slug);
+    } catch {
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+      return local.find((s: Seller) => s.slug === slug);
+    }
+  }
+
+  // Implementation for getProductsBySeller used in ShopFront
+  async getProductsBySeller(sellerId: string): Promise<Product[]> {
+    // Products are managed centrally by Admin for all sellers
+    return this.getGlobalProducts();
+  }
+
+  // Implementation for initOrder used in ShopFront
+  async initOrder(orderData: any): Promise<void> {
+    const newOrder: Order = {
+      ...orderData,
+      id: orderData.id || `ORD-${Date.now()}`,
+      status: orderData.status || 'pending',
+      createdAt: orderData.createdAt || new Date().toISOString()
+    };
+    
+    try {
+      await fetch(`${DB_URL}/orders`, { 
+        method: 'POST', 
+        headers: this.headers, 
+        body: JSON.stringify(newOrder) 
+      });
+    } catch {
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
+      local.push(newOrder);
+      localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
+    }
+  }
+
+  // Implementation for finalizeOrder used in PaymentSuccess
+  async finalizeOrder(orderId: string, status: string, tid: string): Promise<void> {
+    try {
+      await fetch(`${DB_URL}/orders?id=eq.${orderId}`, {
+        method: 'PATCH',
+        headers: this.headers,
+        body: JSON.stringify({ status, transactionId: tid })
+      });
+    } catch {
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
+      const index = local.findIndex((o: Order) => o.id === orderId);
+      if (index > -1) {
+        local[index] = { ...local[index], status, transactionId: tid };
+        localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
+      }
+    }
+  }
+
+  // Implementation for registerSeller used in VendorLanding
+  async registerSeller(data: any): Promise<Seller> {
+    const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const newSeller: Seller = {
+      id: crypto.randomUUID(),
+      name: data.name,
+      fullName: data.name,
+      slug,
+      email: data.email,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+      status: 'active',
+      ...data
+    };
+    
+    try {
+      await fetch(`${DB_URL}/sellers`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(newSeller)
+      });
+    } catch {
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+      local.push(newSeller);
+      localStorage.setItem('APS_LOCAL_SELLERS', JSON.stringify(local));
+    }
+    
+    return newSeller;
+  }
+
+  // Implementation for uploadProduct used in AdminPanel
+  async uploadProduct(product: Product): Promise<void> {
+    try {
+      await fetch(`${DB_URL}/products`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(product)
+      });
+    } catch {
+      // In a real app, we would push to the globalProducts array in mockData
+      // or update local storage
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_PRODUCTS') || '[]');
+      local.push(product);
+      localStorage.setItem('APS_LOCAL_PRODUCTS', JSON.stringify(local));
+    }
+  }
+
+  async registerShow(data: any): Promise<Show> {
     const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const newShow: Show = {
-      ...data,
       id: crypto.randomUUID(),
+      name: data.name,
       slug,
-      createdAt: new Date().toISOString()
+      sellerName: data.sellerName,
+      whatsapp: data.whatsapp,
+      createdAt: new Date().toISOString(),
+      sellerData: {
+        email: data.email,
+        country: data.country,
+        city: data.city,
+        contactNumber: data.contactNumber,
+        paymentMethod: data.country === 'Pakistan' ? 'JazzCash' : 'Bank Account',
+        paymentDetails: data.paymentDetails
+      }
     };
     
     try {
@@ -48,72 +169,49 @@ class ApiService {
         headers: this.headers,
         body: JSON.stringify(newShow)
       });
-      if (!res.ok) throw new Error();
-      const cloudData = await res.json();
-      return cloudData[0] || newShow;
-    } catch {
-      this.saveLocal('shows', newShow);
+      if (!res.ok) throw new Error("Cloud sync failed");
+      
+      // Notify Admin via WhatsApp instantly
+      this.notifyAdminNewSeller(newShow);
+      
+      return newShow;
+    } catch (e) {
+      console.warn("Cloud error, using local fallback", e);
+      const existing = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
+      existing.push(newShow);
+      localStorage.setItem('APS_LOCAL_SHOWS', JSON.stringify(existing));
+      this.notifyAdminNewSeller(newShow);
       return newShow;
     }
+  }
+
+  private notifyAdminNewSeller(show: Show) {
+    const msg = `*NEW SELLER REGISTERED – Admin Patch Shop*\n` +
+      `--------------------------------\n` +
+      `Name: ${show.sellerName}\n` +
+      `WhatsApp: ${show.whatsapp}\n` +
+      `Email: ${show.sellerData?.email}\n` +
+      `Country: ${show.sellerData?.country}\n` +
+      `City: ${show.sellerData?.city}\n` +
+      `Contact Number: ${show.sellerData?.contactNumber}\n` +
+      `Payment Method: ${show.sellerData?.paymentMethod}\n` +
+      `Details: ${show.sellerData?.paymentDetails}\n` +
+      `Show Link: ${this.getProductionUrl(show.slug)}`;
+
+    window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   async findShowBySlug(slug: string): Promise<Show | undefined> {
     try {
       const res = await fetch(`${DB_URL}/shows?slug=eq.${slug}&select=*`, { headers: this.headers });
       const data = await res.json();
-      return data[0] || this.getLocal<Show>('shows').find(s => s.slug === slug);
+      if (data && data[0]) return data[0];
+      
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
+      return local.find((s: Show) => s.slug === slug);
     } catch {
-      return this.getLocal<Show>('shows').find(s => s.slug === slug);
-    }
-  }
-
-  // --- SELLER OPERATIONS ---
-  async registerSeller(data: any): Promise<Seller> {
-    const slug = data.storeName?.toLowerCase().trim().replace(/\s+/g, '-') || `seller-${Date.now()}`;
-    const newSeller: Seller = {
-      ...data,
-      id: `SEL-${Date.now()}`,
-      slug,
-      status: 'active'
-    };
-    
-    try {
-      await fetch(`${DB_URL}/sellers`, { method: 'POST', headers: this.headers, body: JSON.stringify(newSeller) });
-    } catch {
-      this.saveLocal('sellers', newSeller);
-    }
-    return newSeller;
-  }
-
-  // --- ORDER FLOW ---
-  // Fix: Added initOrder to handle initial order creation in checkout flow
-  async initOrder(order: any): Promise<void> {
-    try {
-      await fetch(`${DB_URL}/orders`, { 
-        method: 'POST', 
-        headers: this.headers, 
-        body: JSON.stringify(order) 
-      });
-    } catch {
-      this.saveLocal('orders', order);
-    }
-  }
-
-  // Fix: Added finalizeOrder to update order status and transaction ID after payment
-  async finalizeOrder(orderId: string, status: string, transactionId: string): Promise<void> {
-    try {
-      await fetch(`${DB_URL}/orders?id=eq.${orderId}`, {
-        method: 'PATCH',
-        headers: this.headers,
-        body: JSON.stringify({ status, transactionId })
-      });
-    } catch {
-      const orders = this.getLocal<Order>('orders');
-      const index = orders.findIndex(o => o.id === orderId);
-      if (index > -1) {
-        orders[index] = { ...orders[index], status: status as any, transactionId };
-        localStorage.setItem(`APS_SYNC_orders`, JSON.stringify(orders));
-      }
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
+      return local.find((s: Show) => s.slug === slug);
     }
   }
 
@@ -128,67 +226,34 @@ class ApiService {
     try {
       await fetch(`${DB_URL}/orders`, { method: 'POST', headers: this.headers, body: JSON.stringify(newOrder) });
     } catch {
-      this.saveLocal('orders', newOrder);
+      const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
+      local.push(newOrder);
+      localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
     }
 
-    const message = `*NEW SHOW ORDER*\n` +
-      `--------------------------\n` +
-      `Show: /#/${newOrder.showSlug}\n` +
+    const message = `*New Order – Admin Patch Shop*\n` +
+      `--------------------------------\n` +
+      `Name: ${newOrder.customerName}\n` +
+      `WhatsApp: ${newOrder.customerWhatsapp}\n` +
+      `Email: ${newOrder.customerEmail}\n` +
+      `Address: ${newOrder.customerAddress}\n` +
+      `Location: ${newOrder.customerLocation}\n` +
       `Product: ${newOrder.productName}\n` +
-      `Customer: ${newOrder.customerName}\n` +
-      `WA: ${newOrder.customerWhatsapp}`;
+      `Price: $${newOrder.productPrice}`;
 
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, '_blank');
   }
 
-  // --- PRODUCT OPERATIONS ---
-  // Fix: Added uploadProduct to allow admin to add new products to the global feed
-  async uploadProduct(product: Product): Promise<void> {
+  async getGlobalProducts(): Promise<Product[]> { return globalProducts; }
+  async getAllProducts(): Promise<Product[]> { return globalProducts; }
+  async getAllOrders(): Promise<Order[]> {
     try {
-      await fetch(`${DB_URL}/products`, { 
-        method: 'POST', 
-        headers: this.headers, 
-        body: JSON.stringify(product) 
-      });
+      const res = await fetch(`${DB_URL}/orders?select=*`, { headers: this.headers });
+      return await res.json();
     } catch {
-      this.saveLocal('products', product);
+      return JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
     }
   }
-
-  // --- HELPERS ---
-  private saveLocal(key: string, data: any) {
-    const existing = this.getLocal(key);
-    existing.push(data);
-    localStorage.setItem(`APS_SYNC_${key}`, JSON.stringify(existing));
-  }
-
-  private getLocal<T>(key: string): T[] {
-    const data = localStorage.getItem(`APS_SYNC_${key}`);
-    return data ? JSON.parse(data) : [];
-  }
-
-  // Required by components
-  async getGlobalProducts(): Promise<Product[]> { return globalProducts; }
-  
-  // Fix: Updated getAllProducts to include locally saved products
-  async getAllProducts(): Promise<Product[]> { 
-    const local = this.getLocal<Product>('products');
-    return [...globalProducts, ...local];
-  }
-  
-  async getAllOrders(): Promise<Order[]> { return this.getLocal('orders'); }
-  
-  // Fix: Implemented getSellerById to search in local storage
-  async getSellerById(id: string): Promise<Seller | null> { 
-    return this.getLocal<Seller>('sellers').find(s => s.id === id) || null;
-  }
-  
-  // Fix: Implemented findSellerBySlug to search in local storage
-  async findSellerBySlug(slug: string): Promise<Seller | undefined> { 
-    return this.getLocal<Seller>('sellers').find(s => s.slug === slug);
-  }
-  
-  async getProductsBySeller(id: string): Promise<Product[]> { return this.getAllProducts(); }
 }
 
 export const api = new ApiService();
