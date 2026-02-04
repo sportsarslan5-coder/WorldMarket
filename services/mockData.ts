@@ -22,14 +22,41 @@ export const officialImages = [
   "https://res.cloudinary.com/dzt2nrkjr/image/upload/v1770056366/american-football-player-uniform-training-field_23-2150034543_w6cmwh.jpg"
 ];
 
-export const globalProducts: Product[] = officialImages.map((url, i) => ({
-  id: `PRD-${i}`,
-  name: i % 2 === 0 ? "Pro-Elite Series Jersey" : "Custom Team Apparel",
-  price: 35,
-  imageUrl: url,
-  category: "Manufacturer Direct",
-  description: "Elite manufacturing standards. Professional sports grade fabrics with precision stitching and moisture-wicking technology."
-}));
+const productNames = [
+  "Pro Elite Basketball Jersey",
+  "Varsity League Full Set",
+  "Championship Mesh Uniform",
+  "All-Star Performance Gear",
+  "Slam Dunk Series Kit",
+  "Courtside Pro Apparel",
+  "Legacy Sports Uniform",
+  "Dynamic Team Jersey",
+  "Elite Practice Set",
+  "Pro League Basketball Top",
+  "Prime Stadium Apparel",
+  "Victory Series Uniform",
+  "Hoops Master Jersey",
+  "Gridiron Pro Series",
+  "Baller Performance Set",
+  "Custom League Threads",
+  "Titan Sports Apparel",
+  "Supreme Basketball Kit"
+];
+
+export const globalProducts: Product[] = officialImages.map((url, i) => {
+  // Distribute prices between 35 and 40
+  const prices = [35, 36, 37, 38, 39, 40];
+  const price = prices[i % prices.length];
+  
+  return {
+    id: `PRD-${i}`,
+    name: productNames[i % productNames.length],
+    price: price,
+    imageUrl: url,
+    category: "Basketball Uniforms",
+    description: "Premium sports-grade fabric with professional moisture-wicking technology. Durable double-stitching designed for high-intensity league play. Direct manufacturer quality."
+  };
+});
 
 export const mockSellers: Seller[] = [];
 export const mockProducts: Product[] = globalProducts;

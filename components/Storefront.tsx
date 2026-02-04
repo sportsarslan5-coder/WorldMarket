@@ -41,7 +41,7 @@ const Storefront: React.FC = () => {
     await api.placeOrder({
       showSlug: show.slug,
       productName: selectedProduct.name,
-      productPrice: 35,
+      productPrice: selectedProduct.price,
       customerName: customer.name,
       customerWhatsapp: customer.whatsapp,
       customerEmail: customer.email,
@@ -83,12 +83,12 @@ const Storefront: React.FC = () => {
           <div className="space-y-6">
             <p className="text-blue-600 font-black text-[10px] uppercase tracking-[0.5em]">Exclusive Merchant Show</p>
             <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter italic leading-none">{show.name}</h2>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs italic">Premium Apparel • Guaranteed Quality • Delivery 7 Days</p>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs italic">Basketball Uniforms • Guaranteed Quality • Delivery 7 Days</p>
           </div>
           <div className="w-64 h-64 bg-white p-8 rounded-[48px] shadow-2xl flex flex-col items-center justify-center text-center">
              <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-2">Global Price</span>
-             <span className="text-6xl font-black italic text-blue-600">$35</span>
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">Flat Rate</span>
+             <span className="text-6xl font-black italic text-blue-600">$35+</span>
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2">Premium Grade</span>
           </div>
         </div>
       </header>
@@ -99,10 +99,11 @@ const Storefront: React.FC = () => {
             <div key={p.id} className="group cursor-pointer" onClick={() => setSelectedProduct(p)}>
               <div className="aspect-[3/4] rounded-[56px] bg-slate-50 mb-8 flex items-center justify-center p-12 overflow-hidden transition-transform duration-500 hover:scale-[1.02] border border-transparent hover:border-blue-100">
                 <img src={p.imageUrl} className="max-h-full mix-blend-multiply group-hover:scale-110 transition duration-700" alt={p.name} />
+                <div className="absolute top-8 right-8 bg-white px-4 py-2 rounded-xl text-[10px] font-black shadow-lg italic">${p.price.toFixed(2)}</div>
               </div>
               <h3 className="text-2xl font-black uppercase tracking-tighter italic leading-none mb-4">{p.name}</h3>
               <div className="flex justify-between items-center">
-                <span className="text-3xl font-black italic">$35.00</span>
+                <span className="text-3xl font-black italic">${p.price.toFixed(2)}</span>
                 <button className="h-12 px-8 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition">Order</button>
               </div>
             </div>
@@ -122,7 +123,7 @@ const Storefront: React.FC = () => {
                   </div>
                   <div className="space-y-4">
                      <h3 className="text-4xl font-black uppercase italic tracking-tighter leading-none">{selectedProduct.name}</h3>
-                     <p className="text-5xl font-black text-blue-600 italic">$35.00</p>
+                     <p className="text-5xl font-black text-blue-600 italic">${selectedProduct.price.toFixed(2)}</p>
                      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest leading-relaxed">{selectedProduct.description}</p>
                      <div className="bg-emerald-50 text-emerald-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest inline-block">Estimated Delivery: 7 Days</div>
                   </div>

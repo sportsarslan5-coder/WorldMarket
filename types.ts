@@ -2,7 +2,7 @@
 export interface Product {
   id: string;
   name: string;
-  price: number; // Fixed at 35
+  price: number; // Range: 35 - 40
   imageUrl: string;
   category: string;
   description: string;

@@ -75,8 +75,8 @@ const LandingPage: React.FC = () => {
                        <span className="font-black italic">7 Days</span>
                     </div>
                     <div className="flex justify-between">
-                       <span className="font-bold text-xs uppercase tracking-widest">Fixed Pricing</span>
-                       <span className="font-black italic">$35.00</span>
+                       <span className="font-bold text-xs uppercase tracking-widest">Pricing Model</span>
+                       <span className="font-black italic">$35.00 - $40.00</span>
                     </div>
                  </div>
               </div>
