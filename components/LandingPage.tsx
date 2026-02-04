@@ -11,25 +11,40 @@ const LandingPage: React.FC = () => {
         </Link>
         <div className="flex gap-8">
           <Link to="/sell" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition">Create Show</Link>
-          <Link to="/admin" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition">Admin HQ</Link>
+          <Link to="/admin" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition">Admin Login</Link>
         </div>
       </nav>
 
-      <header className="py-24 md:py-48 px-8 text-center bg-slate-50 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
-           <img src="https://res.cloudinary.com/dzt2nrkjr/image/upload/v1770054612/16AMERICANFOOTBALLMODEL_swj02j.jpg" className="w-full h-full object-cover grayscale" />
-        </div>
-        
+      {/* Commission Transparency Section */}
+      <section className="bg-slate-950 py-6 px-8 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-20 text-white overflow-hidden">
+         <div className="flex items-center gap-4">
+            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-blue-500">Merchant Split</span>
+            <div className="flex items-baseline gap-2">
+               <span className="text-2xl font-black italic">5%</span>
+               <span className="text-[10px] font-bold text-slate-400">SELLER</span>
+            </div>
+         </div>
+         <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+         <div className="flex items-center gap-4">
+            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-emerald-500">Platform Split</span>
+            <div className="flex items-baseline gap-2">
+               <span className="text-2xl font-black italic">95%</span>
+               <span className="text-[10px] font-bold text-slate-400">ADMIN</span>
+            </div>
+         </div>
+      </section>
+
+      <header className="py-24 md:py-36 px-8 text-center bg-slate-50 relative overflow-hidden">
         <div className="max-w-5xl mx-auto space-y-8 relative z-10">
-          <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.5em]">Manufacturer Direct System</span>
-          <h1 className="text-6xl md:text-[140px] font-black tracking-tighter uppercase italic leading-[0.8] mb-12">
-            Sports <br/> <span className="text-blue-600">Uniforms.</span>
+          <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.5em]">Global Manufacturing Grid</span>
+          <h1 className="text-6xl md:text-[120px] font-black tracking-tighter uppercase italic leading-[0.8] mb-12">
+            Sports <br/> <span className="text-blue-600">Apparel.</span>
           </h1>
           <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto italic leading-relaxed">
-            The world's most scalable multi-show platform. Professional grade sports manufacturing delivered from factory direct to your team.
+            Professional multi-vendor system with zero-setup shows. Permanent shared links for global distribution.
           </p>
-          <div className="pt-12 flex justify-center gap-6">
-            <Link to="/sell" className="bg-slate-900 text-white px-16 py-6 rounded-full font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition transform hover:-translate-y-1">Launch Your Show</Link>
+          <div className="pt-12">
+            <Link to="/sell" className="bg-slate-900 text-white px-16 py-6 rounded-full font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-blue-600 transition inline-block transform hover:-translate-y-1">Get Started</Link>
           </div>
         </div>
       </header>
@@ -40,16 +55,20 @@ const LandingPage: React.FC = () => {
               <img src="https://res.cloudinary.com/dzt2nrkjr/image/upload/v1770055149/2026_BASE_LeggettNo7Legacy_FRONT_rkrgpu.webp" className="w-full h-full object-cover" />
            </div>
            <div className="space-y-8">
-              <h2 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Global <span className="text-blue-600">Standards.</span></h2>
-              <p className="text-slate-500 text-lg leading-relaxed">Our manufacturing facilities produce high-end patches, jerseys, and sports uniforms using the latest tech-fiber fabrics. Every "Show" created on our platform has access to this elite global catalog.</p>
-              <div className="grid grid-cols-2 gap-8 pt-8">
-                 <div>
-                    <p className="text-3xl font-black italic">PKR</p>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Localized Billing</p>
-                 </div>
-                 <div>
-                    <p className="text-3xl font-black italic">7-Days</p>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Global Express</p>
+              <h2 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Unified <br/> <span className="text-blue-600">Inventory.</span></h2>
+              <p className="text-slate-500 text-lg leading-relaxed">Every show on the APS grid features our direct-from-factory catalog. Sellers focus on distribution; we handle the manufacturing and logistics from our USA and Pakistan hubs.</p>
+              
+              <div className="bg-slate-50 p-10 rounded-[40px] border border-slate-100 mt-12">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4">Official Commission Protocol</h4>
+                 <div className="space-y-4">
+                    <div className="flex justify-between border-b pb-4">
+                       <span className="font-bold">Seller Share</span>
+                       <span className="font-black italic">5.0%</span>
+                    </div>
+                    <div className="flex justify-between">
+                       <span className="font-bold">Manufacturing/Admin</span>
+                       <span className="font-black italic">95.0%</span>
+                    </div>
                  </div>
               </div>
            </div>

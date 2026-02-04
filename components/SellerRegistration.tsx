@@ -14,9 +14,11 @@ const SellerRegistration: React.FC = () => {
     setLoading(true);
     try {
       const show = await api.registerShow(form);
-      setSuccess(`${window.location.origin}/#/show/${show.slug}`);
+      // Generate absolute path for global sharing compatibility
+      const shareUrl = `${window.location.origin}/#/${show.slug}`;
+      setSuccess(shareUrl);
     } catch (err) {
-      alert("Error creating show.");
+      alert("Error creating show. Check your network connection.");
     } finally {
       setLoading(false);
     }
@@ -28,12 +30,12 @@ const SellerRegistration: React.FC = () => {
         <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mb-12 shadow-[0_0_60px_rgba(37,99,235,0.4)] animate-bounce">
            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
         </div>
-        <h2 className="text-6xl font-black uppercase tracking-tighter italic mb-8">Show Is <span className="text-blue-500">Live.</span></h2>
-        <div className="bg-white/5 backdrop-blur-2xl p-12 rounded-[56px] border border-white/10 max-w-2xl w-full mb-12">
-           <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500 mb-8">Unique Business Link</p>
-           <code className="text-2xl font-mono font-bold block break-all mb-10">{success}</code>
+        <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter italic mb-8">Show Is <span className="text-blue-500">Live.</span></h2>
+        <div className="bg-white/5 backdrop-blur-2xl p-8 md:p-12 rounded-[56px] border border-white/10 max-w-2xl w-full mb-12">
+           <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-500 mb-8">Share this with anyone, anywhere</p>
+           <code className="text-xl md:text-2xl font-mono font-bold block break-all mb-10 select-all">{success}</code>
            <button 
-             onClick={() => { navigator.clipboard.writeText(success); alert("Link Copied!"); }}
+             onClick={() => { navigator.clipboard.writeText(success); alert("Link Copied! You can now send this on WhatsApp."); }}
              className="px-12 py-5 bg-white text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition"
            >
              Copy Link
@@ -48,14 +50,14 @@ const SellerRegistration: React.FC = () => {
     <div className="min-h-screen bg-white flex items-center justify-center p-8">
       <div className="w-full max-w-2xl animate-scale-in">
         <div className="mb-16 text-center">
-           <h1 className="text-5xl font-black italic uppercase tracking-tighter leading-none mb-4">Create Your <br/> <span className="text-blue-600">Premium Show</span></h1>
-           <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em]">Access the Global Distribution Catalog</p>
+           <h1 className="text-5xl font-black italic uppercase tracking-tighter leading-none mb-4">Launch Your <br/> <span className="text-blue-600">Global Node</span></h1>
+           <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em]">Permanent Routing & Cloud Deployment</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Show Identity (Name)</label>
-            <input required placeholder="e.g., Islam Brother" className="w-full h-18 px-8 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-[24px] font-bold outline-none text-lg transition-all" 
+            <input required placeholder="e.g., Arslan Store" className="w-full h-18 px-8 bg-slate-50 border-2 border-transparent focus:border-blue-600 rounded-[24px] font-bold outline-none text-lg transition-all" 
               onChange={e => setForm({...form, name: e.target.value})} />
           </div>
           <div className="space-y-2">
@@ -70,7 +72,7 @@ const SellerRegistration: React.FC = () => {
           </div>
           
           <button disabled={loading} className="w-full h-20 bg-slate-900 text-white rounded-[32px] font-black uppercase text-xs tracking-widest shadow-2xl hover:bg-blue-600 transition-all transform active:scale-95 disabled:opacity-50">
-            {loading ? 'AUTHENTICATING NODE...' : 'Generate Show Link'}
+            {loading ? 'CLOUD SYNC IN PROGRESS...' : 'Activate My Global Link'}
           </button>
         </form>
       </div>

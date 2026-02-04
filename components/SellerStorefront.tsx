@@ -38,7 +38,9 @@ const SellerStorefront: React.FC = () => {
     e.preventDefault();
     if (!checkoutProduct || !seller) return;
 
+    // Fix: Added missing 'showSlug' and 'customerAddress' properties required by Order type
     await api.placeOrder({
+      showSlug: seller.slug,
       productId: checkoutProduct.id,
       productName: checkoutProduct.name,
       productPrice: checkoutProduct.price,
@@ -46,8 +48,9 @@ const SellerStorefront: React.FC = () => {
       sellerName: seller.name,
       sellerSlug: seller.slug,
       customerName: customer.name,
-      customerWhatsapp: customer.phone, // Fixed: customerPhone -> customerWhatsapp
-      customerLocation: customer.address, // Fixed: customerAddress -> customerLocation
+      customerWhatsapp: customer.phone,
+      customerAddress: customer.address,
+      customerLocation: customer.address,
       customerEmail: customer.email
     });
 

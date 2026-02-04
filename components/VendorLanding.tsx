@@ -8,10 +8,12 @@ const VendorLanding: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Fix: Added missing 'phone' field required by Seller type
     const seller = await api.registerSeller({
       name: form.name,
       storeName: form.name,
       whatsapp: form.phone,
+      phone: form.phone,
       email: form.email,
       location: 'Online',
       bankAccount: 'N/A'
