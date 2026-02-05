@@ -8,29 +8,33 @@ const PRODUCTION_DOMAIN = "world-market-one.vercel.app";
 
 class ApiService {
   private get headers() {
+    // Ensuring the API key is passed correctly for cloud storage
+    const apiKey = process.env.API_KEY || "";
     return {
       'Content-Type': 'application/json',
-      'apikey': process.env.API_KEY || "",
-      'Authorization': `Bearer ${process.env.API_KEY || ""}`,
+      'apikey': apiKey,
+      'Authorization': `Bearer ${apiKey}`,
       'Prefer': 'return=representation'
     };
   }
 
   public getProductionUrl(slug: string): string {
-    // Standardized clean link format using HashRouter
-    return `https://${PRODUCTION_DOMAIN}/#/show/${slug}`;
+    // Using a cleaner hash-based link that works on all mobile messaging apps
+    return `https://${PRODUCTION_DOMAIN}/#/${slug}`;
   }
 
-  // Required by SellerDashboard
+  // Required for dashboard functionality
   async getSellerById(id: string): Promise<Seller | null> {
     const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
     return local.find((s: Seller) => s.id === id) || null;
   }
 
-  // Required by ShopFront and SellerStorefront
   async findSellerBySlug(slug: string): Promise<Seller | undefined> {
+    // Fix: Rename local variable to avoid shadowing 's' in the .find callback
+    // and correctly compare the string slug with the seller's slug property.
+    const lowerSlug = slug.toLowerCase();
     const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
-    return local.find((s: Seller) => s.slug === slug);
+    return local.find((seller: Seller) => seller.slug.toLowerCase() === lowerSlug);
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {
@@ -99,17 +103,17 @@ class ApiService {
     };
     
     try {
-      // Prioritize Cloud Registration for global accessibility
-      await fetch(`${DB_URL}/shows`, {
+      // MANDATORY: Force sync to cloud so friends can see it
+      const response = await fetch(`${DB_URL}/shows`, {
         method: 'POST',
         headers: this.headers,
         body: JSON.stringify(newShow)
       });
+      if (!response.ok) throw new Error("Cloud Storage Node Refused Sync");
     } catch (e) {
-      console.warn("Cloud sync failed, falling back to local memory.");
+      console.error("CRITICAL: Show created locally only. Friends will not see this until Cloud Sync is fixed.", e);
     }
 
-    // Always keep a local copy and notify admin
     const existing = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
     existing.push(newShow);
     localStorage.setItem('APS_LOCAL_SHOWS', JSON.stringify(existing));
@@ -119,29 +123,32 @@ class ApiService {
   }
 
   private notifyAdminNewSeller(show: Show) {
-    const msg = `*NEW SHOW CREATED*\n` +
+    const msg = `*NEW SHOW REGISTERED*\n` +
       `--------------------------------\n` +
-      `Shop Name: ${show.name}\n` +
-      `Owner: ${show.sellerName}\n` +
-      `WhatsApp: ${show.whatsapp}\n` +
-      `Global Link: ${this.getProductionUrl(show.slug)}`;
+      `Name: ${show.name}\n` +
+      `Seller: ${show.sellerName}\n` +
+      `Global ID: ${show.id}\n` +
+      `Universal Link: ${this.getProductionUrl(show.slug)}`;
 
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   async findShowBySlug(slug: string): Promise<Show | undefined> {
+    if (!slug) return undefined;
+    const cleanSlug = slug.toLowerCase().trim();
+
     try {
-      // Check Cloud Database first so links work on all devices
-      const res = await fetch(`${DB_URL}/shows?slug=eq.${slug}&select=*`, { headers: this.headers });
+      // 1. Check Global Cloud Registry (Allows any mobile to open the link)
+      const res = await fetch(`${DB_URL}/shows?slug=eq.${cleanSlug}&select=*`, { headers: this.headers });
       const data = await res.json();
-      if (data && data[0]) return data[0];
+      if (data && data.length > 0) return data[0];
     } catch (e) {
-      console.warn("Database unavailable, checking local node.");
+      console.warn("Global Registry check failed, checking local cache.");
     }
     
-    // Check local fallback
+    // 2. Check Local Fallback (For the creator's device)
     const local = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
-    return local.find((s: Show) => s.slug === slug);
+    return local.find((s: Show) => s.slug.toLowerCase() === cleanSlug);
   }
 
   async placeOrder(order: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<void> {
@@ -160,13 +167,13 @@ class ApiService {
       localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
     }
 
-    const message = `*NEW CUSTOMER ORDER*\n` +
+    const message = `*NEW ORDER ALERT*\n` +
       `--------------------------------\n` +
-      `Product: ${newOrder.productName}\n` +
-      `Price: $${newOrder.productPrice}\n` +
-      `Name: ${newOrder.customerName}\n` +
-      `WA: ${newOrder.customerWhatsapp}\n` +
-      `Addr: ${newOrder.customerAddress}`;
+      `Item: ${newOrder.productName}\n` +
+      `Amount: $${newOrder.productPrice}\n` +
+      `Customer: ${newOrder.customerName}\n` +
+      `WhatsApp: ${newOrder.customerWhatsapp}\n` +
+      `Delivery: ${newOrder.customerAddress}`;
 
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, '_blank');
   }

@@ -10,6 +10,7 @@ const Storefront: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
   const [customer, setCustomer] = useState({ 
     name: '', 
     whatsapp: '', 
@@ -23,17 +24,26 @@ const Storefront: React.FC = () => {
     const load = async () => {
       setLoading(true);
       if (slug) {
+        // Try to find the show. If it fails once, we retry after a short delay
+        // to account for cloud synchronization lag on new device first-loads.
         const found = await api.findShowBySlug(slug);
         if (found) {
           setShow(found);
           const p = await api.getGlobalProducts();
           setProducts(p);
+          setLoading(false);
+        } else if (retryCount < 2) {
+          // Auto-retry once to handle network jitter on mobile
+          setTimeout(() => setRetryCount(prev => prev + 1), 1500);
+        } else {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
     load();
-  }, [slug]);
+  }, [slug, retryCount]);
 
   const handleOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,16 +62,27 @@ const Storefront: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="h-screen flex items-center justify-center font-black animate-pulse text-blue-600 text-3xl italic">
-      SYNCING SHOW DATA...
+    <div className="h-screen flex flex-col items-center justify-center bg-white p-12 text-center">
+      <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-8"></div>
+      <h2 className="text-xl font-black uppercase italic tracking-tighter">Syncing Global Hub...</h2>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4">Connecting to Admin Patch Shop Node</p>
     </div>
   );
 
   if (!show) return (
-    <div className="h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-      <h1 className="text-4xl font-black text-slate-900 mb-2 uppercase italic">Show Offline</h1>
-      <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-8">This shop link is currently inactive.</p>
-      <Link to="/" className="bg-slate-900 text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest">Return Home</Link>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-10 text-center">
+      <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center mb-10 text-slate-300">
+         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+      </div>
+      <h1 className="text-4xl font-black text-slate-900 mb-4 uppercase italic leading-none tracking-tighter">Show <span className="text-red-500">Offline</span></h1>
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-10 max-w-xs leading-relaxed">The global registry could not find a store with the name "<span className="text-slate-900">{slug}</span>".</p>
+      
+      <div className="flex flex-col gap-4 w-full max-w-xs">
+        <button onClick={() => window.location.reload()} className="h-16 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-200">Retry Deep Sync</button>
+        <Link to="/" className="h-16 bg-slate-100 text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center">Go to Home</Link>
+      </div>
+      
+      <p className="mt-12 text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em]">If you just created this store, please wait 30 seconds for global propagation.</p>
     </div>
   );
 
