@@ -17,87 +17,41 @@ class ApiService {
   }
 
   public getProductionUrl(slug: string): string {
-    // Standardized clean link format
+    // Standardized clean link format using HashRouter
     return `https://${PRODUCTION_DOMAIN}/#/show/${slug}`;
   }
 
-  // Implementation for getSellerById used in SellerDashboard
+  // Required by SellerDashboard
   async getSellerById(id: string): Promise<Seller | null> {
-    try {
-      const res = await fetch(`${DB_URL}/sellers?id=eq.${id}&select=*`, { headers: this.headers });
-      const data = await res.json();
-      if (data && data[0]) return data[0];
-      
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
-      return local.find((s: Seller) => s.id === id) || null;
-    } catch {
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
-      return local.find((s: Seller) => s.id === id) || null;
-    }
+    const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+    return local.find((s: Seller) => s.id === id) || null;
   }
 
-  // Implementation for findSellerBySlug used in ShopFront and SellerStorefront
+  // Required by ShopFront and SellerStorefront
   async findSellerBySlug(slug: string): Promise<Seller | undefined> {
-    try {
-      const res = await fetch(`${DB_URL}/sellers?slug=eq.${slug}&select=*`, { headers: this.headers });
-      const data = await res.json();
-      if (data && data[0]) return data[0];
-      
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
-      return local.find((s: Seller) => s.slug === slug);
-    } catch {
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
-      return local.find((s: Seller) => s.slug === slug);
-    }
+    const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+    return local.find((s: Seller) => s.slug === slug);
   }
 
-  // Implementation for getProductsBySeller used in ShopFront
   async getProductsBySeller(sellerId: string): Promise<Product[]> {
-    // Products are managed centrally by Admin for all sellers
     return this.getGlobalProducts();
   }
 
-  // Implementation for initOrder used in ShopFront
   async initOrder(orderData: any): Promise<void> {
-    const newOrder: Order = {
-      ...orderData,
-      id: orderData.id || `ORD-${Date.now()}`,
-      status: orderData.status || 'pending',
-      createdAt: orderData.createdAt || new Date().toISOString()
-    };
-    
-    try {
-      await fetch(`${DB_URL}/orders`, { 
-        method: 'POST', 
-        headers: this.headers, 
-        body: JSON.stringify(newOrder) 
-      });
-    } catch {
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
-      local.push(newOrder);
+    const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
+    local.push(orderData);
+    localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
+  }
+
+  async finalizeOrder(orderId: string, status: string, tid: string): Promise<void> {
+    const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
+    const index = local.findIndex((o: Order) => o.id === orderId);
+    if (index > -1) {
+      local[index] = { ...local[index], status, transactionId: tid };
       localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
     }
   }
 
-  // Implementation for finalizeOrder used in PaymentSuccess
-  async finalizeOrder(orderId: string, status: string, tid: string): Promise<void> {
-    try {
-      await fetch(`${DB_URL}/orders?id=eq.${orderId}`, {
-        method: 'PATCH',
-        headers: this.headers,
-        body: JSON.stringify({ status, transactionId: tid })
-      });
-    } catch {
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
-      const index = local.findIndex((o: Order) => o.id === orderId);
-      if (index > -1) {
-        local[index] = { ...local[index], status, transactionId: tid };
-        localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
-      }
-    }
-  }
-
-  // Implementation for registerSeller used in VendorLanding
   async registerSeller(data: any): Promise<Seller> {
     const slug = data.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const newSeller: Seller = {
@@ -112,36 +66,17 @@ class ApiService {
       ...data
     };
     
-    try {
-      await fetch(`${DB_URL}/sellers`, {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify(newSeller)
-      });
-    } catch {
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
-      local.push(newSeller);
-      localStorage.setItem('APS_LOCAL_SELLERS', JSON.stringify(local));
-    }
+    const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
+    local.push(newSeller);
+    localStorage.setItem('APS_LOCAL_SELLERS', JSON.stringify(local));
     
     return newSeller;
   }
 
-  // Implementation for uploadProduct used in AdminPanel
   async uploadProduct(product: Product): Promise<void> {
-    try {
-      await fetch(`${DB_URL}/products`, {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify(product)
-      });
-    } catch {
-      // In a real app, we would push to the globalProducts array in mockData
-      // or update local storage
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_PRODUCTS') || '[]');
-      local.push(product);
-      localStorage.setItem('APS_LOCAL_PRODUCTS', JSON.stringify(local));
-    }
+    const local = JSON.parse(localStorage.getItem('APS_LOCAL_PRODUCTS') || '[]');
+    local.push(product);
+    localStorage.setItem('APS_LOCAL_PRODUCTS', JSON.stringify(local));
   }
 
   async registerShow(data: any): Promise<Show> {
@@ -164,55 +99,49 @@ class ApiService {
     };
     
     try {
-      const res = await fetch(`${DB_URL}/shows`, {
+      // Prioritize Cloud Registration for global accessibility
+      await fetch(`${DB_URL}/shows`, {
         method: 'POST',
         headers: this.headers,
         body: JSON.stringify(newShow)
       });
-      if (!res.ok) throw new Error("Cloud sync failed");
-      
-      // Notify Admin via WhatsApp instantly
-      this.notifyAdminNewSeller(newShow);
-      
-      return newShow;
     } catch (e) {
-      console.warn("Cloud error, using local fallback", e);
-      const existing = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
-      existing.push(newShow);
-      localStorage.setItem('APS_LOCAL_SHOWS', JSON.stringify(existing));
-      this.notifyAdminNewSeller(newShow);
-      return newShow;
+      console.warn("Cloud sync failed, falling back to local memory.");
     }
+
+    // Always keep a local copy and notify admin
+    const existing = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
+    existing.push(newShow);
+    localStorage.setItem('APS_LOCAL_SHOWS', JSON.stringify(existing));
+    
+    this.notifyAdminNewSeller(newShow);
+    return newShow;
   }
 
   private notifyAdminNewSeller(show: Show) {
-    const msg = `*NEW SELLER REGISTERED – Admin Patch Shop*\n` +
+    const msg = `*NEW SHOW CREATED*\n` +
       `--------------------------------\n` +
-      `Name: ${show.sellerName}\n` +
+      `Shop Name: ${show.name}\n` +
+      `Owner: ${show.sellerName}\n` +
       `WhatsApp: ${show.whatsapp}\n` +
-      `Email: ${show.sellerData?.email}\n` +
-      `Country: ${show.sellerData?.country}\n` +
-      `City: ${show.sellerData?.city}\n` +
-      `Contact Number: ${show.sellerData?.contactNumber}\n` +
-      `Payment Method: ${show.sellerData?.paymentMethod}\n` +
-      `Details: ${show.sellerData?.paymentDetails}\n` +
-      `Show Link: ${this.getProductionUrl(show.slug)}`;
+      `Global Link: ${this.getProductionUrl(show.slug)}`;
 
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   async findShowBySlug(slug: string): Promise<Show | undefined> {
     try {
+      // Check Cloud Database first so links work on all devices
       const res = await fetch(`${DB_URL}/shows?slug=eq.${slug}&select=*`, { headers: this.headers });
       const data = await res.json();
       if (data && data[0]) return data[0];
-      
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
-      return local.find((s: Show) => s.slug === slug);
-    } catch {
-      const local = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
-      return local.find((s: Show) => s.slug === slug);
+    } catch (e) {
+      console.warn("Database unavailable, checking local node.");
     }
+    
+    // Check local fallback
+    const local = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
+    return local.find((s: Show) => s.slug === slug);
   }
 
   async placeOrder(order: Omit<Order, 'id' | 'status' | 'createdAt'>): Promise<void> {
@@ -225,21 +154,19 @@ class ApiService {
     
     try {
       await fetch(`${DB_URL}/orders`, { method: 'POST', headers: this.headers, body: JSON.stringify(newOrder) });
-    } catch {
+    } catch (e) {
       const local = JSON.parse(localStorage.getItem('APS_LOCAL_ORDERS') || '[]');
       local.push(newOrder);
       localStorage.setItem('APS_LOCAL_ORDERS', JSON.stringify(local));
     }
 
-    const message = `*New Order – Admin Patch Shop*\n` +
+    const message = `*NEW CUSTOMER ORDER*\n` +
       `--------------------------------\n` +
-      `Name: ${newOrder.customerName}\n` +
-      `WhatsApp: ${newOrder.customerWhatsapp}\n` +
-      `Email: ${newOrder.customerEmail}\n` +
-      `Address: ${newOrder.customerAddress}\n` +
-      `Location: ${newOrder.customerLocation}\n` +
       `Product: ${newOrder.productName}\n` +
-      `Price: $${newOrder.productPrice}`;
+      `Price: $${newOrder.productPrice}\n` +
+      `Name: ${newOrder.customerName}\n` +
+      `WA: ${newOrder.customerWhatsapp}\n` +
+      `Addr: ${newOrder.customerAddress}`;
 
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, '_blank');
   }

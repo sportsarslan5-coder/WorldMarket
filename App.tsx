@@ -7,7 +7,7 @@ import AdminDashboard from './components/AdminDashboard.tsx';
 import SellerRegistration from './components/SellerRegistration.tsx';
 import AdminLogin from './components/AdminLogin.tsx';
 
-// HashRouter is essential for avoiding 404 errors on direct navigation across different devices
+// HashRouter is mandatory for SPA deployments on Vercel/GitHub Pages to support shared links
 const { HashRouter: Router, Routes, Route } = ReactRouterDOM as any;
 
 const App: React.FC = () => {
@@ -20,9 +20,9 @@ const App: React.FC = () => {
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin-hq" element={<AdminDashboard />} />
           
-          {/* Support for direct show slugs via /#/name */}
-          <Route path="/:slug" element={<Storefront />} />
+          {/* Support both link formats to ensure compatibility with all shared messages */}
           <Route path="/show/:slug" element={<Storefront />} />
+          <Route path="/:slug" element={<Storefront />} />
         </Routes>
       </div>
     </Router>
