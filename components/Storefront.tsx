@@ -24,17 +24,16 @@ const Storefront: React.FC = () => {
     const load = async () => {
       setLoading(true);
       if (slug) {
-        // Try to find the show. If it fails once, we retry after a short delay
-        // to account for cloud synchronization lag on new device first-loads.
+        // Attempt to resolve the shop from the global cloud database
         const found = await api.findShowBySlug(slug);
         if (found) {
           setShow(found);
           const p = await api.getGlobalProducts();
           setProducts(p);
           setLoading(false);
-        } else if (retryCount < 2) {
-          // Auto-retry once to handle network jitter on mobile
-          setTimeout(() => setRetryCount(prev => prev + 1), 1500);
+        } else if (retryCount < 3) {
+          // Robust retry logic for mobile network jitter
+          setTimeout(() => setRetryCount(prev => prev + 1), 2000);
         } else {
           setLoading(false);
         }
@@ -64,8 +63,8 @@ const Storefront: React.FC = () => {
   if (loading) return (
     <div className="h-screen flex flex-col items-center justify-center bg-white p-12 text-center">
       <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-8"></div>
-      <h2 className="text-xl font-black uppercase italic tracking-tighter">Syncing Global Hub...</h2>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4">Connecting to Admin Patch Shop Node</p>
+      <h2 className="text-xl font-black uppercase italic tracking-tighter">Connecting to Hub...</h2>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4">Fetching Global Merchant Data</p>
     </div>
   );
 
@@ -74,15 +73,16 @@ const Storefront: React.FC = () => {
       <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center mb-10 text-slate-300">
          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
       </div>
-      <h1 className="text-4xl font-black text-slate-900 mb-4 uppercase italic leading-none tracking-tighter">Show <span className="text-red-500">Offline</span></h1>
-      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-10 max-w-xs leading-relaxed">The global registry could not find a store with the name "<span className="text-slate-900">{slug}</span>".</p>
+      <h1 className="text-4xl font-black text-slate-900 mb-4 uppercase italic leading-none tracking-tighter">Shop <span className="text-red-500">Offline</span></h1>
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-10 max-w-xs leading-relaxed">
+        The global registry could not find "<span className="text-slate-900">{slug}</span>". 
+        Please verify the link is correct.
+      </p>
       
       <div className="flex flex-col gap-4 w-full max-w-xs">
-        <button onClick={() => window.location.reload()} className="h-16 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-200">Retry Deep Sync</button>
-        <Link to="/" className="h-16 bg-slate-100 text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center">Go to Home</Link>
+        <button onClick={() => window.location.reload()} className="h-16 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-200">Retry Connection</button>
+        <Link to="/" className="h-16 bg-slate-100 text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center">Return Home</Link>
       </div>
-      
-      <p className="mt-12 text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em]">If you just created this store, please wait 30 seconds for global propagation.</p>
     </div>
   );
 
@@ -101,7 +101,7 @@ const Storefront: React.FC = () => {
 
       <header className="py-24 px-8 md:px-20 border-b bg-slate-50 relative overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="space-y-6">
+          <div className="space-y-6 text-center md:text-left">
             <p className="text-blue-600 font-black text-[10px] uppercase tracking-[0.5em]">Exclusive Merchant Show</p>
             <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter italic leading-none">{show.name}</h2>
             <p className="text-slate-400 font-bold uppercase tracking-widest text-xs italic">Basketball Uniforms • Guaranteed Quality • Delivery 7 Days</p>
@@ -189,7 +189,6 @@ const Storefront: React.FC = () => {
                       </div>
                       
                       <button className="w-full h-20 bg-emerald-500 text-white rounded-[32px] font-black uppercase text-xs tracking-widest shadow-2xl hover:bg-slate-950 transition-all transform active:scale-95 flex items-center justify-center gap-3">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.483 8.413-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.308 1.655zm6.733-4.015c1.496.886 3.056 1.352 4.661 1.353 5.303 0 9.619-4.314 9.621-9.617.001-2.571-1.003-4.985-2.826-6.81s-4.239-2.827-6.81-2.827c-5.301 0-9.618 4.315-9.62 9.617-.001 1.732.463 3.42 1.342 4.908l-.993 3.629 3.725-.977zm9.438-6.19c-.27-.135-1.595-.788-1.843-.878-.247-.09-.427-.135-.607.135-.18.27-.697.878-.855 1.057-.158.18-.315.202-.585.067-.27-.135-1.14-.419-2.172-1.341-.803-.715-1.344-1.6-1.502-1.87-.158-.27-.017-.417.118-.552.121-.122.27-.315.405-.472.135-.158.18-.27.27-.45.09-.18.045-.337-.022-.472-.067-.135-.607-1.462-.832-2.003-.22-.528-.46-.455-.63-.463l-.54-.01c-.18 0-.473.067-.72.337-.247.27-.945.922-.945 2.25s.967 2.61 1.102 2.79c.135.18 1.905 2.908 4.612 4.074.645.277 1.148.442 1.54.567.647.205 1.236.176 1.7.107.519-.078 1.595-.652 1.82-1.282.225-.63.225-1.17.157-1.282-.067-.113-.247-.18-.517-.315z"/></svg>
                         Order Now on WhatsApp
                       </button>
                    </form>

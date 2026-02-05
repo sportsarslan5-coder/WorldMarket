@@ -8,7 +8,6 @@ const PRODUCTION_DOMAIN = "world-market-one.vercel.app";
 
 class ApiService {
   private get headers() {
-    // Ensuring the API key is passed correctly for cloud storage
     const apiKey = process.env.API_KEY || "";
     return {
       'Content-Type': 'application/json',
@@ -19,19 +18,16 @@ class ApiService {
   }
 
   public getProductionUrl(slug: string): string {
-    // Using a cleaner hash-based link that works on all mobile messaging apps
-    return `https://${PRODUCTION_DOMAIN}/#/${slug}`;
+    // Hash-based routing is essential for Vercel/SPA deep links to work on mobile
+    return `https://${PRODUCTION_DOMAIN}/#/${slug.toLowerCase()}`;
   }
 
-  // Required for dashboard functionality
   async getSellerById(id: string): Promise<Seller | null> {
     const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
     return local.find((s: Seller) => s.id === id) || null;
   }
 
   async findSellerBySlug(slug: string): Promise<Seller | undefined> {
-    // Fix: Rename local variable to avoid shadowing 's' in the .find callback
-    // and correctly compare the string slug with the seller's slug property.
     const lowerSlug = slug.toLowerCase();
     const local = JSON.parse(localStorage.getItem('APS_LOCAL_SELLERS') || '[]');
     return local.find((seller: Seller) => seller.slug.toLowerCase() === lowerSlug);
@@ -102,16 +98,15 @@ class ApiService {
       }
     };
     
-    try {
-      // MANDATORY: Force sync to cloud so friends can see it
-      const response = await fetch(`${DB_URL}/shows`, {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify(newShow)
-      });
-      if (!response.ok) throw new Error("Cloud Storage Node Refused Sync");
-    } catch (e) {
-      console.error("CRITICAL: Show created locally only. Friends will not see this until Cloud Sync is fixed.", e);
+    // Critical: Verify cloud sync before considering registration successful
+    const response = await fetch(`${DB_URL}/shows`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(newShow)
+    });
+
+    if (!response.ok) {
+      throw new Error("GLOBAL_SYNC_FAILED: Database rejected registration.");
     }
 
     const existing = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
@@ -123,12 +118,12 @@ class ApiService {
   }
 
   private notifyAdminNewSeller(show: Show) {
-    const msg = `*NEW SHOW REGISTERED*\n` +
+    const msg = `*GLOBAL SHOP ACTIVE*\n` +
       `--------------------------------\n` +
-      `Name: ${show.name}\n` +
+      `Shop: ${show.name}\n` +
       `Seller: ${show.sellerName}\n` +
-      `Global ID: ${show.id}\n` +
-      `Universal Link: ${this.getProductionUrl(show.slug)}`;
+      `WA: ${show.whatsapp}\n` +
+      `Link: ${this.getProductionUrl(show.slug)}`;
 
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(msg)}`, '_blank');
   }
@@ -138,15 +133,18 @@ class ApiService {
     const cleanSlug = slug.toLowerCase().trim();
 
     try {
-      // 1. Check Global Cloud Registry (Allows any mobile to open the link)
-      const res = await fetch(`${DB_URL}/shows?slug=eq.${cleanSlug}&select=*`, { headers: this.headers });
+      // PRIMARY: Always fetch from Global Cloud Registry so links work for everyone
+      const res = await fetch(`${DB_URL}/shows?slug=eq.${cleanSlug}&select=*`, { 
+        headers: this.headers,
+        cache: 'no-store' 
+      });
       const data = await res.json();
       if (data && data.length > 0) return data[0];
     } catch (e) {
-      console.warn("Global Registry check failed, checking local cache.");
+      console.warn("Cloud registry unreachable, falling back to local cache.");
     }
     
-    // 2. Check Local Fallback (For the creator's device)
+    // SECONDARY: Local fallback only for the creator's preview
     const local = JSON.parse(localStorage.getItem('APS_LOCAL_SHOWS') || '[]');
     return local.find((s: Show) => s.slug.toLowerCase() === cleanSlug);
   }
@@ -170,10 +168,9 @@ class ApiService {
     const message = `*NEW ORDER ALERT*\n` +
       `--------------------------------\n` +
       `Item: ${newOrder.productName}\n` +
-      `Amount: $${newOrder.productPrice}\n` +
+      `Price: $${newOrder.productPrice}\n` +
       `Customer: ${newOrder.customerName}\n` +
-      `WhatsApp: ${newOrder.customerWhatsapp}\n` +
-      `Delivery: ${newOrder.customerAddress}`;
+      `WhatsApp: ${newOrder.customerWhatsapp}`;
 
     window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(message)}`, '_blank');
   }
